@@ -1,4 +1,8 @@
-const CACHE_NAME = 'protour2026-v10';
+const CACHE_NAME = 'protour2026-v11';
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
 const ASSETS = [
   './',
   './index.html',
@@ -8,12 +12,11 @@ const ASSETS = [
   './apple-touch-icon.png'
 ];
 
-// Install — cache core assets
+// Install — cache core assets (do NOT skipWaiting; let user confirm via prompt)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
 });
 
 // Activate — clean up old caches
