@@ -1,4 +1,4 @@
-const CACHE_NAME = 'protour2026-v1';
+const CACHE_NAME = 'protour2026-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -32,6 +32,11 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = event.request.url;
   if (url.includes('firebaseio.com') || url.includes('googleapis.com') || url.includes('gstatic.com')) return;
+  // Always go network for HTML to avoid stale app shell
+  if (url.endsWith('/') || url.endsWith('/index.html')) {
+    event.respondWith(fetch(event.request).catch(() => caches.match('./index.html')));
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)
