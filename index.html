@@ -69,6 +69,14 @@ body.dark .info-b{background:#1a3a22;border-left-color:#2d8a45;color:#b0e0b8}
 body.dark .ptbl td{border-bottom-color:#2a3d2e}
 body.dark .ptbl td:last-child{color:#4ade80}
 body.dark .cal-date{background:#2d8a45}
+/* Dark mode — catch hardcoded light backgrounds */
+body.dark .grp-box,body.dark .rsbtn,body.dark .pin-dot{background:#1a2a1e;border-color:#2a3d2e;color:#e4f0e8}
+body.dark .admin-p{background:#2a2410;border-color:#5a4a18;color:#e4f0e8}
+body.dark [style*="background:#fff"]:not([style*="background:#fff0"]):not([style*="background:#fff9"]):not([style*="background:#fffb"]):not([style*="background:#fff3"]):not([style*="background:#fff8"]){background:#1a2a1e !important;color:#e4f0e8 !important}
+body.dark [style*="background:#fff0f0"],body.dark [style*="background:#fff9f9"]{background:#3a1a1a !important;border-color:#5a2a2a !important;color:#f87171 !important}
+body.dark [style*="background:#fff3e0"]{background:#3a2410 !important;border-color:#5a3a18 !important;color:#fbbf77 !important}
+body.dark [style*="background:#fff8f0"],body.dark [style*="background:#fffbea"]{background:#2a2410 !important;border-color:#5a4a18 !important;color:#fde68a !important}
+body.dark [style*="color:#5a2800"],body.dark [style*="color:#c0392b"]{color:#f87171 !important}
 /* Dark mode toggle button */
 .dark-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:1.5px solid rgba(255,255,255,.35);border-radius:20px;color:#fff;font-size:15px;padding:4px 10px;cursor:pointer;line-height:1;display:flex;align-items:center;gap:5px}
 body.dark .dark-toggle{border-color:rgba(255,255,255,.5)}
