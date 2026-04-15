@@ -27,6 +27,9 @@ input{-webkit-user-select:text;user-select:text}
   --txt:#1a2414;--muted:#5a6b52;--sub:#96a88e;
   --r:14px;--sh:0 2px 12px rgba(0,0,0,0.09);
   --eagle:#1a56a0;--birdie:#2d8a45;--par:#444;--bogey:#c0392b;--dbl:#8b0000;
+  --surf:#fff;--surf-tint:#f0f4ea;--surf-tint2:#e4ead8;
+  --surf-red:#fff0f0;--surf-amber:#fff3e0;--surf-blue:#cce0ff;
+  --green-deep:#1a4020;--red-deep:#c0392b;--amber-deep:#5a2800;
 }
 /* ─── DARK MODE ───────────────────────── */
 body.dark{
@@ -35,6 +38,9 @@ body.dark{
   --txt:#e4f0e8;--muted:#8aaa92;--sub:#5a7a62;
   --sh:0 2px 12px rgba(0,0,0,0.4);
   --eagle:#6aabff;--birdie:#4ade80;--par:#aaa;--bogey:#f87171;--dbl:#fca5a5;
+  --surf:#1a2a1e;--surf-tint:#1a3a22;--surf-tint2:#2a3d2e;
+  --surf-red:#3a1a1a;--surf-amber:#2a2410;--surf-blue:#0f2440;
+  --green-deep:#4ade80;--red-deep:#f87171;--amber-deep:#fde68a;
 }
 body.dark .hdr{background:#0a1a0e}
 body.dark .bnav{background:#1a2a1e;border-top-color:#2a3d2e}
@@ -76,60 +82,60 @@ body.dark .cal-date{background:#2d8a45}
 body.dark .grp-box,body.dark .rsbtn,body.dark .pin-dot{background:#1a2a1e;border-color:#2a3d2e;color:#e4f0e8}
 body.dark .admin-p{background:#2a2410;border-color:#5a4a18;color:#fde68a}
 /* Neutral light backgrounds → dark card */
-body.dark [style*="background:#fff"]:not([style*="background:#fff0"]):not([style*="background:#fff9"]):not([style*="background:#fffb"]):not([style*="background:#fff3"]):not([style*="background:#fff8"]):not([style*="background:#FFE0"]){background:#1a2a1e !important;border-color:#2a3d2e !important;color:#e4f0e8 !important}
+body.dark [style*="background:var(--surf)"]:not([style*="background:#fff0"]):not([style*="background:#fff9"]):not([style*="background:#fffb"]):not([style*="background:#fff3"]):not([style*="background:#fff8"]):not([style*="background:#FFE0"]){background:#1a2a1e !important;border-color:#2a3d2e !important;color:#e4f0e8 !important}
 /* Light green tints (hero stats, info banners, success states) → dark green */
-body.dark [style*="background:#f0f4ea"],
-body.dark [style*="background:#e6f4ea"],
-body.dark [style*="background:#e4ead8"],
-body.dark [style*="background:#d4f4dd"],
-body.dark [style*="background:#f0fff4"],
-body.dark [style*="background:#b6dfc2"]{background:#1a3a22 !important;border-color:#2d5a35 !important;color:#4ade80 !important}
+body.dark [style*="background:var(--surf-tint)"],
+body.dark [style*="background:var(--surf-tint)"],
+body.dark [style*="background:var(--surf-tint2)"],
+body.dark [style*="background:var(--surf-tint)"],
+body.dark [style*="background:var(--surf-tint)"],
+body.dark [style*="background:var(--surf-tint2)"]{background:#1a3a22 !important;border-color:#2d5a35 !important;color:#4ade80 !important}
 /* Red/pink alert backgrounds */
-body.dark [style*="background:#fff0f0"],
-body.dark [style*="background:#fff9f9"],
-body.dark [style*="background:#fde8e8"],
+body.dark [style*="background:var(--surf-red)"],
+body.dark [style*="background:var(--surf-red)"],
+body.dark [style*="background:var(--surf-red)"],
 body.dark [style*="background:#fcc"]{background:#3a1a1a !important;border-color:#5a2a2a !important;color:#f87171 !important}
 /* Orange/amber alert backgrounds */
-body.dark [style*="background:#fff3e0"],
-body.dark [style*="background:#fff8f0"],
-body.dark [style*="background:#fffbea"],
-body.dark [style*="background:#fdf6dc"]{background:#2a2410 !important;border-color:#5a4a18 !important;color:#fde68a !important}
+body.dark [style*="background:var(--surf-amber)"],
+body.dark [style*="background:var(--surf-amber)"],
+body.dark [style*="background:var(--surf-amber)"],
+body.dark [style*="background:var(--surf-amber)"]{background:#2a2410 !important;border-color:#5a4a18 !important;color:#fde68a !important}
 /* Blue tint */
-body.dark [style*="background:#cce0ff"]{background:#0f2440 !important;border-color:#1e4070 !important;color:#6aabff !important}
+body.dark [style*="background:var(--surf-blue)"]{background:#0f2440 !important;border-color:#1e4070 !important;color:#6aabff !important}
 /* Dark text colors used on light bg → flip to lighter variants */
-body.dark [style*="color:#1a4020"],
-body.dark [style*="color:#145c28"],
-body.dark [style*="color:#0f4a20"],
+body.dark [style*="color:var(--green-deep)"],
+body.dark [style*="color:var(--green-deep)"],
+body.dark [style*="color:var(--green-deep)"],
 body.dark [style*="color:#1a5c2a"],
-body.dark [style*="color:#276749"],
+body.dark [style*="color:var(--green-deep)"],
 body.dark [style*="color:#0f3a1a"]{color:#4ade80 !important}
-body.dark [style*="color:#c0392b"],
-body.dark [style*="color:#8b0000"],
-body.dark [style*="color:#5a0000"],
-body.dark [style*="color:#bf360c"]{color:#f87171 !important}
-body.dark [style*="color:#5a2800"],
-body.dark [style*="color:#5a3e00"],
-body.dark [style*="color:#3a2800"],
-body.dark [style*="color:#7a5c00"],
+body.dark [style*="color:var(--red-deep)"],
+body.dark [style*="color:var(--red-deep)"],
+body.dark [style*="color:var(--red-deep)"],
+body.dark [style*="color:var(--red-deep)"]{color:#f87171 !important}
+body.dark [style*="color:var(--amber-deep)"],
+body.dark [style*="color:var(--amber-deep)"],
+body.dark [style*="color:var(--amber-deep)"],
+body.dark [style*="color:var(--amber-deep)"],
 body.dark [style*="color:#5a4a18"],
-body.dark [style*="color:#b8860b"],
-body.dark [style*="color:#b87333"],
-body.dark [style*="color:#e65100"]{color:#fde68a !important}
+body.dark [style*="color:var(--amber-deep)"],
+body.dark [style*="color:var(--amber-deep)"],
+body.dark [style*="color:var(--amber-deep)"]{color:#fde68a !important}
 body.dark [style*="color:#444"]{color:#aaa !important}
 /* Force descendants of light containers to inherit readable text */
-body.dark [style*="background:#f0f4ea"] *:not([class*="green"]):not([class*="gold"]),
-body.dark [style*="background:#e6f4ea"] *:not([class*="green"]):not([class*="gold"]),
-body.dark [style*="background:#e4ead8"] *:not([class*="green"]):not([class*="gold"]){color:#b0e0b8 !important}
-body.dark [style*="background:#fff0f0"] *,
-body.dark [style*="background:#fff9f9"] *,
-body.dark [style*="background:#fde8e8"] *{color:#f87171 !important}
-body.dark [style*="background:#fff3e0"] *,
-body.dark [style*="background:#fff8f0"] *,
-body.dark [style*="background:#fffbea"] *,
-body.dark [style*="background:#fdf6dc"] *{color:#fde68a !important}
-/* Modal/dialog overlay cards (most use background:#fff inline) */
-body.dark [style*="background:#fff"][style*="border-radius:18px"],
-body.dark [style*="background:#fff"][style*="max-width"]{background:#1a2a1e !important;color:#e4f0e8 !important}
+body.dark [style*="background:var(--surf-tint)"] *:not([class*="green"]):not([class*="gold"]),
+body.dark [style*="background:var(--surf-tint)"] *:not([class*="green"]):not([class*="gold"]),
+body.dark [style*="background:var(--surf-tint2)"] *:not([class*="green"]):not([class*="gold"]){color:#b0e0b8 !important}
+body.dark [style*="background:var(--surf-red)"] *,
+body.dark [style*="background:var(--surf-red)"] *,
+body.dark [style*="background:var(--surf-red)"] *{color:#f87171 !important}
+body.dark [style*="background:var(--surf-amber)"] *,
+body.dark [style*="background:var(--surf-amber)"] *,
+body.dark [style*="background:var(--surf-amber)"] *,
+body.dark [style*="background:var(--surf-amber)"] *{color:#fde68a !important}
+/* Modal/dialog overlay cards (most use background:var(--surf) inline) */
+body.dark [style*="background:var(--surf)"][style*="border-radius:18px"],
+body.dark [style*="background:var(--surf)"][style*="max-width"]{background:#1a2a1e !important;color:#e4f0e8 !important}
 /* Dark mode toggle button */
 .dark-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:1.5px solid rgba(255,255,255,.35);border-radius:20px;color:#fff;font-size:15px;padding:4px 10px;cursor:pointer;line-height:1;display:flex;align-items:center;gap:5px}
 body.dark .dark-toggle{border-color:rgba(255,255,255,.5)}
@@ -150,7 +156,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 0}
 
 /* ─── BOTTOM NAV ─────────────────────────── */
-.bnav{flex-shrink:0;background:#fff;border-top:1px solid var(--bdr);display:flex;box-shadow:0 -2px 6px rgba(0,0,0,.07)}
+.bnav{flex-shrink:0;background:var(--surf);border-top:1px solid var(--bdr);display:flex;box-shadow:0 -2px 6px rgba(0,0,0,.07)}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 8px;cursor:pointer;border:none;background:none;color:var(--muted);font-size:9px;font-weight:700;gap:3px;transition:color .12s;text-transform:uppercase;letter-spacing:.5px}
 .nb.act{color:var(--green)}
 .nb.act svg{stroke:var(--green)}
@@ -163,7 +169,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;border:1px solid var(--bdr)}
 .ctitle{font-size:10px;color:var(--green);font-weight:800;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e6f0e8;font-family:'Nunito Sans',sans-serif}
 .stitle{font-size:18px;font-weight:900;margin-bottom:14px;color:var(--gd);text-transform:uppercase;letter-spacing:1.5px}
-.info-b{background:#e6f4ea;border-left:4px solid var(--green);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:#1a4020;margin-bottom:13px;line-height:1.5}
+.info-b{background:var(--surf-tint);border-left:4px solid var(--green);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--green-deep);margin-bottom:13px;line-height:1.5}
 .ptbl{width:100%;font-size:13px;border-collapse:collapse}
 .ptbl td{padding:7px 0;border-bottom:1px solid #eef1e8}
 .ptbl td:last-child{text-align:right;font-weight:700;color:var(--gd)}
@@ -172,15 +178,15 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 /* ─── TABS ───────────────────────────────── */
 .tbar{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch}
 .tbar::-webkit-scrollbar{display:none}
-.tbtn{padding:7px 15px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--bdr);background:#fff;color:var(--muted);transition:all .12s;flex-shrink:0;text-transform:uppercase;letter-spacing:.6px}
+.tbtn{padding:7px 15px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--bdr);background:var(--surf);color:var(--muted);transition:all .12s;flex-shrink:0;text-transform:uppercase;letter-spacing:.6px}
 .tbtn.act{background:var(--green);color:#fff;border-color:var(--green)}
 
 /* ─── ADMIN SETUP ────────────────────────── */
 .admin-p{background:#fffbf0;border:1.5px solid #e8c84a;border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
-.grp-box{border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}
-.fsel{width:100%;padding:9px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:#fff;color:var(--txt);-webkit-appearance:none;margin-bottom:6px}
+.grp-box{border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surf)}
+.fsel{width:100%;padding:9px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:var(--surf);color:var(--txt);-webkit-appearance:none;margin-bottom:6px}
 .fsel:focus{outline:none;border-color:var(--green)}
-.finp{padding:9px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:#fff;color:var(--txt)}
+.finp{padding:9px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:var(--surf);color:var(--txt)}
 .finp:focus{outline:none;border-color:var(--green)}
 .prow{display:grid;grid-template-columns:1fr 72px;gap:6px;margin-bottom:6px}
 .sbtn{width:100%;padding:12px;background:var(--gd);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;margin-top:6px;text-transform:uppercase;letter-spacing:.6px}
@@ -188,7 +194,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 /* ─── GROUP LIST ─────────────────────────── */
 .rsel{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .rsel::-webkit-scrollbar{display:none}
-.rsbtn{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--bdr);background:#fff;color:var(--muted);flex-shrink:0;transition:all .12s;text-transform:uppercase;letter-spacing:.5px}
+.rsbtn{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--bdr);background:var(--surf);color:var(--muted);flex-shrink:0;transition:all .12s;text-transform:uppercase;letter-spacing:.5px}
 .rsbtn.act{background:var(--green);color:#fff;border-color:var(--green)}
 .grp-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;border:1px solid var(--bdr);overflow:hidden}
 .grp-hdr{background:var(--green);color:#fff;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
@@ -202,17 +208,17 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 /* ─── SUMMARY SCORECARD (compact read) ───── */
 .sc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .sc-tbl{border-collapse:collapse;min-width:580px;width:100%;font-size:12px}
-.sc-tbl th{background:#e4ead8;padding:6px 3px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;text-transform:uppercase;letter-spacing:.4px}
+.sc-tbl th{background:var(--surf-tint2);padding:6px 3px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;text-transform:uppercase;letter-spacing:.4px}
 .sc-tbl th.hl{background:var(--gd);color:#fff;text-align:left;padding-left:8px;min-width:72px}
 .sc-tbl th.sp{background:#c8dbbf;color:var(--gd)}
 .sc-tbl td{padding:5px 3px;border:1px solid #d0d8c6;text-align:center;vertical-align:middle}
-.sc-tbl td.pl{background:#f0f4ea;font-size:11px;font-weight:700;color:var(--muted);text-align:left;padding-left:8px;white-space:nowrap}
-.sc-tbl td.tot{background:#e4ead8;font-weight:800;color:var(--gd);font-size:13px}
-.sc-tbl td.nv{background:#d0edda;font-weight:800;color:#145c28;font-size:13px}
+.sc-tbl td.pl{background:var(--surf-tint);font-size:11px;font-weight:700;color:var(--muted);text-align:left;padding-left:8px;white-space:nowrap}
+.sc-tbl td.tot{background:var(--surf-tint2);font-weight:800;color:var(--gd);font-size:13px}
+.sc-tbl td.nv{background:#d0edda;font-weight:800;color:var(--green-deep);font-size:13px}
 /* score colour cells — real golf scorecard style */
 .sc-eagle{color:var(--eagle);font-weight:900;position:relative}
 .sc-eagle .sc-inner{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid var(--eagle);line-height:1}
-.sc-birdie{color:#0f4a20;font-weight:800;position:relative}
+.sc-birdie{color:var(--green-deep);font-weight:800;position:relative}
 .sc-birdie .sc-inner{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid #0f4a20;line-height:1}
 .sc-bogey{color:var(--bogey);font-weight:700;position:relative}
 .sc-bogey .sc-inner{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1.5px solid var(--bogey);line-height:1}
@@ -233,7 +239,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 
 /* Hole progress bar */
 .hole-prog{height:4px;background:rgba(255,255,255,.2);flex-shrink:0}
-.hole-prog-fill{height:100%;background:#fff;transition:width .3s}
+.hole-prog-fill{height:100%;background:var(--surf);transition:width .3s}
 
 /* Hole info band */
 .hole-band{background:var(--green);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -249,17 +255,17 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 /* Player score blocks */
 .players-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 
-.player-block{background:#fff;border-radius:10px;border:1.5px solid var(--bdr);padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.player-block{background:var(--surf);border-radius:10px;border:1.5px solid var(--bdr);padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .pb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .pb-name{font-size:13px;font-weight:800;color:var(--txt)}
 .pb-hcp{font-size:11px;color:var(--muted);font-weight:600}
-.pb-thru{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#e6f4ea;color:var(--green)}
+.pb-thru{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surf-tint);color:var(--green)}
 
 /* +/- score input */
 .score-ctrl{display:flex;align-items:center;justify-content:center;gap:0}
 .sc-minus,.sc-plus{width:48px;height:48px;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:26px;font-weight:300;transition:transform .1s,background .1s;flex-shrink:0}
-.sc-minus{background:#fde8e8;color:#c0392b}
-.sc-plus{background:#e6f4ea;color:#1a5c2a}
+.sc-minus{background:var(--surf-red);color:var(--red-deep)}
+.sc-plus{background:var(--surf-tint);color:#1a5c2a}
 .sc-minus:active,.sc-plus:active{transform:scale(.9)}
 .sc-display{width:70px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}
 .sc-num{font-size:38px;font-weight:900;line-height:1;color:var(--txt);transition:color .15s}
@@ -268,12 +274,12 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .sc-num.bogey{color:var(--bogey)}
 .sc-num.dbl{color:var(--dbl)}
 .sc-rel{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:1px}
-.sc-rel.eagle{background:#cce0ff;color:var(--eagle)}
-.sc-rel.birdie{background:#d4f4dd;color:#0f4a20}
+.sc-rel.eagle{background:var(--surf-blue);color:var(--eagle)}
+.sc-rel.birdie{background:var(--surf-tint);color:var(--green-deep)}
 .sc-rel.par{background:#e8e8e8;color:#444}
-.sc-rel.bogey{background:#fde8e8;color:var(--bogey)}
+.sc-rel.bogey{background:var(--surf-red);color:var(--bogey)}
 .sc-rel.dbl{background:#fcc;color:var(--dbl)}
-.sc-rel.trip{background:#f5b5b5;color:#5a0000}
+.sc-rel.trip{background:#f5b5b5;color:var(--red-deep)}
 
 /* Running total strip */
 .pb-totals{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid #eef1e8}
@@ -283,7 +289,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .pb-net-box .tv{color:var(--green)}
 
 /* Navigation buttons */
-.hole-nav{display:flex;gap:8px;padding:8px 12px;flex-shrink:0;background:#fff;border-top:1px solid var(--bdr)}
+.hole-nav{display:flex;gap:8px;padding:8px 12px;flex-shrink:0;background:var(--surf);border-top:1px solid var(--bdr)}
 .hnav-btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;transition:background .12s;text-transform:uppercase;letter-spacing:.8px}
 .hnav-prev{background:#f0f3eb;color:var(--gd)}
 .hnav-next{background:var(--green);color:#fff}
@@ -304,7 +310,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .lb-pos{font-size:12px;font-weight:800;color:#7a9e82;text-align:center}
 .lb-pos.gold{color:#c9a227;font-size:13px}
 .lb-pos.silver{color:#9da8a0}
-.lb-pos.bronze{color:#b87333}
+.lb-pos.bronze{color:var(--amber-deep)}
 .lb-name{font-size:12px;font-weight:800;color:#e8f0ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;text-transform:uppercase;letter-spacing:.4px}
 .lb-name .lb-flag{font-size:10px;color:#5a8060;margin-left:4px;font-weight:500}
 .lb-score{font-size:14px;font-weight:900;text-align:right;padding-right:4px}
@@ -326,7 +332,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 
 /* Done banner */
-.done-b{display:flex;align-items:center;gap:8px;background:#e6f4ea;border-radius:10px;padding:12px 14px;margin:0 14px 14px}
+.done-b{display:flex;align-items:center;gap:8px;background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin:0 14px 14px}
 .done-b svg{width:20px;height:20px;stroke:var(--green);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .done-b span{font-size:12px;font-weight:800;color:var(--gd);text-transform:uppercase;letter-spacing:.5px}
 .open-sc-btn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;margin:0 0 12px;text-transform:uppercase;letter-spacing:.7px}
@@ -348,8 +354,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .cal-date .day{font-size:20px;font-weight:800;line-height:1}
 .cal-date .mon{font-size:10px;font-weight:700;opacity:.85;text-transform:uppercase}
 .cal-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px}
-.cal-tag.regular{background:#e6f4ea;color:#1a5c2a}
-.cal-tag.playoff{background:#fdf6dc;color:#7a5c00}
+.cal-tag.regular{background:var(--surf-tint);color:#1a5c2a}
+.cal-tag.playoff{background:var(--surf-amber);color:var(--amber-deep)}
 
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a2414;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -359,16 +365,16 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .pin-screen h2{font-size:20px;font-weight:800;margin-bottom:6px}
 .pin-screen p{font-size:13px;color:var(--muted);margin-bottom:24px}
 .pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
-.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bdr);background:#fff;transition:background .15s}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bdr);background:var(--surf);transition:background .15s}
 .pin-dot.filled{background:var(--green);border-color:var(--green)}
 .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
-.pin-key{padding:16px;border:1.5px solid var(--bdr);border-radius:12px;background:#fff;font-size:20px;font-weight:700;cursor:pointer;transition:background .1s;box-shadow:var(--sh)}
+.pin-key{padding:16px;border:1.5px solid var(--bdr);border-radius:12px;background:var(--surf);font-size:20px;font-weight:700;cursor:pointer;transition:background .1s;box-shadow:var(--sh)}
 .pin-key:active{background:#e8ede2}
 .pin-key.del{font-size:15px;color:var(--bogey)}
 .pin-key.wide{grid-column:span 1}
 .pin-error{color:var(--bogey);font-size:13px;font-weight:600;margin-top:8px;min-height:20px}
 
-.as-section{background:#fff;border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.as-section{background:var(--surf);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
 .as-section-hdr{background:var(--gd);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 .as-section-hdr h3{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
 .as-section-body{display:none;padding:14px 16px}
@@ -380,23 +386,23 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 .as-row:last-child{border-bottom:none}
 .as-row-lbl{flex:1;font-size:12px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.4px}
 .as-row-sub{font-size:11px;color:var(--muted);margin-top:1px;text-transform:none;font-weight:400;letter-spacing:0}
-.as-num{width:80px;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;font-weight:700;text-align:center;background:#fff;color:var(--txt)}
+.as-num{width:80px;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;font-weight:700;text-align:center;background:var(--surf);color:var(--txt)}
 .as-num:focus{outline:none;border-color:var(--green)}
 .as-toggle{position:relative;width:44px;height:26px;flex-shrink:0}
 .as-toggle input{opacity:0;width:0;height:0}
 .as-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:20px;transition:.2s}
-.as-slider:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.as-slider:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:var(--surf);border-radius:50%;transition:.2s}
 .as-toggle input:checked+.as-slider{background:var(--green)}
 .as-toggle input:checked+.as-slider:before{transform:translateX(18px)}
 
 .as-player-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eef1e8}
 .as-player-row:last-child{border-bottom:none}
 .as-player-avt{width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
-.as-del-btn{width:28px;height:28px;border-radius:50%;background:#fde8e8;border:none;color:var(--bogey);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.as-del-btn{width:28px;height:28px;border-radius:50%;background:var(--surf-red);border:none;color:var(--bogey);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
 .as-save-btn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;margin-top:12px;text-transform:uppercase;letter-spacing:.8px}
 .as-save-btn:active{background:var(--gd)}
 .as-add-row{display:flex;gap:8px;margin-top:10px}
-.as-logout{width:100%;padding:11px;background:#fde8e8;color:var(--bogey);border:1.5px solid #f5c0c0;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;text-transform:uppercase;letter-spacing:.6px}
+.as-logout{width:100%;padding:11px;background:var(--surf-red);color:var(--bogey);border:1.5px solid #f5c0c0;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;text-transform:uppercase;letter-spacing:.6px}
 .as-logout:active{background:#f5c0c0}
 </style>
 </head>
@@ -410,7 +416,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
       <div style="font-size:13px;color:var(--muted);margin-top:2px">Sign in to continue</div>
     </div>
     <div style="background:var(--card);border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.12)">
-      <div id="login-error" style="background:#fff0f0;border:1px solid #f5c0c0;border-radius:8px;padding:10px 12px;font-size:13px;color:#c0392b;margin-bottom:14px;display:none"></div>
+      <div id="login-error" style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red-deep);margin-bottom:14px;display:none"></div>
       <div style="margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Username</div>
         <input id="login-username" type="text" autocomplete="username" autocapitalize="none" placeholder="e.g. markmetallo" style="width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:15px;background:var(--bg);color:var(--txt);box-sizing:border-box" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
@@ -438,8 +444,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
       <div style="font-size:13px;color:var(--muted);margin-top:4px">Enter your current and new password</div>
     </div>
     <div style="background:var(--card);border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.12)">
-      <div id="cpw-error" style="background:#fff0f0;border:1px solid #f5c0c0;border-radius:8px;padding:10px 12px;font-size:13px;color:#c0392b;margin-bottom:14px;display:none"></div>
-      <div id="cpw-success" style="background:#f0fff4;border:1px solid #b7ebc0;border-radius:8px;padding:10px 12px;font-size:13px;color:#276749;margin-bottom:14px;display:none"></div>
+      <div id="cpw-error" style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red-deep);margin-bottom:14px;display:none"></div>
+      <div id="cpw-success" style="background:var(--surf-tint);border:1px solid #b7ebc0;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--green-deep);margin-bottom:14px;display:none"></div>
       <div style="margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Username</div>
         <input id="cpw-username" type="text" autocapitalize="none" placeholder="Your username" style="width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:15px;background:var(--bg);color:var(--txt);box-sizing:border-box">
@@ -591,7 +597,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
   <div id="admin-settings" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="stitle" style="margin-bottom:0">Admin</div>
-      <span style="background:#e6f4ea;color:var(--gd);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">🔓 Unlocked</span>
+      <span style="background:var(--surf-tint);color:var(--gd);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">🔓 Unlocked</span>
     </div>
 
     <!-- GROUPS SETUP -->
@@ -656,18 +662,18 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
           <select class="fsel" id="course-round" onchange="buildCourseHoleRows()" style="margin-bottom:0"></select>
         </div>
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Hole Par, Stroke Index &amp; Yardage</div>
-        <div style="background:#fff;border-radius:10px;border:1px solid var(--bdr);overflow:hidden;margin-bottom:10px">
-          <div style="display:grid;grid-template-columns:38px 52px 52px 1fr;background:#e4ead8;padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">
+        <div style="background:var(--surf);border-radius:10px;border:1px solid var(--bdr);overflow:hidden;margin-bottom:10px">
+          <div style="display:grid;grid-template-columns:38px 52px 52px 1fr;background:var(--surf-tint2);padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">
             <div>Hole</div><div style="text-align:center">Par</div><div style="text-align:center">S.I.</div><div style="text-align:center">Yards</div>
           </div>
           <div id="course-hole-rows"></div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:4px">
-          <div style="flex:1;background:#e4ead8;border-radius:8px;padding:9px;text-align:center">
+          <div style="flex:1;background:var(--surf-tint2);border-radius:8px;padding:9px;text-align:center">
             <div style="font-size:18px;font-weight:800;color:var(--gd)" id="ci-out-par">—</div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:1px">OUT</div>
           </div>
-          <div style="flex:1;background:#e4ead8;border-radius:8px;padding:9px;text-align:center">
+          <div style="flex:1;background:var(--surf-tint2);border-radius:8px;padding:9px;text-align:center">
             <div style="font-size:18px;font-weight:800;color:var(--gd)" id="ci-in-par">—</div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:1px">IN</div>
           </div>
@@ -675,7 +681,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
             <div style="font-size:18px;font-weight:800;color:#fff" id="ci-total-par">—</div>
             <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.7);margin-top:1px">TOTAL</div>
           </div>
-          <div style="flex:1;background:#f0f4ea;border-radius:8px;padding:9px;text-align:center">
+          <div style="flex:1;background:var(--surf-tint);border-radius:8px;padding:9px;text-align:center">
             <div style="font-size:16px;font-weight:800;color:var(--gd)" id="ci-total-yards">—</div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:1px">YARDS</div>
           </div>
@@ -781,7 +787,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
           <div><div class="as-row-lbl">Sponsor Discount</div><div class="as-row-sub">1 free entry deducted ($)</div></div>
           <input class="as-num" type="number" id="as-prize-sponsor" min="0" style="width:72px" oninput="updatePrizePreview()">
         </div>
-        <div style="background:#f0f4ea;border-radius:8px;padding:10px 12px;margin:10px 0 14px;font-size:12px;color:var(--muted);line-height:1.6">
+        <div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;margin:10px 0 14px;font-size:12px;color:var(--muted);line-height:1.6">
           Pool = (players × fee) − sponsor discount<br>
           <span style="font-style:italic">e.g. 24 players × $60 − $60 = <strong style="color:var(--gd)">$1,380</strong></span>
         </div>
@@ -897,14 +903,14 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         <svg class="as-garr" id="as-garr-export" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-export">
-        <div style="background:#e6f4ea;border-left:4px solid var(--green);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:#1a4020;margin-bottom:14px;line-height:1.6">
+        <div style="background:var(--surf-tint);border-left:4px solid var(--green);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--green-deep);margin-bottom:14px;line-height:1.6">
           Downloads an Excel file (.xlsx) with full season data — standings, round results, earnings, and world rankings. Open in Excel or import to Google Sheets.
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <button onclick="exportSeasonData()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">
             📥 Download Season Excel (.xlsx)
           </button>
-          <button onclick="exportRoundData()" style="width:100%;padding:13px;background:#f0f4ea;color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
+          <button onclick="exportRoundData()" style="width:100%;padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
             📥 Download Round-by-Round Scorecards
           </button>
         </div>
@@ -918,7 +924,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         <svg class="as-garr" id="as-garr-clear-scores" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-clear-scores">
-        <div style="background:#fde8e8;border-left:4px solid var(--bogey);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:#5a0000;margin-bottom:14px;line-height:1.6">
+        <div style="background:var(--surf-red);border-left:4px solid var(--bogey);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--red-deep);margin-bottom:14px;line-height:1.6">
           ⚠️ Clearing scores cannot be undone. Enter your PIN to confirm any action.
         </div>
 
@@ -932,8 +938,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;margin-top:4px">Clear Groups</div>
 
         <!-- Clear groups for a round -->
-        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:12px;background:#fff9f9">
-          <div style="font-size:13px;font-weight:700;color:#8b0000;margin-bottom:8px">Clear Groups for a Round</div>
+        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:12px;background:var(--surf-red)">
+          <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear Groups for a Round</div>
           <select class="fsel" id="clear-groups-round-sel" style="margin-bottom:8px;border-color:#f5c0c0"></select>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
             <button onclick="doGroupAction('players')" style="flex:1;padding:9px 6px;background:#c0392b;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🗑️ Clear Players</button>
@@ -944,8 +950,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         </div>
 
         <!-- Clear all groups -->
-        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:16px;background:#fff9f9">
-          <div style="font-size:13px;font-weight:700;color:#8b0000;margin-bottom:8px">Clear ALL Groups (Every Round)</div>
+        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:16px;background:var(--surf-red)">
+          <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear ALL Groups (Every Round)</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Removes all group setups for the entire season.</div>
           <button onclick="clearAllGroups()" style="width:100%;padding:10px;background:#8b0000;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
             🗑️ Clear Every Round's Groups
@@ -956,8 +962,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Clear Scores</div>
 
         <!-- Option 1: Clear specific round -->
-        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:12px;background:#fff9f9">
-          <div style="font-size:13px;font-weight:700;color:#8b0000;margin-bottom:8px">Clear a Specific Round's Scores</div>
+        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:12px;background:var(--surf-red)">
+          <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear a Specific Round's Scores</div>
           <select class="fsel" id="clear-round-sel" style="margin-bottom:8px;border-color:#f5c0c0"></select>
           <button onclick="clearRoundScores()" style="width:100%;padding:10px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
             🗑️ Clear This Round's Scores
@@ -965,8 +971,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         </div>
 
         <!-- Option 2: Clear specific player from a round -->
-        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:12px;background:#fff9f9">
-          <div style="font-size:13px;font-weight:700;color:#8b0000;margin-bottom:8px">Remove a Player's Score from a Round</div>
+        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;margin-bottom:12px;background:var(--surf-red)">
+          <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Remove a Player's Score from a Round</div>
           <select class="fsel" id="clear-player-round-sel" style="margin-bottom:8px;border-color:#f5c0c0" onchange="updateClearPlayerList()"></select>
           <select class="fsel" id="clear-player-sel" style="margin-bottom:8px;border-color:#f5c0c0">
             <option value="">— Select player —</option>
@@ -977,8 +983,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
         </div>
 
         <!-- Option 3: Clear everything -->
-        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;background:#fff9f9">
-          <div style="font-size:13px;font-weight:700;color:#8b0000;margin-bottom:8px">Clear ALL Scores</div>
+        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;background:var(--surf-red)">
+          <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear ALL Scores</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Deletes every submitted scorecard for the entire season.</div>
           <button onclick="clearAllScores()" style="width:100%;padding:10px;background:#8b0000;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
             🗑️ Delete All Scores Permanently
@@ -1127,8 +1133,8 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
           <span style="margin-left:auto;color:var(--muted);font-size:16px">›</span>
         </button>
         <div id="inline-cpw" style="display:none;margin-top:10px">
-          <div id="inline-cpw-err" style="background:#fff0f0;border:1px solid #f5c0c0;border-radius:8px;padding:8px 10px;font-size:12px;color:#c0392b;margin-bottom:8px;display:none"></div>
-          <div id="inline-cpw-ok" style="background:#f0fff4;border:1px solid #b7ebc0;border-radius:8px;padding:8px 10px;font-size:12px;color:#276749;margin-bottom:8px;display:none"></div>
+          <div id="inline-cpw-err" style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--red-deep);margin-bottom:8px;display:none"></div>
+          <div id="inline-cpw-ok" style="background:var(--surf-tint);border:1px solid #b7ebc0;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--green-deep);margin-bottom:8px;display:none"></div>
           <div style="position:relative;margin-bottom:8px">
             <input id="inline-cpw-cur" type="password" placeholder="Current password" style="width:100%;padding:10px 44px 10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:var(--bg);color:var(--txt);box-sizing:border-box">
             <button type="button" onclick="toggleLoginPW(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--muted);font-size:16px;line-height:1">👁</button>
@@ -1169,7 +1175,7 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
 
       <!-- Sign out -->
       <div style="padding:12px 0 0">
-        <button onclick="signOut()" style="width:100%;padding:12px;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;font-size:13px;font-weight:800;color:#c0392b;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <button onclick="signOut()" style="width:100%;padding:12px;background:var(--surf-red);border:1.5px solid #f5c0c0;border-radius:10px;font-size:13px;font-weight:800;color:var(--red-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
           <span style="font-size:15px">🚪</span> Sign Out
         </button>
       </div>
@@ -1229,10 +1235,10 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
     </button>
 
     <!-- Sign Out -->
-    <button onclick="signOut()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff9f9;border:1.5px solid #f5c0c0;border-radius:14px;margin-bottom:20px;cursor:pointer;text-align:left">
-      <div style="width:42px;height:42px;border-radius:50%;background:#f5c0c0;color:#8b0000;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🚪</div>
+    <button onclick="signOut()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surf-red);border:1.5px solid #f5c0c0;border-radius:14px;margin-bottom:20px;cursor:pointer;text-align:left">
+      <div style="width:42px;height:42px;border-radius:50%;background:#f5c0c0;color:var(--red-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🚪</div>
       <div>
-        <div style="font-size:15px;font-weight:800;color:#8b0000">Sign Out</div>
+        <div style="font-size:15px;font-weight:800;color:var(--red-deep)">Sign Out</div>
         <div style="font-size:12px;color:var(--muted)">Sign out of Pro Tour 2026</div>
       </div>
     </button>
@@ -1363,10 +1369,10 @@ input:not([type=password]):not([type=email]):not([type=number]),textarea{text-tr
     <div style="font-size:36px;text-align:center;margin-bottom:12px">🏌️</div>
     <div style="font-size:19px;font-weight:900;color:var(--gd);text-align:center;margin-bottom:8px">Submit Scorecard?</div>
     <div style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;line-height:1.5">This will finalise the round for all players in this group. Scores cannot be changed without admin access.</div>
-    <div id="confirm-submit-summary" style="background:#f0f4ea;border-radius:10px;padding:12px;margin-bottom:18px;font-size:13px;color:var(--gd)"></div>
+    <div id="confirm-submit-summary" style="background:var(--surf-tint);border-radius:10px;padding:12px;margin-bottom:18px;font-size:13px;color:var(--gd)"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <button id="confirm-submit-yes" style="padding:14px;background:var(--green);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer">✓ Yes, Submit</button>
-      <button onclick="closeConfirmSubmit(true)" style="padding:13px;background:#f0f4ea;color:var(--gd);border:1.5px solid var(--bdr);border-radius:11px;font-size:14px;font-weight:700;cursor:pointer">← Go Back</button>
+      <button onclick="closeConfirmSubmit(true)" style="padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:11px;font-size:14px;font-weight:700;cursor:pointer">← Go Back</button>
     </div>
   </div>
 </div>
@@ -1638,11 +1644,11 @@ function showPlayerScorecard(idx){
     const strokes = strokesOnHole(hcp, siVal);
     const net = gross - strokes;
     const rel = net - par;
-    if(rel<=-2) return 'background:#cce0ff;color:#1a56a0;font-weight:800';
-    if(rel===-1) return 'background:#d4f4dd;color:#0f4a20;font-weight:800';
+    if(rel<=-2) return 'background:var(--surf-blue);color:#1a56a0;font-weight:800';
+    if(rel===-1) return 'background:var(--surf-tint);color:var(--green-deep);font-weight:800';
     if(rel===0)  return 'color:#444';
-    if(rel===1)  return 'background:#fde8e8;color:#c0392b';
-    return 'background:#fcc;color:#8b0000;font-weight:700';
+    if(rel===1)  return 'background:var(--surf-red);color:var(--red-deep)';
+    return 'background:#fcc;color:var(--red-deep);font-weight:700';
   }
 
   const frontRows = Array.from({length:9},(_,i)=>{
@@ -1682,17 +1688,17 @@ function showPlayerScorecard(idx){
             <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px">Net</div>
           </div>
         </div>
-        ${h.earned>0?`<div style="background:#e6f4ea;border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--gd)">💰 Prize Earnings</span><span style="font-size:18px;font-weight:900;color:var(--gd)">$${h.earned}</span></div>`:''}
+        ${h.earned>0?`<div style="background:var(--surf-tint);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--gd)">💰 Prize Earnings</span><span style="font-size:18px;font-weight:900;color:var(--gd)">$${h.earned}</span></div>`:''}
         <!-- Front 9 -->
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Front Nine</div>
         <div style="overflow-x:auto;margin-bottom:12px">
           <table style="border-collapse:collapse;min-width:100%;font-size:12px">
-            <tr style="background:#e4ead8">
+            <tr style="background:var(--surf-tint2)">
               <td style="padding:5px 6px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;font-size:10px">Hole</td>
               ${Array.from({length:9},(_,i)=>`<td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;font-weight:700;color:var(--muted)">${i+1}</td>`).join('')}
               <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;font-weight:700;color:var(--gd)">OUT</td>
             </tr>
-            <tr style="background:#f0f4ea">
+            <tr style="background:var(--surf-tint)">
               <td style="padding:5px 6px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;font-size:10px">Par</td>
               ${pars.slice(0,9).map(p=>`<td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;color:var(--muted)">${p}</td>`).join('')}
               <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;font-weight:700;color:var(--gd)">${outPar}</td>
@@ -1700,7 +1706,7 @@ function showPlayerScorecard(idx){
             <tr>
               <td style="padding:5px 6px;font-weight:800;color:var(--txt);border:1px solid #cdd6c3;font-size:10px">Score</td>
               ${frontRows}
-              <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:13px;font-weight:900;color:var(--gd);background:#e4ead8">${outGross||'—'}</td>
+              <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:13px;font-weight:900;color:var(--gd);background:var(--surf-tint2)">${outGross||'—'}</td>
             </tr>
           </table>
         </div>
@@ -1708,12 +1714,12 @@ function showPlayerScorecard(idx){
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Back Nine</div>
         <div style="overflow-x:auto;margin-bottom:16px">
           <table style="border-collapse:collapse;min-width:100%;font-size:12px">
-            <tr style="background:#e4ead8">
+            <tr style="background:var(--surf-tint2)">
               <td style="padding:5px 6px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;font-size:10px">Hole</td>
               ${Array.from({length:9},(_,i)=>`<td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;font-weight:700;color:var(--muted)">${i+10}</td>`).join('')}
               <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;font-weight:700;color:var(--gd)">IN</td>
             </tr>
-            <tr style="background:#f0f4ea">
+            <tr style="background:var(--surf-tint)">
               <td style="padding:5px 6px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;font-size:10px">Par</td>
               ${pars.slice(9).map(p=>`<td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;color:var(--muted)">${p}</td>`).join('')}
               <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:11px;font-weight:700;color:var(--gd)">${inPar}</td>
@@ -1721,7 +1727,7 @@ function showPlayerScorecard(idx){
             <tr>
               <td style="padding:5px 6px;font-weight:800;color:var(--txt);border:1px solid #cdd6c3;font-size:10px">Score</td>
               ${backRows}
-              <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:13px;font-weight:900;color:var(--gd);background:#e4ead8">${inGross||'—'}</td>
+              <td style="text-align:center;padding:5px 3px;border:1px solid #cdd6c3;font-size:13px;font-weight:900;color:var(--gd);background:var(--surf-tint2)">${inGross||'—'}</td>
             </tr>
           </table>
         </div>
@@ -1846,7 +1852,7 @@ function renderHomeCurrentRound(){
       </div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-          ${isToday?`<span style="background:#4ade80;color:#0a1f0f;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px">Today</span>`:`<span style="background:#e6f4ea;color:var(--gd);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">Next Up</span>`}
+          ${isToday?`<span style="background:#4ade80;color:#0a1f0f;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px">Today</span>`:`<span style="background:var(--surf-tint);color:var(--gd);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">Next Up</span>`}
           <span style="font-size:10px;color:var(--muted);font-weight:600">${display.type==='playoff'?'Playoff':'Regular'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
@@ -1858,18 +1864,18 @@ function renderHomeCurrentRound(){
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div style="background:#f0f4ea;border-radius:10px;padding:10px;text-align:center">
+      <div style="background:var(--surf-tint);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:18px;font-weight:800;color:var(--gd)">${hasGroups?activeGroups[display.round].reduce((a,g)=>a+g.players.length,0):'—'}</div>
         <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px">Players</div>
       </div>
-      <div style="background:#f0f4ea;border-radius:10px;padding:10px;text-align:center">
+      <div style="background:var(--surf-tint);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:18px;font-weight:800;color:var(--gd)">${hasGroups?'$'+calcPrizePool(display.round).toLocaleString():'$—'}</div>
         <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px">Prize Pool</div>
       </div>
     </div>
     ${hasGroups?buildHomeGroupTimes(display.round):''}
     ${hasGroups&&!submitted?`<button onclick="jumpToRound('${display.round}')" style="width:100%;margin-top:10px;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">Enter Scores →</button>`:''}
-    ${submitted?`<div style="margin-top:10px;background:#e6f4ea;border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--gd);text-align:center">✓ Scores submitted</div>`:''}
+    ${submitted?`<div style="margin-top:10px;background:var(--surf-tint);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--gd);text-align:center">✓ Scores submitted</div>`:''}
     ${!isToday&&display.date&&display.date!=='TBD'?buildCountdownBanner(display):''}`;
 }
 
@@ -1882,7 +1888,7 @@ function buildCountdownBanner(display){
   if(days<0||days>60) return '';
   const urgency=days<=3?'#c0392b':days<=7?'#e8a020':'var(--green)';
   const msg=days===0?'Today!':days===1?'Tomorrow':days+' days away';
-  return `<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:#f0f4ea;border-radius:10px;padding:10px 14px">
+  return `<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:var(--surf-tint);border-radius:10px;padding:10px 14px">
     <div style="font-size:13px;color:var(--muted)">⏰ Round in <strong style="color:${urgency}">${msg}</strong></div>
     <button onclick="addToCalendar('${display.round}','${display.date}','${display.course||''}')" style="padding:6px 12px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">+ Calendar</button>
   </div>`;
@@ -1910,7 +1916,7 @@ function buildHomeGroupTimes(round){
     </div>`;
   }).join('');
 
-  return `<div style="margin-top:12px;background:#f0f4ea;border-radius:10px;padding:10px 12px">
+  return `<div style="margin-top:12px;background:var(--surf-tint);border-radius:10px;padding:10px 12px">
     <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px">Tee Times</div>
     ${rows}
   </div>`;
@@ -2060,12 +2066,12 @@ function renderHomePrizePool(){
 
   el.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div style="background:#f0f4ea;border-radius:10px;padding:12px;text-align:center">
+      <div style="background:var(--surf-tint);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Entry/Round</div>
         <div style="font-size:20px;font-weight:800;color:var(--gd)">$${settings.entryFee}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">per player</div>
       </div>
-      <div style="background:#f0f4ea;border-radius:10px;padding:12px;text-align:center">
+      <div style="background:var(--surf-tint);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Season Entry</div>
         <div style="font-size:20px;font-weight:800;color:var(--gd)">$${settings.playoffEntryFee}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">per player</div>
@@ -2168,7 +2174,7 @@ function scorecardCell(gross, par, hcp, siVal, tdStyle){
 
   // Net score shown below gross, small gold text, no overlap, no circle
   const netLabel = strokes > 0
-    ? `<div style="font-size:9px;font-weight:800;color:#b8860b;line-height:1;margin-top:2px">${netScore}</div>`
+    ? `<div style="font-size:9px;font-weight:800;color:var(--amber-deep);line-height:1;margin-top:2px">${netScore}</div>`
     : '';
 
   let shapeEl = '';
@@ -2236,14 +2242,14 @@ function renderSetup(){
   if(isPlayoff1){
     const {totals}=calcSeasonStandings();
     const qualifiers=PLAYERS.filter(n=>totals[n]>0).sort((a,b)=>(totals[b]||0)-(totals[a]||0)).slice(0,12);
-    html+=`<div style="background:#f0f4ea;border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
+    html+=`<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
       <div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:6px">⛳ Playoff 1 — Handicap Advantages</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.7">
         Group 1 (1st–4th): <strong>HCP +2</strong><br>
         Group 2 (5th–8th): <strong>HCP +1</strong><br>
         Group 3 (9th–12th): <strong>Regular HCP</strong>
       </div>
-      <button onclick="doAutoAssign()" style="margin-top:10px;width:100%;padding:9px;background:var(--gold);color:#5a3e00;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">
+      <button onclick="doAutoAssign()" style="margin-top:10px;width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">
         ✨ Auto-Assign Top 12 from Standings
       </button>
       ${qualifiers.length<12?`<div style="font-size:11px;color:var(--bogey);margin-top:6px">Only ${qualifiers.length} players with points — fill remaining slots manually</div>`:''}
@@ -2253,7 +2259,7 @@ function renderSetup(){
   for(let g=0;g<numGroups;g++){
     const grp=existing[g]||{players:[{name:'',hcp:0},{name:'',hcp:0},{name:'',hcp:0},{name:'',hcp:0}],teeTime:''};
     const bonus=isPlayoff1?playoffHcpBonus(g):null;
-    const bonusLabel=bonus!==null?(bonus>0?` <span style="font-size:11px;background:#fdf6dc;color:#7a5c00;padding:2px 7px;border-radius:8px;font-weight:700">HCP +${bonus}</span>`:''):'' ;
+    const bonusLabel=bonus!==null?(bonus>0?` <span style="font-size:11px;background:var(--surf-amber);color:var(--amber-deep);padding:2px 7px;border-radius:8px;font-weight:700">HCP +${bonus}</span>`:''):'' ;
     html+=`<div class="grp-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-size:13px;font-weight:800;color:var(--gd)">Group ${g+1}${bonusLabel}</span>
@@ -2314,11 +2320,11 @@ function renderAdminCalendar(){
         <div style="font-size:10px;color:var(--muted);font-weight:600;margin-bottom:3px">SPONSOR LOGO <span style="color:var(--sub);font-weight:400">(optional)</span></div>
         <div style="display:flex;align-items:center;gap:8px">
           ${sponsorLogos[c.round]?`<img src="${sponsorLogos[c.round]}" style="height:32px;width:auto;border-radius:6px;border:1px solid var(--bdr)">`:'' }
-          <label style="padding:7px 12px;background:#f0f4ea;border:1.5px dashed var(--bdr);border-radius:8px;font-size:12px;font-weight:600;color:var(--gd);cursor:pointer">
+          <label style="padding:7px 12px;background:var(--surf-tint);border:1.5px dashed var(--bdr);border-radius:8px;font-size:12px;font-weight:600;color:var(--gd);cursor:pointer">
             ${sponsorLogos[c.round]?'Change logo':'Upload logo'}
             <input type="file" accept="image/*" onchange="uploadSponsorLogo('${c.round}',this)" style="display:none">
           </label>
-          ${sponsorLogos[c.round]?`<button onclick="removeSponsorLogo('${c.round}')" style="padding:6px 10px;background:#fde8e8;color:var(--bogey);border:none;border-radius:8px;font-size:12px;cursor:pointer">Remove</button>`:''}
+          ${sponsorLogos[c.round]?`<button onclick="removeSponsorLogo('${c.round}')" style="padding:6px 10px;background:var(--surf-red);color:var(--bogey);border:none;border-radius:8px;font-size:12px;cursor:pointer">Remove</button>`:''}
         </div>
       </div>
     </div>`).join('');
@@ -2555,7 +2561,7 @@ function renderGroupBody(round,gi,grp,sc,done,inProg){
     html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eef1e8">
       <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${inits(pl.name)}</div>
       <div style="flex:1;font-weight:700;font-size:14px">${pl.name}</div>
-      <div style="font-size:12px;font-weight:700;background:#e6f4ea;color:var(--gd);padding:2px 8px;border-radius:10px">HCP ${pl.hcp}</div>
+      <div style="font-size:12px;font-weight:700;background:var(--surf-tint);color:var(--gd);padding:2px 8px;border-radius:10px">HCP ${pl.hcp}</div>
     </div>`;
   });
   html+=`</div>`;
@@ -2586,7 +2592,7 @@ function renderGroupBody(round,gi,grp,sc,done,inProg){
         <img src="${existing}" style="width:100%;border-radius:10px;border:2px solid var(--bdr)">
         <button onclick="removeScorecardPhoto('${round}',${gi})" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
       </div>`:''}
-      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f0f4ea;border:1.5px dashed var(--bdr);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gd)">
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surf-tint);border:1.5px dashed var(--bdr);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gd)">
         📷 ${existing?'Replace':'Upload'} Scorecard Photo
         <input type="file" accept="image/*" capture="environment" onchange="uploadScorecardPhoto('${round}',${gi},this)" style="display:none">
       </label>
@@ -2610,7 +2616,7 @@ function buildSummaryTable(round,gi,grp,sc){
   for(let h=1;h<=9;h++) html+=`<th>${h}</th>`;
   html+=`<th class="sp">OUT</th>`;
   for(let h=10;h<=18;h++) html+=`<th>${h}</th>`;
-  html+=`<th class="sp">IN</th><th class="sp">GRS</th><th style="background:#b6dfc2;color:#145c28;font-weight:800">NET</th></tr>`;
+  html+=`<th class="sp">IN</th><th class="sp">GRS</th><th style="background:var(--surf-tint2);color:var(--green-deep);font-weight:800">NET</th></tr>`;
   // Par row
   html+=`<tr><td class="pl" style="font-style:italic">Par</td>`;
   let parOut=0,parIn=0;
@@ -2914,7 +2920,7 @@ function showDetailedStats(name){
   modal.onclick=e=>{ if(e.target===modal) modal.remove(); };
 
   const statBox=(label,val,color='var(--gd)')=>`
-    <div style="background:#f0f4ea;border-radius:10px;padding:10px;text-align:center">
+    <div style="background:var(--surf-tint);border-radius:10px;padding:10px;text-align:center">
       <div style="font-size:18px;font-weight:800;color:${color}">${val}</div>
       <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px">${label}</div>
     </div>`;
@@ -2922,16 +2928,16 @@ function showDetailedStats(name){
   const pct=n=>total>0?Math.round(n/total*100)+'%':'—';
 
   modal.innerHTML=`
-    <div style="background:#fff;border-radius:18px;padding:20px;width:100%;max-width:360px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+    <div style="background:var(--surf);border-radius:18px;padding:20px;width:100%;max-width:360px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
           <div style="font-size:17px;font-weight:900;color:var(--gd)">${name}</div>
           <div style="font-size:12px;color:var(--muted)">${playerData.rounds} rounds · ${playerData.holes} holes</div>
         </div>
-        <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:#f0f4ea;border:none;font-size:18px;cursor:pointer;color:var(--gd)">×</button>
+        <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--surf-tint);border:none;font-size:18px;cursor:pointer;color:var(--gd)">×</button>
       </div>
 
-      ${totalEarnings>0?`<div style="background:#e6f4ea;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--gd)">💰 Season Earnings</span><span style="font-size:20px;font-weight:900;color:var(--gd)">$${Math.round(totalEarnings).toLocaleString()}</span></div>`:''}
+      ${totalEarnings>0?`<div style="background:var(--surf-tint);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--gd)">💰 Season Earnings</span><span style="font-size:20px;font-weight:900;color:var(--gd)">$${Math.round(totalEarnings).toLocaleString()}</span></div>`:''}
 
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Scoring</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
@@ -2958,12 +2964,12 @@ function showDetailedStats(name){
       </div>`:''}
 
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Hole Insights</div>
-      ${bestHole?`<div style="display:flex;justify-content:space-between;padding:9px 12px;background:#e6f4ea;border-radius:10px;margin-bottom:6px">
+      ${bestHole?`<div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--surf-tint);border-radius:10px;margin-bottom:6px">
         <span style="font-size:13px;font-weight:600;color:var(--gd)">💚 Best Hole</span>
         <span style="font-size:13px;font-weight:800;color:var(--birdie)">Hole ${bestHole.hole} (${bestHole.avg>=0?'+':''}${bestHole.avg.toFixed(1)} avg)</span>
       </div>`:''}
-      ${worstHole&&worstHole.hole!==bestHole?.hole?`<div style="display:flex;justify-content:space-between;padding:9px 12px;background:#fde8e8;border-radius:10px">
-        <span style="font-size:13px;font-weight:600;color:#8b0000">❌ Toughest Hole</span>
+      ${worstHole&&worstHole.hole!==bestHole?.hole?`<div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--surf-red);border-radius:10px">
+        <span style="font-size:13px;font-weight:600;color:var(--red-deep)">❌ Toughest Hole</span>
         <span style="font-size:13px;font-weight:800;color:var(--bogey)">Hole ${worstHole.hole} (+${worstHole.avg.toFixed(1)} avg)</span>
       </div>`:''}
     </div>`;
@@ -3309,7 +3315,7 @@ function renderHole(){
       <div style="display:flex;align-items:center;justify-content:center;gap:0">
         <button class="sc-minus" onclick="adjScore(${pi},-1)">−</button>
         <div class="sc-display">
-          ${strokes>0?`<div id="scnet-${pi}" style="font-size:10px;font-weight:800;color:#b8860b;line-height:1.2">${hasScore?'Net '+netScore:''}</div>`:`<div id="scnet-${pi}"></div>`}
+          ${strokes>0?`<div id="scnet-${pi}" style="font-size:10px;font-weight:800;color:var(--amber-deep);line-height:1.2">${hasScore?'Net '+netScore:''}</div>`:`<div id="scnet-${pi}"></div>`}
           <div class="sc-num ${grossCls}" id="scnum-${pi}">${hasScore?gross:'—'}</div>
           <div class="sc-rel ${hasScore?grossCls:'par'}" id="screl-${pi}">${hasScore?(relToGrossPar<=-2?'Eagle'+(relToGrossPar<-2?'+'+(Math.abs(relToGrossPar)-2):''):relToGrossPar===-1?'Birdie':relToGrossPar===0?'Par':relToGrossPar===1?'Bogey':relToGrossPar===2?'Double':'+'+relToGrossPar):'—'}</div>
           <div style="font-size:9px;color:var(--muted);margin-top:1px">Par ${par}${strokes>0?` · <span style="color:var(--gold)">stroke</span>`:''}</div>
@@ -3476,9 +3482,9 @@ function buildGroupScorecardHTML(sc, pars, si, holeRange, title){
   const holes = Array.from({length: hEnd-hStart}, (_,i) => i+hStart);
 
   // Header row - hole numbers
-  const hdrCells = holes.map(h=>`<th style="text-align:center;padding:5px 2px;font-size:10px;font-weight:700;color:var(--muted);background:#e4ead8;border:1px solid #cdd6c3;min-width:24px">${h+1}</th>`).join('');
+  const hdrCells = holes.map(h=>`<th style="text-align:center;padding:5px 2px;font-size:10px;font-weight:700;color:var(--muted);background:var(--surf-tint2);border:1px solid #cdd6c3;min-width:24px">${h+1}</th>`).join('');
   // Par row
-  const parCells = holes.map(h=>`<td style="text-align:center;padding:4px 2px;font-size:11px;font-weight:700;color:var(--gd);background:#f0f4ea;border:1px solid #cdd6c3">${pars[h]}</td>`).join('');
+  const parCells = holes.map(h=>`<td style="text-align:center;padding:4px 2px;font-size:11px;font-weight:700;color:var(--gd);background:var(--surf-tint);border:1px solid #cdd6c3">${pars[h]}</td>`).join('');
   const parTotal = holes.reduce((a,h)=>a+pars[h],0);
 
   // Player rows
@@ -3493,7 +3499,7 @@ function buildGroupScorecardHTML(sc, pars, si, holeRange, title){
     return `<tr>
       <td style="padding:5px 6px;font-size:11px;font-weight:700;color:var(--txt);border:1px solid #cdd6c3;background:#fafcf7;white-space:nowrap">${pl.name.split(' ')[0]} <span style="font-size:9px;color:var(--muted)">(${pl.hcp})</span></td>
       ${cells}
-      <td style="text-align:center;padding:4px 2px;border:1px solid #cdd6c3;background:#e4ead8;font-size:12px;font-weight:900;color:var(--gd)">${total||'—'}</td>
+      <td style="text-align:center;padding:4px 2px;border:1px solid #cdd6c3;background:var(--surf-tint2);font-size:12px;font-weight:900;color:var(--gd)">${total||'—'}</td>
       <td style="text-align:center;padding:4px 2px;border:1px solid #cdd6c3;font-size:12px;font-weight:900;color:${nvpCol}">${nvpStr}</td>
     </tr>`;
   }).join('');
@@ -3504,16 +3510,16 @@ function buildGroupScorecardHTML(sc, pars, si, holeRange, title){
       <table style="border-collapse:collapse;font-size:12px;width:100%">
         <thead>
           <tr>
-            <th style="text-align:left;padding:5px 6px;font-size:10px;font-weight:700;color:var(--muted);background:#e4ead8;border:1px solid #cdd6c3;white-space:nowrap">Player</th>
+            <th style="text-align:left;padding:5px 6px;font-size:10px;font-weight:700;color:var(--muted);background:var(--surf-tint2);border:1px solid #cdd6c3;white-space:nowrap">Player</th>
             ${hdrCells}
-            <th style="text-align:center;padding:5px 2px;font-size:10px;font-weight:700;color:var(--gd);background:#e4ead8;border:1px solid #cdd6c3">${hEnd===9?'OUT':hStart===9?'IN':'TOT'}</th>
-            <th style="text-align:center;padding:5px 2px;font-size:10px;font-weight:700;color:var(--muted);background:#e4ead8;border:1px solid #cdd6c3">NET</th>
+            <th style="text-align:center;padding:5px 2px;font-size:10px;font-weight:700;color:var(--gd);background:var(--surf-tint2);border:1px solid #cdd6c3">${hEnd===9?'OUT':hStart===9?'IN':'TOT'}</th>
+            <th style="text-align:center;padding:5px 2px;font-size:10px;font-weight:700;color:var(--muted);background:var(--surf-tint2);border:1px solid #cdd6c3">NET</th>
           </tr>
           <tr>
-            <td style="padding:4px 6px;font-size:10px;font-weight:700;color:var(--muted);background:#f0f4ea;border:1px solid #cdd6c3">Par</td>
+            <td style="padding:4px 6px;font-size:10px;font-weight:700;color:var(--muted);background:var(--surf-tint);border:1px solid #cdd6c3">Par</td>
             ${parCells}
-            <td style="text-align:center;padding:4px 2px;background:#f0f4ea;border:1px solid #cdd6c3;font-size:11px;font-weight:800;color:var(--gd)">${parTotal}</td>
-            <td style="background:#f0f4ea;border:1px solid #cdd6c3"></td>
+            <td style="text-align:center;padding:4px 2px;background:var(--surf-tint);border:1px solid #cdd6c3;font-size:11px;font-weight:800;color:var(--gd)">${parTotal}</td>
+            <td style="background:var(--surf-tint);border:1px solid #cdd6c3"></td>
           </tr>
         </thead>
         <tbody>${playerRows}</tbody>
@@ -3542,12 +3548,12 @@ function showHalfwayReview(onConfirm){
         <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">Review before continuing to the back nine</div>
       </div>
       <div style="padding:16px">
-        <div style="background:#fff3e0;border-left:4px solid #e65100;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13px;color:#5a2800;margin-bottom:14px;line-height:1.5">
+        <div style="background:var(--surf-amber);border-left:4px solid #e65100;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13px;color:var(--amber-deep);margin-bottom:14px;line-height:1.5">
           ⚠️ Check each score carefully. If anything looks wrong tap <strong>Go Back</strong> to correct it. Tap a player's name on the scorecard to edit that hole.
         </div>
         ${tableHTML}
         <div style="display:flex;gap:10px;margin-top:4px">
-          <button onclick="window._halfwayGoBack()" style="flex:1;padding:13px;background:#f0f4ea;color:var(--gd);border:1.5px solid var(--bdr);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">← Go Back</button>
+          <button onclick="window._halfwayGoBack()" style="flex:1;padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">← Go Back</button>
           <button onclick="window._halfwayConfirmFn()" style="flex:2;padding:13px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer">✓ Scores Correct — Start Back 9</button>
         </div>
       </div>
@@ -3611,7 +3617,7 @@ function showFinalReview(doSubmit, onCancel){
         <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">${roundTitle(round)} · Check all 18 holes before submitting</div>
       </div>
       <div style="padding:16px">
-        <div style="background:#fff3e0;border-left:4px solid #e65100;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13px;color:#5a2800;margin-bottom:14px;line-height:1.5">
+        <div style="background:var(--surf-amber);border-left:4px solid #e65100;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13px;color:var(--amber-deep);margin-bottom:14px;line-height:1.5">
           ⚠️ Once submitted scores are final. Review carefully — tap <strong>Go Back</strong> to fix any errors.
         </div>
         ${frontHTML}
@@ -3621,7 +3627,7 @@ function showFinalReview(doSubmit, onCancel){
           ${summaryRows}
         </div>
         <div style="display:flex;gap:10px;margin-top:8px">
-          <button onclick="document.getElementById('final-review-modal').remove();const b=document.getElementById('ov-next');if(b)b.disabled=false;if(window._finalReviewCancel)window._finalReviewCancel();" style="flex:1;padding:13px;background:#f0f4ea;color:var(--gd);border:1.5px solid var(--bdr);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">← Go Back</button>
+          <button onclick="document.getElementById('final-review-modal').remove();const b=document.getElementById('ov-next');if(b)b.disabled=false;if(window._finalReviewCancel)window._finalReviewCancel();" style="flex:1;padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">← Go Back</button>
           <button onclick="document.getElementById('final-review-modal').remove();if(window._finalReviewSubmit)window._finalReviewSubmit();" style="flex:2;padding:13px;background:#0f3a1a;color:#4ade80;border:1.5px solid #2d8a45;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer">✓ Submit Scorecard</button>
         </div>
       </div>
@@ -3726,7 +3732,7 @@ function showMissingScoreModal(names, hole, round, gi){
       <div style="font-size:17px;font-weight:800;color:var(--gd);margin-bottom:8px">⚠️ Missing Score</div>
       <div style="font-size:14px;color:var(--txt);margin-bottom:6px">No score entered for hole ${hole+1}:</div>
       <div style="font-size:14px;font-weight:700;color:var(--bogey);margin-bottom:14px">${names.join(', ')}</div>
-      <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff8f0;border:1.5px solid #ffcc80;border-radius:10px;margin-bottom:14px;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surf-amber);border:1.5px solid #ffcc80;border-radius:10px;margin-bottom:14px;cursor:pointer">
         <input type="checkbox" id="skip-remaining-chk" style="width:18px;height:18px;cursor:pointer;accent-color:var(--green)">
         <div>
           <div style="font-size:13px;font-weight:700;color:#7a4400">Skip remaining holes too</div>
@@ -3737,7 +3743,7 @@ function showMissingScoreModal(names, hole, round, gi){
         <button onclick="closeMissingModal()" style="padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">
           ← Go Back &amp; Enter Score
         </button>
-        <button onclick="window._doSkipHole(${JSON.stringify(missingIndices)})" style="padding:13px;background:#f0f4ea;color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
+        <button onclick="window._doSkipHole(${JSON.stringify(missingIndices)})" style="padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
           Skip This Hole
         </button>
       </div>
@@ -3812,9 +3818,9 @@ function showMissingBeforeSubmitModal(allMissing, onProceed, onCancel){
       <div style="font-size:32px;text-align:center;margin-bottom:8px">⚠️</div>
       <div style="font-size:17px;font-weight:900;color:var(--bogey);text-align:center;margin-bottom:6px">Missing Scores</div>
       <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">The following holes have no score entered:</div>
-      <div style="background:#fff9f9;border:1px solid #f5c0c0;border-radius:10px;padding:10px 14px;margin-bottom:18px">${rows}</div>
+      <div style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:10px;padding:10px 14px;margin-bottom:18px">${rows}</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button onclick="document.getElementById('missing-before-submit-modal').remove();(${onCancel.toString()})()" style="padding:13px;background:#f0f4ea;color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">← Go Back &amp; Fix</button>
+        <button onclick="document.getElementById('missing-before-submit-modal').remove();(${onCancel.toString()})()" style="padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">← Go Back &amp; Fix</button>
         <button onclick="document.getElementById('missing-before-submit-modal').remove();(${onProceed.toString()})()" style="padding:13px;background:var(--bogey);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">Submit Anyway</button>
       </div>
     </div>`;
@@ -3937,25 +3943,25 @@ function showRoundResultsModal(round){
   const isAdmin=typeof adminUnlocked!=='undefined'&&adminUnlocked;
   const needsPlayoff=allSubmitted && tiedForFirst && !overrideWinner;
   const playoffHTML=needsPlayoff && tiedPlayers.length>0 && isAdmin ? `
-    <div style="background:#fff3e0;border:2px solid #f57c00;border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:800;color:#e65100;margin-bottom:8px">⚔️ Tie for 1st — Declare Playoff Winner</div>
-      <div style="font-size:12px;color:#bf360c;margin-bottom:10px">These players tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}:<br>${tiedPlayers.map(p=>p.name).join(', ')}</div>
-      <select id="playoff-winner-sel" style="width:100%;padding:8px 10px;border:1.5px solid #f57c00;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;background:#fff">
+    <div style="background:var(--surf-amber);border:2px solid #f57c00;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:800;color:var(--amber-deep);margin-bottom:8px">⚔️ Tie for 1st — Declare Playoff Winner</div>
+      <div style="font-size:12px;color:var(--red-deep);margin-bottom:10px">These players tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}:<br>${tiedPlayers.map(p=>p.name).join(', ')}</div>
+      <select id="playoff-winner-sel" style="width:100%;padding:8px 10px;border:1.5px solid #f57c00;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;background:var(--surf)">
         <option value="">— Select playoff winner —</option>
         ${tiedPlayers.map(p=>`<option value="${p.name}">${p.name}</option>`).join('')}
       </select>
       <button onclick="declarePlayoffWinner('${round}')" style="width:100%;padding:10px;background:#e65100;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">✓ Declare Winner</button>
     </div>` : needsPlayoff && tiedPlayers.length>0 ? `
-    <div style="background:#fff3e0;border:2px solid #f57c00;border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+    <div style="background:var(--surf-amber);border:2px solid #f57c00;border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
       <div style="font-size:22px">⚔️</div>
       <div>
-        <div style="font-size:13px;font-weight:800;color:#e65100">Tie for 1st — Playoff Needed</div>
-        <div style="font-size:12px;color:#bf360c;margin-top:2px">${tiedPlayers.map(p=>p.name).join(' · ')} tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}</div>
+        <div style="font-size:13px;font-weight:800;color:var(--amber-deep)">Tie for 1st — Playoff Needed</div>
+        <div style="font-size:12px;color:var(--red-deep);margin-top:2px">${tiedPlayers.map(p=>p.name).join(' · ')} tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}</div>
       </div>
     </div>` : '';
 
   const winnerHTML=allSubmitted && (overrideWinner || !tiedForFirst) ? `
-    <div style="background:#fffbea;border:2px solid var(--gold);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+    <div style="background:var(--surf-amber);border:2px solid var(--gold);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
       <div style="font-size:36px">🏆</div>
       <div>
         <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gold)">${overrideWinner?'Winner (Playoff)':'Winner'}</div>
@@ -3964,7 +3970,7 @@ function showRoundResultsModal(round){
       </div>
       ${finalMoneyMap[effectiveWinner.name]>0?`<div style="margin-left:auto;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--gd)">$${Math.round(finalMoneyMap[effectiveWinner.name])}</div><div style="font-size:10px;color:var(--muted);font-weight:700">Prize</div></div>`:''}
     </div>`
-  : allSubmitted ? '' : `<div style="background:#f0f4ea;border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+  : allSubmitted ? '' : `<div style="background:var(--surf-tint);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
       <div style="font-size:22px">⏳</div>
       <div>
         <div style="font-size:13px;font-weight:800;color:var(--gd)">${submittedCount} of ${totalGroups} groups in</div>
@@ -3988,7 +3994,7 @@ function showRoundResultsModal(round){
         <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Leaderboard — ${submittedCount} of ${totalGroups} groups</div>
         <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bdr)">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead><tr style="background:#f0f4ea">
+            <thead><tr style="background:var(--surf-tint)">
               <th style="padding:7px 6px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center">Pos</th>
               <th style="padding:7px 4px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:left">Player</th>
               <th style="padding:7px 4px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center">Net</th>
@@ -4058,16 +4064,16 @@ function renderAdminTieBreaker(){
       </div>`;
 
     if(currentOverride){
-      html += `<div style="font-size:13px;color:#1a4020;margin-bottom:10px">
+      html += `<div style="font-size:13px;color:var(--green-deep);margin-bottom:10px">
         🏆 <strong>${currentOverride}</strong> declared winner
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Tied players: ${tied.map(p=>p.name).join(', ')} — all at ${fmtNvp(topScore)}</div>
-      <button onclick="clearPlayoffWinner('${round}')" style="width:100%;padding:9px;background:#fff;border:1.5px solid #e65100;border-radius:8px;font-size:12px;font-weight:700;color:#e65100;cursor:pointer">↩ Undo / Change Winner</button>`;
+      <button onclick="clearPlayoffWinner('${round}')" style="width:100%;padding:9px;background:var(--surf);border:1.5px solid #e65100;border-radius:8px;font-size:12px;font-weight:700;color:var(--amber-deep);cursor:pointer">↩ Undo / Change Winner</button>`;
     } else {
       html += `<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-        ${tied.map(p=>`<span style="display:inline-block;background:#fff;border:1px solid #ffcc80;border-radius:6px;padding:3px 8px;margin:2px;font-weight:700">${p.name} — ${fmtNvp(p.effNet)}</span>`).join('')}
+        ${tied.map(p=>`<span style="display:inline-block;background:var(--surf);border:1px solid #ffcc80;border-radius:6px;padding:3px 8px;margin:2px;font-weight:700">${p.name} — ${fmtNvp(p.effNet)}</span>`).join('')}
       </div>
-      <select id="tb-sel-${round.replace(/\s/g,'-')}" style="width:100%;padding:9px 10px;border:1.5px solid #ffcc80;border-radius:8px;font-size:13px;font-weight:700;background:#fff;margin-bottom:8px">
+      <select id="tb-sel-${round.replace(/\s/g,'-')}" style="width:100%;padding:9px 10px;border:1.5px solid #ffcc80;border-radius:8px;font-size:13px;font-weight:700;background:var(--surf);margin-bottom:8px">
         <option value="">— Select playoff winner —</option>
         ${tied.map(p=>`<option value="${p.name}">${p.name}</option>`).join('')}
       </select>
@@ -4078,7 +4084,7 @@ function renderAdminTieBreaker(){
   });
 
   if(!anyTies){
-    html = '<div style="background:#e6f4ea;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a4020;text-align:center">✓ No ties detected in any completed round.</div>';
+    html = '<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--green-deep);text-align:center">✓ No ties detected in any completed round.</div>';
   }
 
   el.innerHTML = html;
@@ -4327,7 +4333,7 @@ function renderStandings(){
     });
 
     el.innerHTML=`
-      <div style="background:#e6f4ea;border-left:4px solid var(--green);padding:10px 13px;border-radius:0 8px 8px 0;font-size:12px;color:#1a4020;margin-bottom:12px;line-height:1.6">
+      <div style="background:var(--surf-tint);border-left:4px solid var(--green);padding:10px 13px;border-radius:0 8px 8px 0;font-size:12px;color:var(--green-deep);margin-bottom:12px;line-height:1.6">
         <strong>5 of 8 rule:</strong> Top 5 rounds count. Tap a player to see their round breakdown.
       </div>
       <div class="card" style="padding:0;overflow:hidden"><table class="stbl">
@@ -4538,7 +4544,7 @@ function showPlayerBreakdown(name){
   const pills=REGULAR_ROUNDS.map(r=>{
     const entry=entries.find(e=>e.round===r);
     if(!entry){
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px;background:#f0f4ea;margin-bottom:6px;opacity:.4">
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px;background:var(--surf-tint);margin-bottom:6px;opacity:.4">
         <span style="font-size:13px;font-weight:600;color:var(--muted)">${roundTitle(r)}</span>
         <span style="font-size:12px;color:var(--sub)">Did not play</span>
       </div>`;
@@ -4549,10 +4555,10 @@ function showPlayerBreakdown(name){
     let bg,labelColor,badge;
     if(isDNF){
       bg='#fff8f0';labelColor='#c65100';
-      badge=`<span style="font-size:10px;font-weight:700;background:#fde8e8;color:var(--bogey);padding:2px 8px;border-radius:10px;border:1.5px solid var(--bogey)">DNF · 0 pts</span>`;
+      badge=`<span style="font-size:10px;font-weight:700;background:var(--surf-red);color:var(--bogey);padding:2px 8px;border-radius:10px;border:1.5px solid var(--bogey)">DNF · 0 pts</span>`;
     } else if(blocked){
       bg='#fde8e8';labelColor='var(--bogey)';
-      badge=`<span style="font-size:10px;font-weight:700;background:#fde8e8;color:var(--bogey);padding:2px 8px;border-radius:10px;border:1.5px solid var(--bogey)">Blocked</span>`;
+      badge=`<span style="font-size:10px;font-weight:700;background:var(--surf-red);color:var(--bogey);padding:2px 8px;border-radius:10px;border:1.5px solid var(--bogey)">Blocked</span>`;
     } else if(counts){
       bg='#e6f4ea';labelColor='var(--gd)';
       badge=`<span style="font-size:10px;font-weight:700;background:var(--green);color:#fff;padding:2px 8px;border-radius:10px">✓ Counts</span>`;
@@ -4579,11 +4585,11 @@ function showPlayerBreakdown(name){
   const avgHoleMs  = avgRoundMs ? avgRoundMs/18 : 0;
   const timingHTML = avgRoundMs ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div style="text-align:center;background:#f0f4ea;border-radius:10px;padding:10px 4px">
+      <div style="text-align:center;background:var(--surf-tint);border-radius:10px;padding:10px 4px">
         <div style="font-size:16px;font-weight:900;color:var(--gd)">${fmtElapsed(avgRoundMs)}</div>
         <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Avg Round</div>
       </div>
-      <div style="text-align:center;background:#f0f4ea;border-radius:10px;padding:10px 4px">
+      <div style="text-align:center;background:var(--surf-tint);border-radius:10px;padding:10px 4px">
         <div style="font-size:16px;font-weight:900;color:var(--gd)">${fmtElapsed(avgHoleMs)}</div>
         <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Avg / Hole</div>
       </div>
@@ -4596,7 +4602,7 @@ function showPlayerBreakdown(name){
           <div style="font-size:17px;font-weight:900;color:var(--gd)">${name}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">Season total: <strong style="color:var(--green)">${Math.round(total)} pts</strong></div>
         </div>
-        <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:#f0f4ea;border:none;font-size:18px;cursor:pointer;color:var(--gd)">×</button>
+        <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--surf-tint);border:none;font-size:18px;cursor:pointer;color:var(--gd)">×</button>
       </div>
       ${timingHTML}
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Round Breakdown</div>
@@ -4653,7 +4659,7 @@ function renderSchedule(){
             ${sponsorLogoImg(c.round)}
             <div style="font-size:15px;font-weight:800">${roundTitle(c.round)}</div>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.date}${c.course?' · '+c.course:''}${c.teeTime?'<span style="margin-left:6px;background:#e6f4ea;color:var(--gd);font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px">⛳ '+c.teeTime+'</span>':''}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.date}${c.course?' · '+c.course:''}${c.teeTime?'<span style="margin-left:6px;background:var(--surf-tint);color:var(--gd);font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px">⛳ '+c.teeTime+'</span>':''}</div>
           <div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap">
             <span class="cal-tag ${c.type}">${c.type==='playoff'?'Playoff':'Regular'}</span>
             ${hasResults?`<span class="cal-tag regular">Results in</span>`:hasG?`<span class="cal-tag regular">Groups ready</span>`:''}
@@ -4661,7 +4667,7 @@ function renderSchedule(){
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           ${hasG?`<button onclick="jumpToRound('${c.round}')" style="padding:7px 11px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Scorecards</button>`:''}
-          ${hasResults?`<button onclick="toggleScheduleResults('${c.round.replace(/\s/g,'_')}')" style="padding:7px 11px;background:#f0f4ea;color:var(--gd);border:1px solid var(--bdr);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Results ↓</button>`:''}
+          ${hasResults?`<button onclick="toggleScheduleResults('${c.round.replace(/\s/g,'_')}')" style="padding:7px 11px;background:var(--surf-tint);color:var(--gd);border:1px solid var(--bdr);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Results ↓</button>`:''}
         </div>
       </div>
       ${hasResults?`<div id="sr-${c.round.replace(/\s/g,'_')}" style="display:none;border-top:1px solid var(--bdr)">
@@ -4712,7 +4718,7 @@ function buildScheduleScorecards(round, submittedGroups){
     for(let h=1;h<=9;h++) table+=`<th>${h}</th>`;
     table+=`<th class="sp">OUT</th>`;
     for(let h=10;h<=18;h++) table+=`<th>${h}</th>`;
-    table+=`<th class="sp">IN</th><th class="sp">GRS</th><th style="background:#b6dfc2;color:#145c28;font-weight:800">NET</th></tr>`;
+    table+=`<th class="sp">IN</th><th class="sp">GRS</th><th style="background:var(--surf-tint2);color:var(--green-deep);font-weight:800">NET</th></tr>`;
 
     // Par row
     table+=`<tr><td class="pl" style="font-style:italic">Par</td>`;
@@ -4839,7 +4845,7 @@ function buildScheduleResults(round, submittedGroups){
   let html='';
   if(winner1st){
     const winnerData=allPlayers.find(p=>p.name===winner1st);
-    html+=`<div style="background:#fffbea;border:2px solid var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+    html+=`<div style="background:var(--surf-amber);border:2px solid var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
       <div style="font-size:28px">🏆</div>
       <div>
         <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gold)">${isTieWithOverride?'Winner (Playoff Declared)':'Winner'}</div>
@@ -4974,12 +4980,12 @@ async function searchCourse(){
 
 function showCourseSearchError(msg){
   document.getElementById('course-search-results').innerHTML =
-    `<div style="background:#fde8e8;border-radius:8px;padding:10px 12px;font-size:13px;color:#8b0000">${msg}</div>`;
+    `<div style="background:var(--surf-red);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red-deep)">${msg}</div>`;
 }
 
 function renderCourseSearchResults(courses){
   const html = courses.slice(0,8).map(c=>
-    `<div onclick="selectCourse(${c.id})" style="padding:10px 12px;border-bottom:1px solid var(--bdr);cursor:pointer;background:#fff;transition:background .1s" onmouseover="this.style.background='#e6f4ea'" onmouseout="this.style.background='#fff'">
+    `<div onclick="selectCourse(${c.id})" style="padding:10px 12px;border-bottom:1px solid var(--bdr);cursor:pointer;background:var(--surf);transition:background .1s" onmouseover="this.style.background='#e6f4ea'" onmouseout="this.style.background='#fff'">
       <div style="font-size:14px;font-weight:700;color:var(--gd)">${c.club_name || c.course_name}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:2px">${[c.course_name!==c.club_name?c.course_name:'',c.location?.city,c.location?.state,c.location?.country].filter(Boolean).join(' · ')}</div>
     </div>`
@@ -5018,7 +5024,7 @@ async function selectCourse(courseId){
     if(!allTees.length){
       applyCourseParsOnly(course);
       document.getElementById('course-search-results').innerHTML =
-        `<div style="background:#e6f4ea;border-radius:8px;padding:10px 12px;font-size:13px;color:#1a4020">✓ Course selected. No full hole data — pars applied. Edit S.I. and yardages manually.</div>`;
+        `<div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--green-deep)">✓ Course selected. No full hole data — pars applied. Edit S.I. and yardages manually.</div>`;
       document.getElementById('tee-selector-row').style.display = 'none';
       return;
     }
@@ -5032,11 +5038,11 @@ async function selectCourse(courseId){
     ).join('');
     document.getElementById('tee-selector-row').style.display = 'block';
     document.getElementById('course-search-results').innerHTML =
-      `<div style="background:#e6f4ea;border-radius:8px;padding:10px 12px;font-size:13px;color:#1a4020">✓ <strong>${course.club_name||course.course_name}</strong> — ${allTees.length} tee${allTees.length>1?'s':''} available. Select yours below.</div>`;
+      `<div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--green-deep)">✓ <strong>${course.club_name||course.course_name}</strong> — ${allTees.length} tee${allTees.length>1?'s':''} available. Select yours below.</div>`;
     applySelectedTee();
   } catch(err){
     document.getElementById('course-search-results').innerHTML =
-      `<div style="background:#fde8e8;border-radius:8px;padding:10px 12px;font-size:13px;color:#8b0000">Failed to load course: ${err.message}</div>`;
+      `<div style="background:var(--surf-red);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red-deep)">Failed to load course: ${err.message}</div>`;
   }
 }
 
@@ -5126,14 +5132,14 @@ function buildCourseHoleRows(){
     nameInp.value = existing.name || cal?.course || '';
   }
 
-  let html = '<div style="display:grid;grid-template-columns:38px 52px 52px 1fr;background:#e4ead8;padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;position:sticky;top:0;z-index:1"><div>Hole</div><div style="text-align:center">Par</div><div style="text-align:center">S.I.</div><div style="text-align:center">Yards</div></div>';
+  let html = '<div style="display:grid;grid-template-columns:38px 52px 52px 1fr;background:var(--surf-tint2);padding:7px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;position:sticky;top:0;z-index:1"><div>Hole</div><div style="text-align:center">Par</div><div style="text-align:center">S.I.</div><div style="text-align:center">Yards</div></div>';
   for(let h=0;h<18;h++){
     const rowBg = h<9 ? '#fafcf7' : '#f4f7ef';
-    if(h===9) html += `<div style="background:#e4ead8;padding:5px 12px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Back Nine</div>`;
+    if(h===9) html += `<div style="background:var(--surf-tint2);padding:5px 12px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Back Nine</div>`;
     html += `<div style="display:grid;grid-template-columns:38px 52px 52px 1fr;align-items:center;padding:6px 10px;border-bottom:1px solid #eef1e8;background:${rowBg}">
       <div style="font-size:13px;font-weight:700;color:var(--muted)">${h+1}</div>
       <div style="text-align:center">
-        <select id="ci-par-${h}" onchange="updateCourseParTotals()" style="width:50px;padding:6px 2px;border:1.5px solid var(--bdr);border-radius:8px;font-size:15px;font-weight:700;text-align:center;background:#fff;-webkit-appearance:none">
+        <select id="ci-par-${h}" onchange="updateCourseParTotals()" style="width:50px;padding:6px 2px;border:1.5px solid var(--bdr);border-radius:8px;font-size:15px;font-weight:700;text-align:center;background:var(--surf);-webkit-appearance:none">
           <option value="3" ${pars[h]===3?'selected':''}>3</option>
           <option value="4" ${pars[h]===4?'selected':''}>4</option>
           <option value="5" ${pars[h]===5?'selected':''}>5</option>
@@ -5141,12 +5147,12 @@ function buildCourseHoleRows(){
         </select>
       </div>
       <div style="text-align:center">
-        <select id="ci-si-${h}" style="width:50px;padding:6px 2px;border:1.5px solid var(--bdr);border-radius:8px;font-size:15px;font-weight:700;text-align:center;background:#fff;-webkit-appearance:none">
+        <select id="ci-si-${h}" style="width:50px;padding:6px 2px;border:1.5px solid var(--bdr);border-radius:8px;font-size:15px;font-weight:700;text-align:center;background:var(--surf);-webkit-appearance:none">
           ${Array.from({length:18},(_,i)=>`<option value="${i+1}" ${si[h]===i+1?'selected':''}>${i+1}</option>`).join('')}
         </select>
       </div>
       <div style="text-align:center;padding:0 4px">
-        <input id="ci-yards-${h}" type="number" min="0" max="700" value="${yards[h]||''}" placeholder="—" oninput="updateYardageTotals()" style="width:100%;padding:6px 4px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;font-weight:600;text-align:center;background:#fff;color:var(--txt)">
+        <input id="ci-yards-${h}" type="number" min="0" max="700" value="${yards[h]||''}" placeholder="—" oninput="updateYardageTotals()" style="width:100%;padding:6px 4px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;font-weight:600;text-align:center;background:var(--surf);color:var(--txt)">
       </div>
     </div>`;
   }
@@ -5206,20 +5212,20 @@ function renderSavedCourses(){
     const ci=courseInfo[r];
     const totalPar=ci.pars.reduce((a,v)=>a+v,0);
     const totalYards=ci.yards?(ci.yards.reduce((a,v)=>a+(v||0),0)):0;
-    const teeLabel=ci.tee?`<span style="background:#e6f4ea;color:var(--gd);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:6px">${ci.tee}</span>`:'';
+    const teeLabel=ci.tee?`<span style="background:var(--surf-tint);color:var(--gd);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:6px">${ci.tee}</span>`:'';
     return `<div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px">
         <div style="font-size:15px;font-weight:800">${ci.name}${teeLabel}</div>
         <div style="display:flex;gap:6px">
-          <span style="background:#e6f4ea;color:var(--gd);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">Par ${totalPar}</span>
-          ${totalYards>0?`<span style="background:#f0f4ea;color:var(--muted);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">${totalYards.toLocaleString()} yds</span>`:''}
+          <span style="background:var(--surf-tint);color:var(--gd);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">Par ${totalPar}</span>
+          ${totalYards>0?`<span style="background:var(--surf-tint);color:var(--muted);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">${totalYards.toLocaleString()} yds</span>`:''}
         </div>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${r}</div>
       <div style="overflow-x:auto">
         <table style="border-collapse:collapse;min-width:${ci.yards?'580px':'460px'};width:100%;font-size:12px">
-          <tr><td style="padding:4px 6px;font-weight:700;color:var(--muted);background:#f0f4ea">Hole</td>${ci.pars.map((_,h)=>`<td style="text-align:center;padding:4px;background:#f0f4ea;font-weight:700;color:var(--muted)">${h+1}</td>`).join('')}</tr>
-          <tr><td style="padding:4px 6px;font-weight:700;color:var(--gd);background:#e4ead8">Par</td>${ci.pars.map(p=>`<td style="text-align:center;padding:5px 4px;font-weight:800;color:var(--gd);background:#e4ead8">${p}</td>`).join('')}</tr>
+          <tr><td style="padding:4px 6px;font-weight:700;color:var(--muted);background:var(--surf-tint)">Hole</td>${ci.pars.map((_,h)=>`<td style="text-align:center;padding:4px;background:var(--surf-tint);font-weight:700;color:var(--muted)">${h+1}</td>`).join('')}</tr>
+          <tr><td style="padding:4px 6px;font-weight:700;color:var(--gd);background:var(--surf-tint2)">Par</td>${ci.pars.map(p=>`<td style="text-align:center;padding:5px 4px;font-weight:800;color:var(--gd);background:var(--surf-tint2)">${p}</td>`).join('')}</tr>
           <tr><td style="padding:4px 6px;font-weight:700;color:var(--muted)">S.I.</td>${ci.si.map(s=>`<td style="text-align:center;padding:4px;color:var(--muted)">${s}</td>`).join('')}</tr>
           ${ci.yards?`<tr><td style="padding:4px 6px;font-weight:700;color:var(--muted)">Yds</td>${ci.yards.map(y=>`<td style="text-align:center;padding:4px;color:var(--muted)">${y||'—'}</td>`).join('')}</tr>`:''}
         </table>
@@ -5454,7 +5460,7 @@ function showSyncBanner(msg){
   if(!b){
     b=document.createElement('div');
     b.id='sync-banner';
-    b.style.cssText='position:fixed;top:0;left:0;right:0;background:#c9a227;color:#3a2800;font-size:12px;font-weight:700;text-align:center;padding:6px;z-index:9999';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;background:#c9a227;color:var(--amber-deep);font-size:12px;font-weight:700;text-align:center;padding:6px;z-index:9999';
     document.body.appendChild(b);
   }
   b.textContent=msg;
@@ -5781,7 +5787,7 @@ function renderAdminScorecardEditor(){
         <div style="font-size:13px;font-weight:700">${roundTitle(sc.round)} — Group ${sc.gi+1}</div>
         <div style="font-size:11px;color:var(--muted)">${sc.players.map(p=>p.name.split(' ').slice(-1)[0]).join(', ')}</div>
       </div>
-      <button onclick="adminEditScorecard('${sc.round}',${sc.gi})" style="padding:7px 12px;background:var(--gold);color:#5a3e00;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Edit</button>
+      <button onclick="adminEditScorecard('${sc.round}',${sc.gi})" style="padding:7px 12px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Edit</button>
     </div>`).join('');
 }
 
@@ -5818,7 +5824,7 @@ function updatePrizePreview(){
   const posLabels=['🥇 1st','🥈 2nd','🥉 3rd','4th'];
   const posColors=['#c9a227','#7a8a96','#a05c2a','var(--muted)'];
   prev.innerHTML=`
-    <div style="background:#f0f4ea;border-radius:10px;padding:12px 14px;margin-bottom:4px">
+    <div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:4px">
       <div style="display:flex;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:12px;font-weight:700;color:var(--muted)">${count} players × $${fee} − $${sponsor} sponsor</span>
         <span style="font-size:14px;font-weight:800;color:var(--gd)">Pool: $${pool.toLocaleString()}</span>
@@ -6268,7 +6274,7 @@ function renderNotifToggle(){
           <div class="as-row-lbl">Score Notifications</div>
           <div class="as-row-sub" style="color:var(--green)">✓ Enabled — you'll be notified when groups submit</div>
         </div>
-        <span style="background:#e6f4ea;color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">ON</span>
+        <span style="background:var(--surf-tint);color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">ON</span>
       </div>`
     : `<div style="display:flex;align-items:center;justify-content:space-between">
         <div>
@@ -6361,7 +6367,7 @@ function showPWABanner(isIOS=false){
         <div style="font-size:13px;font-weight:800;letter-spacing:.3px">Install Pro Tour 2026</div>
         <div style="font-size:11px;opacity:.8;margin-top:2px">Add to your home screen for the best experience</div>
       </div>
-      <button onclick="triggerPWAInstall()" style="background:#FFE033;color:#3a2800;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Install</button>
+      <button onclick="triggerPWAInstall()" style="background:#FFE033;color:var(--amber-deep);border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Install</button>
       <button onclick="dismissPWABanner()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">×</button>`;
   }
   document.body.appendChild(banner);
@@ -6502,7 +6508,7 @@ function showConfirmSubmit(round, gi, callback, cancelCallback){
     const isDNF=missingHoles>0;
     const col=isDNF?'var(--bogey)':nvp<0?'var(--birdie)':nvp>0?'var(--bogey)':'var(--muted)';
     summaryHTML+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.07)">
-      <span style="font-size:13px;font-weight:600">${pl.name}${isDNF?` <span style="font-size:10px;background:#fde8e8;color:var(--bogey);padding:2px 6px;border-radius:6px;font-weight:800">DNF</span>`:''}</span>
+      <span style="font-size:13px;font-weight:600">${pl.name}${isDNF?` <span style="font-size:10px;background:var(--surf-red);color:var(--bogey);padding:2px 6px;border-radius:6px;font-weight:800">DNF</span>`:''}</span>
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:12px;color:var(--muted)">${isDNF?`${missingHoles} holes missing`:`Gross ${gross}`}</span>
         <span style="font-size:14px;font-weight:800;color:${col}">${isDNF?'DNF':nvpStr}</span>
