@@ -1,4 +1,4 @@
-const CACHE_NAME = 'protour2026-v7';
+const CACHE_NAME = 'protour2026-v8';
 const ASSETS = [
   './',
   './index.html',
