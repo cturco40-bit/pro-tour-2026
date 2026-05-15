@@ -2371,7 +2371,7 @@ function renderFoursomesInlineLB(){
       const played=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(played.length===0) return;
       const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes.slice(0,thru), pl.hcp, pars, si);
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
       const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
       allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
     });
@@ -2452,6 +2452,10 @@ function switchGRound(round,btn){
   renderGroupCards(round);
 }
 
+// Tracks which group cards the user has expanded. Lives outside the DOM so that
+// listener-triggered re-renders (e.g. another phone submits a score) don't collapse them.
+const _openGroups = new Set();
+
 function renderGroupCards(round){
   const groups=activeGroups[round]||[];
   const isPlayoff1=round==='Playoff 1';
@@ -2464,6 +2468,7 @@ function renderGroupCards(round){
     const inProg=sc&&!done;
     const holesPlayed=sc?sc.players[0]?.holes.filter(h=>h!==null).length:0;
     const rid=`${round.replace(/[\s-]/g,'_')}_${gi}`;
+    const isOpen=_openGroups.has(rid);
     const bonus=isPlayoff1?playoffHcpBonus(gi):null;
     const bonusBadge=bonus!==null&&bonus>0
       ?`<span style="font-size:11px;background:rgba(201,162,39,.25);color:#f0c94a;padding:2px 8px;border-radius:8px;margin-left:6px;font-weight:700">HCP +${bonus}</span>`
@@ -2474,9 +2479,9 @@ function renderGroupCards(round){
           <h3>Group ${gi+1}${bonusBadge}${done?' ✓':inProg?` (Hole ${holesPlayed})`:''}</h3>
           <div class="grp-tee">${grp.teeTime?'Tee: '+grp.teeTime:''}${done?' · Submitted':inProg?' · In progress':''}</div>
         </div>
-        <svg class="garr" id="garr-${rid}" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg class="garr${isOpen?' open':''}" id="garr-${rid}" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="grp-body" id="gbody-${rid}">
+      <div class="grp-body${isOpen?' open':''}" id="gbody-${rid}">
         ${renderGroupBody(round,gi,grp,sc,done,inProg)}
       </div>
     </div>`;
@@ -2486,8 +2491,16 @@ function renderGroupCards(round){
 function toggleGrp(rid){
   const b=document.getElementById(`gbody-${rid}`);
   const a=document.getElementById(`garr-${rid}`);
-  if(b.classList.contains('open')){b.classList.remove('open');a.classList.remove('open');}
-  else{b.classList.add('open');a.classList.add('open');setTimeout(()=>b.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+  if(b.classList.contains('open')){
+    b.classList.remove('open');
+    a.classList.remove('open');
+    _openGroups.delete(rid);
+  } else {
+    b.classList.add('open');
+    a.classList.add('open');
+    _openGroups.add(rid);
+    setTimeout(()=>b.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  }
 }
 
 function renderGroupBody(round,gi,grp,sc,done,inProg){
@@ -2600,7 +2613,7 @@ const PACE_WARNING_MS=15*60*1000; // 15 minutes
 
 function startPaceTimer(){
   _paceRoundStart=_paceRoundStart||Date.now();
-  _paceHoleStart=Date.now();
+  _paceHoleStart=_paceHoleStart||Date.now(); // preserve restored hole start across reopens
   if(_paceInterval) clearInterval(_paceInterval);
   _paceInterval=setInterval(updatePaceDisplay,1000);
   updatePaceDisplay();
@@ -3074,14 +3087,17 @@ function startGPSWatch(){
     () => { if(el){ el.textContent='—'; el.style.color='rgba(255,255,255,.5)'; } },
     { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
   );
-  // Continuous watch — updates automatically as player walks
+  // Continuous watch — updates automatically as player walks.
+  // maximumAge: 15000 = accept positions up to 15s old. A golfer walks ~7 ft/sec,
+  // so worst-case staleness is ~100 ft — fine for hole yardage and saves a lot of battery
+  // versus updating every 3s for a 4-hour round.
   _gpsWatchId = navigator.geolocation.watchPosition(
     pos => updateGPSYardage(pos),
     err => {
       // Only show permission error — movement errors are silent
       if(err.code === 1){ showToast('Allow location access for GPS yardage'); stopGPSWatch(); }
     },
-    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+    { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
   );
 }
 
@@ -3145,17 +3161,36 @@ function openScorecard(round,gi){
       players:grp.players.map(p=>({name:p.name,hcp:p.hcp,holes:Array(18).fill(null),gross:0,net:0}))
     };
   }
-  ov={round,gi,hole:0};
+  const sc = roundScores[key];
+
+  // Round start time — set once on first open, persist across closes/reopens
+  if(!sc.roundStartedAt) sc.roundStartedAt = Date.now();
+
+  // Resume on the hole the user was last viewing; otherwise jump to first unfilled.
+  let resumeHole;
+  if(typeof sc.lastHole === 'number' && sc.lastHole >= 0 && sc.lastHole <= 17){
+    resumeHole = sc.lastHole;
+  } else {
+    const firstEmpty = sc.players[0].holes.findIndex(h=>h===null);
+    resumeHole = firstEmpty >= 0 ? firstEmpty : 0;
+  }
+
+  // Hole start time — keep the existing one if we have it (so closing & reopening
+  // doesn't reset the hole timer); otherwise stamp now.
+  if(!sc.holeStartedAt) sc.holeStartedAt = Date.now();
+
+  ov={round,gi,hole:resumeHole};
   _skipRemaining.clear();
-  _paceRoundStart=Date.now();
-  _paceHoleStart=Date.now();
+  _paceRoundStart = sc.roundStartedAt;
+  _paceHoleStart = sc.holeStartedAt;
   startPaceTimer();
   startGPSWatch();
   startLBRefresh();
-  maybePromptNotif();
-  // Find first unfilled hole
-  const firstEmpty=roundScores[key].players[0].holes.findIndex(h=>h===null);
-  ov.hole=firstEmpty>=0?firstEmpty:0;
+  // Don't pop the notification permission prompt inside a scorecard — distracts the scorer.
+  // It can be enabled any time from the Account page.
+
+  // Persist sc.roundStartedAt / lastHole / holeStartedAt back to Firebase + local backup
+  saveOneScorecard(key);
 
   document.getElementById('ov-title').textContent=`Group ${gi+1}`;
   document.getElementById('ov-sub').textContent=roundTitle(round);
@@ -3175,6 +3210,12 @@ function closeScorecard(){
   document.getElementById('sc-overlay').classList.remove('open');
   const configured=Object.keys(activeGroups);
   if(configured.length) renderGroupCards(ov.round||configured[0]);
+  // If an app update arrived while the scorecard was open, surface it now.
+  if(window._pendingUpdateWorker){
+    const w = window._pendingUpdateWorker;
+    window._pendingUpdateWorker = null;
+    setTimeout(()=>showUpdatePrompt(w), 400);
+  }
 }
 
 function renderHole(){
@@ -3284,6 +3325,7 @@ function adjScore(pi,delta){
   const current=isFirstTap ? par : pl.holes[hole];
   const newScore=isFirstTap ? par : Math.max(1,Math.min(15,current+delta));
   pl.holes[hole]=newScore;
+  backupRoundScoresLocal(); // B2: back up to phone immediately so a closed app doesn't lose this tap
 
   // Update hole display — colour relative to net par
   const strokes=strokesOnHole(pl.hcp, si[hole]);
@@ -3336,7 +3378,9 @@ function renderLiveStandings(){
       const confirmed=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(confirmed.length===0) return;
       const thru=confirmed.length;
-      const nvp=calcNetVsPar(pl.holes.slice(0,thru), pl.hcp, pars, si);
+      // Use full holes array — calcNetVsPar skips nulls. Slicing by `thru` (a count, not an index)
+      // was wrong when middle holes were skipped: it dropped the most-recent hole.
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
       const grossTotal=confirmed.reduce((a,v)=>a+v,0);
       // Elapsed time for finished groups
       const elapsed = sc.submitted && sc.roundStartedAt
@@ -3405,8 +3449,10 @@ function prevHole(){
   if(ov.hole===0) return;
   closeMissingModal();
   commitHoleScores();
-  saveRoundScores();
   ov.hole--;
+  const _scP = roundScores[`${ov.round}__${ov.gi}`];
+  if(_scP) _scP.lastHole = ov.hole; // remember position; don't reset hole timer for prev
+  saveOneScorecard(`${ov.round}__${ov.gi}`);
   renderHole();
   renderLiveStandings();
   document.getElementById('ov-players').scrollTop=0;
@@ -3506,7 +3552,9 @@ function showHalfwayReview(onConfirm){
     _halfwayConfirmed=true;
     ov.hole++;
     _paceHoleStart=Date.now();
-    saveRoundScores();
+    const _scH = roundScores[`${ov.round}__${ov.gi}`];
+    if(_scH){ _scH.lastHole = ov.hole; _scH.holeStartedAt = _paceHoleStart; }
+    saveOneScorecard(`${ov.round}__${ov.gi}`);
     renderHole();
     renderLiveStandings();
     document.getElementById('ov-players').scrollTop=0;
@@ -3609,7 +3657,7 @@ function nextHole(){
   if(hole===8 && !_halfwayConfirmed){
     const nextBtn=document.getElementById('ov-next');
     if(nextBtn) nextBtn.disabled=true;
-    saveRoundScores();
+    saveOneScorecard(`${round}__${gi}`);
     showHalfwayReview();
     return;
   }
@@ -3635,20 +3683,22 @@ function nextHole(){
         pl.net=pl.gross-pl.hcp;
         pl.nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
       });
-      saveRoundScores();
+      saveOneScorecard(`${round}__${gi}`);
       renderLiveStandings();
       closeScorecard();
       showToast('Scorecard submitted! ✓');
       setTimeout(()=>{ renderGroupCards(round); showRoundResultsModal(round); },200);
     };
-    saveRoundScores();
+    saveOneScorecard(`${round}__${gi}`);
     showFinalReview(doSubmit, onCancel);
     return;
   }
 
   ov.hole++;
   _paceHoleStart=Date.now();
-  saveRoundScores();
+  sc.lastHole = ov.hole;
+  sc.holeStartedAt = _paceHoleStart;
+  saveOneScorecard(`${round}__${gi}`);
   renderHole();
   renderLiveStandings();
   document.getElementById('ov-players').scrollTop=0;
@@ -3727,7 +3777,7 @@ function skipHole(){
         pl.net=pl.gross-pl.hcp;
         pl.nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
       });
-      saveRoundScores();
+      saveOneScorecard(`${round}__${gi}`);
       renderLiveStandings();
       closeScorecard();
       showToast('Scorecard submitted! ✓');
@@ -3737,7 +3787,10 @@ function skipHole(){
     return;
   }
   ov.hole++;
-  saveRoundScores();
+  _paceHoleStart = Date.now();
+  sc.lastHole = ov.hole;
+  sc.holeStartedAt = _paceHoleStart;
+  saveOneScorecard(`${round}__${gi}`);
   renderHole();
   renderLiveStandings();
   document.getElementById('ov-players').scrollTop=0;
@@ -5214,6 +5267,44 @@ function saveRoundScores(){
     safe[k.replace(/__/g,'___')]=v;
   });
   fbSet('roundScores', safe);
+  backupRoundScoresLocal();
+}
+
+// ─── Per-group write (B1 fix) ──────────────────────────────────────────────
+// Writes ONLY one group's scorecard so concurrent groups can't overwrite each other.
+function saveOneScorecard(key){
+  if(!key || !roundScores[key]) return;
+  const safeKey = key.replace(/__/g,'___');
+  if(db) db.ref(`roundScores/${safeKey}`).set(roundScores[key]);
+  // Audit (mirrors fbSet's audit behavior for this path)
+  if(currentUser && db){
+    db.ref('auditLog').push({
+      user:(currentUser.email||'').replace('@protour2026.com',''),
+      action:'write',
+      detail:`roundScores/${safeKey}`,
+      ts:Date.now()
+    });
+  }
+  backupRoundScoresLocal();
+}
+
+// ─── Local backup of in-progress scores (B2 fix) ───────────────────────────
+// Mirrors roundScores to localStorage on every change so a closed browser /
+// dropped connection at the course doesn't lose entered holes.
+const RSCORES_BACKUP_KEY='protour_rscores_backup_v1';
+function backupRoundScoresLocal(){
+  try{ localStorage.setItem(RSCORES_BACKUP_KEY, JSON.stringify(roundScores)); }catch(e){}
+}
+function restoreRoundScoresLocal(){
+  try{
+    const s=localStorage.getItem(RSCORES_BACKUP_KEY);
+    if(!s) return {};
+    return JSON.parse(s)||{};
+  }catch(e){ return {}; }
+}
+function countFilledHoles(sc){
+  if(!sc || !sc.players) return 0;
+  return sc.players.reduce((a,p)=>a+(p.holes||[]).filter(h=>h!==null&&h!==undefined).length, 0);
 }
 
 function saveActiveGroups(){
@@ -5257,7 +5348,10 @@ function getPin(){
 }
 
 // ─── Load all data from Firebase & set up live listeners ──────────────────
+let _firebaseInited = false;
 function initFirebase(){
+  if(_firebaseInited) return; // guard: don't stack listeners if auth handler re-fires
+  _firebaseInited = true;
   try{ db = firebase.database(); } catch(e){ console.warn('Firebase db init error',e); }
   showSyncBanner('Connecting…');
 
@@ -5281,6 +5375,9 @@ function initFirebase(){
     if(activeKey && activeSnapshot && !activeSnapshot.submitted){
       roundScores[activeKey] = activeSnapshot;
     }
+
+    // B2: keep local backup in sync with what we just learned from the cloud
+    backupRoundScoresLocal();
 
     // Detect newly submitted groups and fire notification
     Object.entries(roundScores).forEach(([k,v])=>{
@@ -5367,6 +5464,25 @@ function initFirebase(){
   const _totalToLoad = 5; // roundScores, activeGroups, calendar, courseInfo, settings
   const _checkSyncLoaded = () => {
     if(++_syncLoaded >= _totalToLoad){
+      // B2 recovery: if local backup has an in-progress scorecard with MORE
+      // filled holes than what the cloud just gave us, the player must have
+      // entered scores while offline before closing the app — restore + push back.
+      try {
+        const local = restoreRoundScoresLocal();
+        let recovered = 0;
+        Object.entries(local).forEach(([k, lv]) => {
+          if(!lv || lv.submitted) return; // only recover in-progress local data
+          const rv = roundScores[k];
+          if(rv && rv.submitted) return;  // cloud is final — trust it
+          if(countFilledHoles(lv) > countFilledHoles(rv)){
+            roundScores[k] = lv;
+            saveOneScorecard(k);
+            recovered++;
+          }
+        });
+        if(recovered > 0) showToast(`Recovered ${recovered} unsaved scorecard${recovered>1?'s':''} ✓`);
+      } catch(e) { console.warn('local recovery failed', e); }
+
       hideSyncBanner();
       // Full re-render now that all data is in
       try { renderHome(); } catch(e){}
@@ -5733,7 +5849,7 @@ function adminEditScorecard(round,gi){
   const key=`${round}__${gi}`;
   if(roundScores[key]){
     roundScores[key].submitted=false;
-    saveRoundScores(); // sync unlock to Firebase
+    saveOneScorecard(key); // sync unlock to Firebase
   }
   showToast(`Group ${gi+1} unlocked for editing`);
   renderAdminScorecardEditor();
@@ -6250,6 +6366,12 @@ function maybePromptNotif(){
 // Register service worker + new-version prompt
 function showUpdatePrompt(worker){
   if(document.getElementById('sw-update-banner')) return;
+  // Don't pop the update banner while a scorecard is open — distracts the scorer mid-round.
+  // The next time they close the scorecard or reopen the app it'll show.
+  if(document.getElementById('sc-overlay')?.classList.contains('open')){
+    window._pendingUpdateWorker = worker;
+    return;
+  }
   const b=document.createElement('div');
   b.id='sw-update-banner';
   b.style.cssText='position:fixed;left:50%;bottom:78px;transform:translateX(-50%);background:#18181b;color:#fafafa;border:1.5px solid #27272a;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:99998;font-size:13px;font-weight:700;max-width:92vw';
@@ -6421,7 +6543,7 @@ function buildMidLB(){
       const played=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(played.length===0) return;
       const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes.slice(0,thru), pl.hcp, pars, si);
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
       const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
       allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
     });
