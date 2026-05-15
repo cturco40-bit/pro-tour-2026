@@ -1222,20 +1222,9 @@ input,textarea,select{text-transform:none}
       <div class="val" id="ov-si">1</div>
     </div>
     <div id="gps-yardage-box" style="text-align:right;cursor:pointer" onclick="requestGPS()" title="Tap to refresh GPS">
-      <div style="display:flex;gap:10px;align-items:flex-end;justify-content:flex-end">
-        <div style="text-align:center">
-          <div style="font-size:8px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.5px;color:#fff">Front</div>
-          <div style="font-size:14px;font-weight:800;color:rgba(255,255,255,.7)" id="gps-front">—</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:8px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.5px;color:#fff">Centre</div>
-          <div style="font-size:20px;font-weight:900;color:#fff" id="gps-yards">—</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:8px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.5px;color:#fff">Back</div>
-          <div style="font-size:14px;font-weight:800;color:rgba(255,255,255,.7)" id="gps-back">—</div>
-        </div>
-
+      <div style="text-align:center">
+        <div style="font-size:8px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.5px;color:#fff">YDS</div>
+        <div style="font-size:22px;font-weight:900;color:#fff" id="gps-yards">—</div>
       </div>
     </div>
   </div>
@@ -3020,31 +3009,17 @@ function updateGPSYardage(pos){
   const {round, hole} = ov;
   const green = getGreenCoords(round, hole);
   const el = document.getElementById('gps-yards');
-  const frontEl = document.getElementById('gps-front');
-  const backEl = document.getElementById('gps-back');
   if(!el) return;
   if(!green){
     el.textContent = '—'; el.style.color = 'rgba(255,255,255,.5)';
-    if(frontEl) frontEl.textContent = '—';
-    if(backEl)  backEl.textContent  = '—';
     return;
   }
   const lat = pos.coords.latitude, lng = pos.coords.longitude;
-  // Centre (Pin) — main display
+  // Centre (Pin) — only display
   const centre = green.centre || green; // backwards compat if only centre stored
   const yardsC = haversineYards(lat, lng, centre.lat, centre.lng);
   el.textContent = yardsC + ' yds';
   el.style.color = yardsC < 100 ? '#FFE033' : yardsC < 150 ? '#4ade80' : '#fff';
-  // Front
-  if(frontEl && green.front){
-    const yardsF = haversineYards(lat, lng, green.front.lat, green.front.lng);
-    frontEl.textContent = yardsF + ' yds';
-  }
-  // Back
-  if(backEl && green.back){
-    const yardsB = haversineYards(lat, lng, green.back.lat, green.back.lng);
-    backEl.textContent = yardsB + ' yds';
-  }
 }
 
 function requestGPS(){
@@ -3108,11 +3083,7 @@ function stopGPSWatch(){
   }
   _lastGPSPos = null;
   const el = document.getElementById('gps-yards');
-  const frontEl = document.getElementById('gps-front');
-  const backEl  = document.getElementById('gps-back');
   if(el){ el.textContent = '—'; el.style.color = 'rgba(255,255,255,.5)'; }
-  if(frontEl) frontEl.textContent = '—';
-  if(backEl)  backEl.textContent  = '—';
   // Note: hole yardage stays — it's from course data not GPS
 }
 
@@ -3235,12 +3206,8 @@ function renderHole(){
   else {
     const green = getGreenCoords(round, hole);
     const el = document.getElementById('gps-yards');
-    const frontEl = document.getElementById('gps-front');
-    const backEl  = document.getElementById('gps-back');
     const dash = green ? '— yds' : '—';
     if(el){ el.textContent = dash; el.style.color='rgba(255,255,255,.5)'; }
-    if(frontEl) frontEl.textContent = dash;
-    if(backEl)  backEl.textContent  = dash;
   }
   document.getElementById('ov-prog').style.width=`${((hole)/18)*100}%`;
   document.getElementById('ov-prev').disabled=hole===0;
