@@ -495,6 +495,7 @@ input,textarea,select{text-transform:none}
     <button class="tbtn" onclick="switchTab('playoffs',this)">Playoffs</button>
     <button class="tbtn" onclick="switchTab('earnings',this)">Earnings</button>
     <button class="tbtn" onclick="switchTab('stats',this)">Player Stats</button>
+    <button class="tbtn" onclick="switchTab('points',this)">Points</button>
   </div>
   <div id="standings-content"></div>
 </div>
@@ -4467,7 +4468,57 @@ function renderStandings(){
       `<div class="card">${rows.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eef1e8"><span style="font-weight:600;font-size:14px">${p.n}</span><span style="font-weight:800;font-size:15px;color:${p.t>0?'var(--gd)':'var(--sub)'}">${p.t>0?'$'+Math.round(p.t).toLocaleString():'—'}</span></div>`).join('')}</div>`;
   } else if(activeTab==='stats'){
     renderPlayerStats();
+  } else if(activeTab==='points'){
+    renderPointsBreakdown();
   }
+}
+
+// ─── Public points breakdown (read-only) ─────────────────────────────────
+function renderPointsBreakdown(){
+  const el = document.getElementById('standings-content');
+  const regular = (settings.pts && settings.pts.length) ? settings.pts : DEFAULT_SETTINGS.pts;
+  const playoff = (settings.playoffPts && settings.playoffPts.length) ? settings.playoffPts : DEFAULT_SETTINGS.playoffPts;
+
+  const ord = n => {
+    const s = ['th','st','nd','rd'], v = n % 100;
+    return n + (s[(v-20)%10] || s[v] || s[0]);
+  };
+
+  const buildRows = arr => {
+    // Two-column layout to keep the list compact on mobile
+    const half = Math.ceil(arr.length / 2);
+    const left = arr.slice(0, half);
+    const right = arr.slice(half);
+    let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+    [left, right].forEach((col, ci) => {
+      html += '<div>';
+      col.forEach((pts, i) => {
+        const pos = ci === 0 ? i + 1 : half + i + 1;
+        const medalCls = pos === 1 ? 'r1' : pos === 2 ? 'r2' : pos === 3 ? 'r3' : 'rn';
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr)">
+          <span class="rnk ${medalCls}" style="min-width:32px;text-align:center">${ord(pos)}</span>
+          <span style="font-weight:800;color:var(--gd);font-size:14px">${pts}</span>
+        </div>`;
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  };
+
+  el.innerHTML = `
+    <div class="info-b" style="margin-bottom:12px">
+      Points awarded by finishing position each round. Tied players split the
+      pooled points evenly (e.g. T2 splits 2nd + 3rd place points).
+    </div>
+    <div class="card">
+      <div class="ctitle">Regular Season — Points per Finish</div>
+      ${buildRows(regular)}
+    </div>
+    <div class="card">
+      <div class="ctitle">Playoff Rounds — Points per Finish</div>
+      ${buildRows(playoff)}
+    </div>`;
 }
 
 // ─── Playoff combined net score (Playoff 1 + Championship carry-over) ────
