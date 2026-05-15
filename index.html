@@ -1201,7 +1201,6 @@ input,textarea,select{text-transform:none}
         <div class="sc-ohdr-sub" id="ov-sub">Round 1</div>
       </div>
     </div>
-    <div style="font-size:13px;font-weight:700;opacity:.8" id="ov-hole-count">Hole 1 of 18</div>
   </div>
 
   <!-- Progress bar -->
@@ -2382,7 +2381,8 @@ function renderFoursomesInlineLB(){
   let pos=1;
   rowsEl.innerHTML=allPlayers.map((p,i,arr)=>{
     if(i>0&&p.nvp!==arr[i-1].nvp) pos=i+1;
-    const posStr=i>0&&p.nvp===arr[i-1].nvp?'T'+(allPlayers.findIndex(x=>x.nvp===p.nvp)+1):String(pos);
+    const tied = arr.filter(x => x.nvp === p.nvp).length > 1;
+    const posStr = tied ? 'T'+pos : String(pos);
     const posCls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
     const nvpStr=fmtNvp(p.nvp);
     const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
@@ -3200,7 +3200,6 @@ function renderHole(){
   document.getElementById('ov-hole-num').textContent=hole+1;
   document.getElementById('ov-par').textContent=par;
   document.getElementById('ov-si').textContent=si[hole];
-  document.getElementById('ov-hole-count').textContent=`Hole ${hole+1} of 18`;
   // Refresh GPS yardage for new hole
   if(_lastGPSPos) updateGPSYardage(_lastGPSPos);
   else {
@@ -3376,13 +3375,12 @@ function renderLiveStandings(){
     (window._roundWinnerOverrides||{})[round]||null
   );
 
-  // Assign positions with T for ties
+  // Assign positions with T for ties — every player in a tie group gets the T prefix
   const positioned=allPlayers.map((p,i,arr)=>{
-    if(i>0&&p.nvp===arr[i-1].nvp){
-      const tiePos=arr.findIndex(x=>x.nvp===p.nvp)+1;
-      return {...p,posStr:'T'+tiePos};
-    }
-    return {...p,posStr:String(i+1)};
+    const firstIdx = arr.findIndex(x => x.nvp === p.nvp);
+    const tied = arr.filter(x => x.nvp === p.nvp).length > 1;
+    const posNum = firstIdx + 1;
+    return {...p, posStr: tied ? 'T'+posNum : String(posNum)};
   });
 
   const rowsEl=document.getElementById('ov-live-rows');
@@ -6527,11 +6525,12 @@ function buildMidLB(){
   const inProgress=allPlayers.filter(p=>!p.done).length;
   document.getElementById('mid-lb-sub').textContent=inProgress>0?`${inProgress} player${inProgress>1?'s':''} still playing`:'Round complete';
 
-  // Assign positions
+  // Assign positions — tied players all get the T prefix
   let pos=1;
   const rows=allPlayers.map((p,i,arr)=>{
     if(i>0&&p.nvp!==arr[i-1].nvp) pos=i+1;
-    const posStr=i>0&&p.nvp===arr[i-1].nvp?'T'+(allPlayers.findIndex(x=>x.nvp===p.nvp)+1):String(pos);
+    const tied = arr.filter(x => x.nvp === p.nvp).length > 1;
+    const posStr = tied ? 'T'+pos : String(pos);
     const posCls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
     const nvpStr=fmtNvp(p.nvp);
     const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
