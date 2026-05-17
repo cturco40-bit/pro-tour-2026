@@ -2336,6 +2336,9 @@ function switchFSTab(tab, btn){
 // ═══════════════ FOURSOME LIST PAGE ═══════════════
 
 function renderFoursomesInlineLB(){
+  try { _renderFoursomesInlineLBInner(); } catch(e){ console.warn('renderFoursomesInlineLB failed:', e); }
+}
+function _renderFoursomesInlineLBInner(){
   const titleEl = document.getElementById('fs-lb-title');
   const subEl   = document.getElementById('fs-lb-sub');
   const rowsEl  = document.getElementById('fs-lb-rows');
@@ -2391,8 +2394,8 @@ function renderFoursomesInlineLB(){
     const nvpStr=fmtNvp(p.nvp);
     const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
     const thruStr=p.done?(p.elapsed?'F · '+p.elapsed:'F'):String(p.thru);
-    const lastName=p.name.split(' ').slice(-1)[0];
-    const firstName=p.name.split(' ')[0];
+    const lastName=(p.name||'?').split(' ').slice(-1)[0];
+    const firstName=(p.name||'?').split(' ')[0];
     const clockStr2 = p.done
       ? (p.elapsed || '')
       : (p.liveElapsed || '');
@@ -2471,6 +2474,13 @@ function switchGRound(round,btn){
 const _openGroups = new Set();
 
 function renderGroupCards(round){
+  try { _renderGroupCardsInner(round); } catch(e){
+    console.error('renderGroupCards failed:', e);
+    const el=document.getElementById('grp-display');
+    if(el) el.innerHTML='<div style="padding:20px;text-align:center;color:var(--bogey);font-size:13px">Display glitch loading groups — refresh the page or switch tabs and back.</div>';
+  }
+}
+function _renderGroupCardsInner(round){
   const groups=activeGroups[round]||[];
   const isPlayoff1=round==='Playoff 1';
   const el=document.getElementById('grp-display');
@@ -3217,6 +3227,12 @@ function closeScorecard(){
 }
 
 function renderHole(){
+  try { _renderHoleInner(); } catch(e){
+    console.error('renderHole failed:', e);
+    showToast('Display glitch — score saved. Tap Next/Prev to refresh.');
+  }
+}
+function _renderHoleInner(){
   const {round,gi,hole}=ov;
   const key=`${round}__${gi}`;
   const sc=roundScores[key];
@@ -3359,6 +3375,9 @@ function fmtScore(diff){if(diff===0)return'E';return(diff>0?'+':'')+diff;}
 function scoreCls(diff){if(diff<0)return'under';if(diff===0)return'even';return'over';}
 
 function renderLiveStandings(){
+  try { _renderLiveStandingsInner(); } catch(e){ console.warn('renderLiveStandings failed:', e); }
+}
+function _renderLiveStandingsInner(){
   const {round,gi:myGi}=ov;
   const pars=coursePars[round]||Array(18).fill(4);
   const si=courseStrokeIndex[round]||DEFAULT_SI;
@@ -3420,8 +3439,8 @@ function renderLiveStandings(){
     const posCls=posNum===1?'gold':posNum===2?'silver':posNum===3?'bronze':'';
     const isLead=posNum===1;
     const nvpStr=fmtNvp(p.nvp);
-    const lastName=p.name.split(' ').slice(-1)[0];
-    const firstName=p.name.split(' ')[0];
+    const lastName=(p.name||'?').split(' ').slice(-1)[0];
+    const firstName=(p.name||'?').split(' ')[0];
     // Timer next to name: elapsed time only (light font)
     const clockStr = p.done
       ? (p.elapsed || '')
@@ -3464,16 +3483,18 @@ function buildGroupScorecardHTML(sc, pars, si, holeRange, title){
   const parTotal = holes.reduce((a,h)=>a+pars[h],0);
 
   // Player rows
-  const playerRows = sc.players.map(pl=>{
+  const playerRows = (sc.players||[]).map(pl=>{
+    // Coerce holes defensively — handles array, numeric-key object, or missing
+    const holesA = Array.isArray(pl.holes) ? pl.holes : (pl.holes && typeof pl.holes==='object' ? Object.keys(pl.holes).sort((a,b)=>Number(a)-Number(b)).map(k=>pl.holes[k]) : Array(18).fill(null));
     const cells = holes.map(h=>{
-      return scorecardCell(pl.holes[h], pars[h], pl.hcp, si[h]);
+      return scorecardCell(holesA[h], pars[h], pl.hcp, si[h]);
     }).join('');
-    const total = holes.reduce((a,h)=>a+(pl.holes[h]||0),0);
-    const nvp = calcNetVsPar(holes.map(h=>pl.holes[h]), pl.hcp, pars.slice(hStart,hEnd), si.slice(hStart,hEnd));
+    const total = holes.reduce((a,h)=>a+(holesA[h]||0),0);
+    const nvp = calcNetVsPar(holes.map(h=>holesA[h]), pl.hcp, pars.slice(hStart,hEnd), si.slice(hStart,hEnd));
     const nvpStr = fmtNvp(nvp);
     const nvpCol = nvp<0?'#1a5c2a':nvp>0?'#c0392b':'#444';
     return `<tr>
-      <td style="padding:5px 6px;font-size:11px;font-weight:700;color:var(--txt);border:1px solid #cdd6c3;background:#fafcf7;white-space:nowrap">${pl.name.split(' ')[0]} <span style="font-size:9px;color:var(--muted)">(${pl.hcp})</span></td>
+      <td style="padding:5px 6px;font-size:11px;font-weight:700;color:var(--txt);border:1px solid #cdd6c3;background:#fafcf7;white-space:nowrap">${(pl.name||'?').split(' ')[0]} <span style="font-size:9px;color:var(--muted)">(${pl.hcp||0})</span></td>
       ${cells}
       <td style="text-align:center;padding:4px 2px;border:1px solid #cdd6c3;background:var(--surf-tint2);font-size:12px;font-weight:900;color:var(--gd)">${total||'—'}</td>
       <td style="text-align:center;padding:4px 2px;border:1px solid #cdd6c3;font-size:12px;font-weight:900;color:${nvpCol}">${nvpStr}</td>
@@ -4763,10 +4784,11 @@ function buildScheduleScorecards(round, submittedGroups){
 
     // Player rows
     sc.players.forEach(pl=>{
-      table+=`<tr><td class="pl">${pl.name.split(' ').slice(-1)[0]}<br><span style="font-size:10px;color:var(--muted)">HCP ${pl.hcp}</span></td>`;
+      const holesArr2 = Array.isArray(pl.holes) ? pl.holes : (pl.holes && typeof pl.holes==='object' ? Object.keys(pl.holes).sort((a,b)=>Number(a)-Number(b)).map(k=>pl.holes[k]) : Array(18).fill(null));
+      table+=`<tr><td class="pl">${(pl.name||'?').split(' ').slice(-1)[0]}<br><span style="font-size:10px;color:var(--muted)">HCP ${pl.hcp||0}</span></td>`;
       let out=0, outDone=true, inp=0, inDone=true;
       for(let h=0;h<9;h++){
-        const v=pl.holes[h];
+        const v=holesArr2[h];
         if(v===null||v===undefined){table+=`<td>—</td>`;outDone=false;}
         else{
           table+=scorecardCell(v,pars[h],pl.hcp,si[h]);
@@ -4775,7 +4797,7 @@ function buildScheduleScorecards(round, submittedGroups){
       }
       table+=`<td class="tot">${outDone?out:'—'}</td>`;
       for(let h=9;h<18;h++){
-        const v=pl.holes[h];
+        const v=holesArr2[h];
         if(v===null||v===undefined){table+=`<td>—</td>`;inDone=false;}
         else{
           table+=scorecardCell(v,pars[h],pl.hcp,si[h]);
@@ -4783,7 +4805,7 @@ function buildScheduleScorecards(round, submittedGroups){
         }
       }
       const gross=out+inp;
-      const nvp=calcNetVsPar(pl.holes,pl.hcp,pars,si);
+      const nvp=calcNetVsPar(holesArr2,pl.hcp,pars,si);
       const nvpStr=fmtNvp(nvp);
       table+=`<td class="tot">${inDone?inp:'—'}</td><td class="tot">${(outDone&&inDone)?gross:'—'}</td>`;
       table+=`<td class="nv" style="color:${nvp<0?'#145c28':nvp>0?'var(--bogey)':'var(--muted)'}">${(outDone&&inDone)?nvpStr:'—'}</td></tr>`;
@@ -5463,7 +5485,7 @@ function initFirebase(){
     // Detect newly submitted groups and fire notification
     Object.entries(roundScores).forEach(([k,v])=>{
       if(v.submitted && !prevSubmitted.has(k)){
-        const playerNames = (v.players||[]).map(p=>p.name.split(' ')[0]).join(', ');
+        const playerNames = (v.players||[]).map(p=>(p?.name||'?').split(' ')[0]).join(', ');
         fireSubmitNotification(roundTitle(v.round), playerNames);
       }
     });
@@ -5944,7 +5966,7 @@ function renderAdminScorecardEditor(){
     `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eef1e8">
       <div>
         <div style="font-size:13px;font-weight:700">${roundTitle(sc.round)} — Group ${sc.gi+1}</div>
-        <div style="font-size:11px;color:var(--muted)">${sc.players.map(p=>p.name.split(' ').slice(-1)[0]).join(', ')}</div>
+        <div style="font-size:11px;color:var(--muted)">${(sc.players||[]).map(p=>(p?.name||'?').split(' ').slice(-1)[0]).join(', ')}</div>
       </div>
       <button onclick="adminEditScorecard('${sc.round}',${sc.gi})" style="padding:7px 12px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Edit</button>
     </div>`).join('');
@@ -6635,6 +6657,9 @@ function fmtElapsed(ms){
 }
 
 function buildMidLB(){
+  try { _buildMidLBInner(); } catch(e){ console.warn('buildMidLB failed:', e); }
+}
+function _buildMidLBInner(){
   // Find the most recent round with in-progress or submitted scores
   const allRounds=Object.keys(activeGroups);
   if(!allRounds.length){
@@ -6685,8 +6710,8 @@ function buildMidLB(){
     const nvpStr=fmtNvp(p.nvp);
     const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
     const thruStr=p.done?(p.elapsed?'F · '+p.elapsed:'F'):String(p.thru);
-    const lastName=p.name.split(' ').slice(-1)[0];
-    const firstName=p.name.split(' ')[0];
+    const lastName=(p.name||'?').split(' ').slice(-1)[0];
+    const firstName=(p.name||'?').split(' ')[0];
     const clockStr3 = p.done
       ? (p.elapsed || '')
       : (p.elapsed || '');
