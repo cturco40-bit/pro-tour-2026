@@ -5329,8 +5329,21 @@ function countFilledHoles(sc){
   return sc.players.reduce((a,p)=>a+(p.holes||[]).filter(h=>h!==null&&h!==undefined).length, 0);
 }
 
+const AGROUPS_BACKUP_KEY='protour_active_groups_backup_v1';
+function backupActiveGroupsLocal(){
+  try{ localStorage.setItem(AGROUPS_BACKUP_KEY, JSON.stringify(activeGroups||{})); }catch(e){}
+}
+function restoreActiveGroupsLocal(){
+  try{
+    const s=localStorage.getItem(AGROUPS_BACKUP_KEY);
+    if(!s) return null;
+    return JSON.parse(s)||null;
+  }catch(e){ return null; }
+}
+
 function saveActiveGroups(){
   fbSet('activeGroups', activeGroups);
+  backupActiveGroupsLocal();
 }
 
 function savePenalties(){
@@ -5421,6 +5434,9 @@ function initFirebase(){
   // Live listener: active groups
   fbOn('activeGroups', data=>{
     activeGroups = data || {};
+    // Mirror to localStorage so if the cloud copy ever vanishes we can recover.
+    // Only back up when there's actually data — don't overwrite a good backup with an empty cloud read.
+    if(data && Object.keys(data).length) backupActiveGroupsLocal();
     if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
     if(document.getElementById('pg-home').classList.contains('act')) renderHome();
   });
@@ -5991,17 +6007,20 @@ function doGroupAction(action){
   const round=sel.value;
   const grps=JSON.parse(JSON.stringify(activeGroups[round]||[]));
   if(action==='players'){
+    if(!confirm(`Clear all PLAYERS from every group in ${roundTitle(round)}?\n\nThe groups themselves stay but every slot becomes empty. Cannot be undone.`)) return;
     grps.forEach(g=>{g.players=[];});
     activeGroups[round]=grps;
     fbSet('activeGroups/'+round, grps);
     renderFoursomePage();
     showToast('All players cleared for '+roundTitle(round));
   } else if(action==='hcp'){
+    if(!confirm(`Zero out all HANDICAPS in ${roundTitle(round)}?\n\nPlayers stay in their groups but everyone's HCP becomes 0. Cannot be undone.`)) return;
     grps.forEach(g=>{g.players=(g.players||[]).map(p=>({...p,hcp:0}));});
     activeGroups[round]=grps;
     fbSet('activeGroups/'+round, grps);
     showToast('All handicaps cleared for '+roundTitle(round));
   } else if(action==='all'){
+    if(!confirm(`Delete ALL GROUPS for ${roundTitle(round)}?\n\nThis removes every group, player, and tee time for that round. Cannot be undone.`)) return;
     delete activeGroups[round];
     fbSet('activeGroups/'+round, null);
     renderFoursomePage();
@@ -6018,6 +6037,7 @@ function _checkGroupPin(){
 
 function clearGroupPlayers(round,gi){
   if(!_checkGroupPin()) return;
+  if(!confirm(`Clear all players from Group ${gi+1} (${roundTitle(round)})?`)) return;
   const grps=JSON.parse(JSON.stringify(activeGroups[round]||[]));
   if(!grps[gi]) return;
   grps[gi].players=[];
@@ -6030,6 +6050,7 @@ function clearGroupPlayers(round,gi){
 
 function clearGroupHcp(round,gi){
   if(!_checkGroupPin()) return;
+  if(!confirm(`Zero out handicaps for everyone in Group ${gi+1} (${roundTitle(round)})?`)) return;
   const grps=JSON.parse(JSON.stringify(activeGroups[round]||[]));
   if(!grps[gi]) return;
   grps[gi].players=grps[gi].players.map(p=>({...p,hcp:0}));
@@ -6041,6 +6062,7 @@ function clearGroupHcp(round,gi){
 
 function clearGroupAll(round,gi){
   if(!_checkGroupPin()) return;
+  if(!confirm(`Delete Group ${gi+1} entirely from ${roundTitle(round)}?\n\nRemoves the group, its players, and tee time.`)) return;
   const grps=JSON.parse(JSON.stringify(activeGroups[round]||[]));
   grps.splice(gi,1);
   activeGroups[round]=grps;
@@ -6052,6 +6074,7 @@ function clearGroupAll(round,gi){
 
 function clearRoundGroupsPlayers(round){
   if(!_checkGroupPin()) return;
+  if(!confirm(`Clear all PLAYERS from every group in ${roundTitle(round)}?\n\nGroups stay but every slot becomes empty.`)) return;
   const grps=JSON.parse(JSON.stringify(activeGroups[round]||[]));
   grps.forEach(g=>{g.players=[];});
   activeGroups[round]=grps;
@@ -6063,6 +6086,7 @@ function clearRoundGroupsPlayers(round){
 
 function clearRoundGroupsHcp(round){
   if(!_checkGroupPin()) return;
+  if(!confirm(`Zero out HANDICAPS for every player in ${roundTitle(round)}?`)) return;
   const grps=JSON.parse(JSON.stringify(activeGroups[round]||[]));
   grps.forEach(g=>{g.players=g.players.map(p=>({...p,hcp:0}));});
   activeGroups[round]=grps;
@@ -6073,6 +6097,7 @@ function clearRoundGroupsHcp(round){
 
 function clearRoundGroups(round){
   if(!_checkGroupPin()) return;
+  if(!confirm(`Delete ALL groups for ${roundTitle(round)}?\n\nThis removes the players, tee times, and groups for that round. Cannot be undone.`)) return;
   delete activeGroups[round];
   fbSet('activeGroups/'+round, null);
   renderClearGroupsPanel();
@@ -6082,6 +6107,7 @@ function clearRoundGroups(round){
 
 function clearAllGroups(){
   if(!_checkGroupPin()) return;
+  if(!confirm('Delete groups for EVERY round?\n\nThis wipes player assignments, tee times, and groups across the entire season. Cannot be undone.')) return;
   Object.keys(activeGroups).forEach(r=>{delete activeGroups[r];});
   fbSet('activeGroups', null);
   renderClearGroupsPanel();
