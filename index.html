@@ -1734,14 +1734,17 @@ function renderHomeCurrentRound(){
   let nextRound=null;
   let lastRound=null;
 
+  // Compare midnight-aligned dates so "tomorrow at midnight" isn't counted as today
+  const today0 = new Date(today); today0.setHours(0,0,0,0);
   CALENDAR.forEach(c=>{
     const d=parseDate(c.date);
     if(!d) return;
     const submitted=Object.values(roundScores).some(sc=>sc.round===c.round&&sc.submitted);
     if(submitted){ lastRound=c; return; }
-    const dayDiff=(d-today)/(1000*60*60*24);
-    if(dayDiff>=-1&&dayDiff<=1) currentRound=c;      // within 1 day = today
-    else if(dayDiff>1&&!nextRound) nextRound=c;       // next future round
+    const d0 = new Date(d); d0.setHours(0,0,0,0);
+    const dayDiff = Math.round((d0 - today0) / (1000*60*60*24));
+    if(dayDiff === 0 || dayDiff === -1) currentRound=c;  // today (or yesterday — late entry)
+    else if(dayDiff > 0 && !nextRound) nextRound=c;       // tomorrow or future
   });
 
   const display=currentRound||nextRound;
