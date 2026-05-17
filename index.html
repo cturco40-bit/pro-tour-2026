@@ -2412,7 +2412,25 @@ function renderFoursomePage(){
 
   const configured=Object.keys(activeGroups);
   if(!configured.length){
-    document.getElementById('foursome-list').innerHTML=`<div style="text-align:center;padding:30px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">🏌️</div><div style="font-size:14px;font-weight:600">Set up groups in Admin first</div><div style="font-size:12px;color:var(--sub);margin-top:6px">Admin → Groups Setup → save groups for a round</div></div>`;
+    // Diagnostic: what does memory + local backup actually contain?
+    let diag = '';
+    try {
+      const local = restoreActiveGroupsLocal();
+      const localKeys = local ? Object.keys(local) : [];
+      const localCount = localKeys.reduce((a,k)=>a + ((local[k]||[]).length||0), 0);
+      diag = `
+        <div style="margin-top:18px;background:var(--surf-tint);border:1px solid var(--bdr);border-radius:10px;padding:12px;text-align:left;font-size:12px;color:var(--muted);line-height:1.6">
+          <div style="font-weight:800;color:var(--gd);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;font-size:11px">Diagnostic</div>
+          <div>In memory: <strong>${configured.length}</strong> round(s) configured</div>
+          <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
+          <div>Local backup group count: <strong>${localCount}</strong></div>
+          <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
+          <div>SW cache: <strong>v21</strong></div>
+        </div>
+        ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
+    } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
+
+    document.getElementById('foursome-list').innerHTML=`<div style="text-align:center;padding:30px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">🏌️</div><div style="font-size:14px;font-weight:600">No groups configured for this device</div><div style="font-size:12px;color:var(--sub);margin-top:6px">If you set up groups in Admin and don't see them here, check the diagnostic below</div>${diag}</div>`;
     return;
   }
 
@@ -5433,10 +5451,31 @@ function initFirebase(){
 
   // Live listener: active groups
   fbOn('activeGroups', data=>{
-    activeGroups = data || {};
+    // Firebase RTDB stores arrays as objects under the hood; if keys aren't
+    // perfectly dense ("0","1","2",...) it returns an object instead of an array.
+    // Coerce back to arrays here so all downstream .map / .every / .filter calls work.
+    const coerced = {};
+    if(data && typeof data === 'object'){
+      Object.keys(data).forEach(round => {
+        const v = data[round];
+        let groups;
+        if(Array.isArray(v)) groups = v;
+        else if(v && typeof v === 'object') groups = Object.keys(v).sort((a,b)=>Number(a)-Number(b)).map(k => v[k]);
+        else groups = [];
+        // Same for the inner players array of each group
+        groups = groups.filter(g => g).map(g => {
+          if(g && g.players && !Array.isArray(g.players) && typeof g.players === 'object'){
+            g = {...g, players: Object.keys(g.players).sort((a,b)=>Number(a)-Number(b)).map(k => g.players[k])};
+          }
+          return g;
+        });
+        coerced[round] = groups;
+      });
+    }
+    activeGroups = coerced;
     // Mirror to localStorage so if the cloud copy ever vanishes we can recover.
     // Only back up when there's actually data — don't overwrite a good backup with an empty cloud read.
-    if(data && Object.keys(data).length) backupActiveGroupsLocal();
+    if(Object.keys(coerced).length) backupActiveGroupsLocal();
     if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
     if(document.getElementById('pg-home').classList.contains('act')) renderHome();
   });
