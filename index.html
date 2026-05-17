@@ -2591,10 +2591,12 @@ function buildSummaryTable(round,gi,grp,sc){
   html+=`<td class="tot">${parIn}</td><td class="tot">${parOut+parIn}</td><td class="nv">—</td></tr>`;
   // Player rows
   (sc?.players||grp.players.map(p=>({...p,holes:Array(18).fill(null),gross:0,net:0}))).forEach((pl,pi)=>{
-    html+=`<tr><td class="pl">${pl.name.split(' ').slice(-1)[0]}<br><span style="font-size:10px;color:var(--muted)">${pl.hcp}</span></td>`;
+    // Defend against malformed scorecards where holes is missing or stored as an object
+    const holesArr = Array.isArray(pl.holes) ? pl.holes : (pl.holes && typeof pl.holes==='object' ? Object.keys(pl.holes).sort((a,b)=>Number(a)-Number(b)).map(k=>pl.holes[k]) : Array(18).fill(null));
+    html+=`<tr><td class="pl">${(pl.name||'').split(' ').slice(-1)[0]}<br><span style="font-size:10px;color:var(--muted)">${pl.hcp||0}</span></td>`;
     let out=0,outDone=true,inp=0,inDone=true;
     for(let h=0;h<9;h++){
-      const v=pl.holes[h];
+      const v=holesArr[h];
       if(v===null||v===undefined){html+=`<td>—</td>`;outDone=false;}
       else{
         html+=scorecardCell(v,pars[h],pl.hcp,si[h]);
@@ -2603,7 +2605,7 @@ function buildSummaryTable(round,gi,grp,sc){
     }
     html+=`<td class="tot">${outDone?out:'—'}</td>`;
     for(let h=9;h<18;h++){
-      const v=pl.holes[h];
+      const v=holesArr[h];
       if(v===null||v===undefined){html+=`<td>—</td>`;inDone=false;}
       else{
         html+=scorecardCell(v,pars[h],pl.hcp,si[h]);
@@ -2611,7 +2613,7 @@ function buildSummaryTable(round,gi,grp,sc){
       }
     }
     const gross=out+inp;
-    const nvp=sc?calcNetVsPar(pl.holes,pl.hcp,pars,si):0;
+    const nvp=sc?calcNetVsPar(holesArr,pl.hcp,pars,si):0;
     const nvpStr=fmtNvp(nvp);
     html+=`<td class="tot">${inDone?inp:'—'}</td><td class="tot">${(outDone&&inDone)?gross:'—'}</td><td class="nv" style="color:${nvp<0?'#145c28':nvp>0?'var(--bogey)':'var(--muted)'}">${(outDone&&inDone)?nvpStr:'—'}</td></tr>`;
   });
@@ -5417,10 +5419,36 @@ function initFirebase(){
     const activeKey = overlayOpen ? `${ov.round}__${ov.gi}` : null;
     const activeSnapshot = activeKey ? roundScores[activeKey] : null;
 
+    // Helper: Firebase RTDB sometimes returns arrays as objects with numeric keys.
+    // Coerce so all .map / .forEach / .filter calls downstream get real arrays.
+    const toArr = v => Array.isArray(v) ? v
+      : (v && typeof v === 'object') ? Object.keys(v).sort((a,b)=>Number(a)-Number(b)).map(k=>v[k])
+      : [];
+    const normalizeScorecard = v => {
+      if(!v || typeof v !== 'object') return v;
+      const out = {...v};
+      if(out.players !== undefined) out.players = toArr(out.players);
+      if(Array.isArray(out.players)){
+        out.players = out.players.map(p => {
+          if(!p || typeof p !== 'object') return p;
+          const pp = {...p};
+          if(pp.holes !== undefined){
+            pp.holes = toArr(pp.holes);
+            // Pad to 18 with null so downstream code can safely index 0..17
+            while(pp.holes.length < 18) pp.holes.push(null);
+          } else {
+            pp.holes = Array(18).fill(null);
+          }
+          return pp;
+        });
+      }
+      return out;
+    };
+
     if(data){
       roundScores={};
       Object.entries(data).forEach(([k,v])=>{
-        roundScores[k.replace(/___/g,'__')]=v;
+        roundScores[k.replace(/___/g,'__')] = normalizeScorecard(v);
       });
     } else { roundScores={}; }
 
