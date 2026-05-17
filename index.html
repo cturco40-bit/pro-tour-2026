@@ -2480,7 +2480,7 @@ function renderGroupCards(round){
     const sc=roundScores[key];
     const done=sc?.submitted;
     const inProg=sc&&!done;
-    const holesPlayed=sc?sc.players[0]?.holes.filter(h=>h!==null).length:0;
+    const holesPlayed=sc?(sc.players?.[0]?.holes||[]).filter(h=>h!==null&&h!==undefined).length:0;
     const rid=`${round.replace(/[\s-]/g,'_')}_${gi}`;
     const isOpen=_openGroups.has(rid);
     const bonus=isPlayoff1?playoffHcpBonus(gi):null;
@@ -2563,7 +2563,7 @@ function renderGroupBody(round,gi,grp,sc,done,inProg){
       </label>
     </div>`;
   } else {
-    const btnLabel=inProg?`Resume Scorecard (Hole ${sc.players[0].holes.filter(h=>h!==null).length+1})`:'Start Scorecard';
+    const btnLabel=inProg?`Resume Scorecard (Hole ${(sc.players?.[0]?.holes||[]).filter(h=>h!==null&&h!==undefined).length+1})`:'Start Scorecard';
     const btnClass=inProg?'open-sc-btn resume':'open-sc-btn';
     html+=`<button class="${btnClass}" onclick="openScorecard('${round}',${gi})">${btnLabel}</button>`;
     if(inProg) html+=buildSummaryTable(round,gi,grp,sc);
@@ -3167,7 +3167,7 @@ function openScorecard(round,gi){
   if(typeof sc.lastHole === 'number' && sc.lastHole >= 0 && sc.lastHole <= 17){
     resumeHole = sc.lastHole;
   } else {
-    const firstEmpty = sc.players[0].holes.findIndex(h=>h===null);
+    const firstEmpty = (sc.players?.[0]?.holes||[]).findIndex(h=>h===null);
     resumeHole = firstEmpty >= 0 ? firstEmpty : 0;
   }
 
