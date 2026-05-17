@@ -2413,27 +2413,30 @@ function renderFoursomePage(){
     return;
   }
 
-  // Show only rounds that are NOT fully submitted (i.e. still active/upcoming)
-  // Completed rounds live in the Schedule tab
+  // Show every configured round (including ones where all groups have submitted).
+  // Hiding submitted rounds caused groups to disappear from this tab — players
+  // still need to view/expand their scorecards from here after the round.
+  // Default the visible round to the first one that isn't fully submitted; if all
+  // are submitted, default to the last one.
   const done=fullySubmittedRounds();
-  const activeRounds=configured.filter(r=>!done.has(r));
+  const activeRounds=configured;
+  const firstActiveIdx = activeRounds.findIndex(r=>!done.has(r));
+  const defaultRound = firstActiveIdx >= 0 ? activeRounds[firstActiveIdx] : activeRounds[activeRounds.length-1];
 
-  if(!activeRounds.length){
-    document.getElementById('foursome-list').innerHTML=`<div style="text-align:center;padding:30px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">✅</div><div style="font-size:14px;font-weight:600">All groups have finished</div><div style="font-size:12px;color:var(--sub);margin-top:6px">Check the Schedule tab for results &amp; scorecards</div></div>`;
-    return;
-  }
-
-  // Show only the active round(s) — usually just one
   let html=``;
   if(activeRounds.length>1){
-    // Multiple active rounds — show tab selector
+    // Multiple configured rounds — show tab selector
     html=`<div class="rsel" id="grp-rtabs">`;
-    activeRounds.forEach((r,i)=>html+=`<button class="rsbtn${i===0?' act':''}" onclick="switchGRound('${r}',this)">${roundTitle(r)}</button>`);
+    activeRounds.forEach(r=>{
+      const isAct = r===defaultRound ? ' act' : '';
+      const checkMark = done.has(r) ? ' ✓' : '';
+      html+=`<button class="rsbtn${isAct}" onclick="switchGRound('${r}',this)">${roundTitle(r)}${checkMark}</button>`;
+    });
     html+=`</div>`;
   }
   html+=`<div id="grp-display"></div>`;
   document.getElementById('foursome-list').innerHTML=html;
-  renderGroupCards(activeRounds[0]);
+  renderGroupCards(defaultRound);
 }
 
 function switchGRound(round,btn){
