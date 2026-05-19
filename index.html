@@ -137,11 +137,12 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
    the iPhone clock. Bottom margin gives breathing room above the nav. */
 #pg-home{margin:-14px -14px 0;padding-bottom:14px}
 .brand-block{padding:14px 16px 6px;display:flex;align-items:center;gap:14px}
-/* Sponsor logo sits inline to the right of the round title */
-.hero-title-row{display:flex;align-items:flex-end;gap:14px;justify-content:space-between}
+/* Sponsor logo sits inline to the LEFT of the round title, scaled to match the
+   title's visual height so it reads as a paired mark, not a small afterthought. */
+.hero-title-row{display:flex;align-items:center;gap:16px}
 .hero-title-row .hero-title{flex:1;min-width:0;margin-bottom:0}
-.hero-title-row .hero-sponsor-mark{flex-shrink:0;display:flex;align-items:center;justify-content:center;padding-bottom:6px}
-.hero-title-row .hero-sponsor-mark img{height:54px;width:auto;max-width:90px;border-radius:6px;display:block}
+.hero-title-row .hero-sponsor-mark{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:78px;height:78px;background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:6px}
+.hero-title-row .hero-sponsor-mark img{max-height:100%;max-width:100%;width:auto;height:auto;object-fit:contain;border-radius:0;display:block}
 .home-cards-wrap{padding:4px 16px 20px}
 .home-cards-wrap .card{margin-bottom:14px}
 
@@ -1994,11 +1995,13 @@ function renderHome(){
   const courseIcon=`<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
   const clockIcon=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
 
-  const sponsorImg = sponsorLogoImg(display.round, '54px');
-  const titleBlock = sponsorImg
+  // Build sponsor mark inline (don't use sponsorLogoImg here — it bakes inline
+  // styles we'd have to fight; our CSS .hero-sponsor-mark img handles fitting).
+  const sponsorSrc = sponsorLogos[display.round];
+  const titleBlock = sponsorSrc
     ? `<div class="hero-title-row">
+        <div class="hero-sponsor-mark"><img src="${sponsorSrc}" alt="sponsor"></div>
         <h1 class="hero-title">${titleHTML}</h1>
-        <div class="hero-sponsor-mark">${sponsorImg}</div>
       </div>`
     : `<h1 class="hero-title">${titleHTML}</h1>`;
   hero.innerHTML=`
@@ -2947,7 +2950,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v33</strong></div>
+          <div>SW cache: <strong>v34</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
