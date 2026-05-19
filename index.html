@@ -136,6 +136,39 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .hero-sponsor img{height:34px;width:auto;border-radius:5px;flex-shrink:0}
 .home-cards-wrap{padding:4px 16px 20px}
 .home-cards-wrap .card{margin-bottom:14px}
+
+/* Shared row style for home carry-over cards (standings / previous round / etc) */
+.ho-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair-2);gap:12px}
+.ho-row:last-child{border-bottom:none}
+.ho-pos{font-family:var(--ff-display);font-weight:800;font-size:18px;color:var(--green);text-align:center;line-height:1;font-feature-settings:"tnum"}
+.ho-pos.podium-1{color:var(--gold-deep)}
+.ho-pos.podium-2{color:var(--muted)}
+.ho-pos.podium-3{color:#a87038}
+.ho-name-wrap{min-width:0}
+.ho-name{font-size:14px;font-weight:600;color:var(--txt);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ho-meta{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);margin-top:3px}
+.ho-val{font-family:var(--ff-display);font-weight:800;font-size:22px;color:var(--green);line-height:1;font-feature-settings:"tnum";text-align:right}
+.ho-val.under{color:var(--birdie)}
+.ho-val.over{color:var(--bogey)}
+.ho-val-sub{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);margin-top:3px;text-align:right;font-weight:600}
+.ho-empty{color:var(--sub);font-size:12px;text-align:center;padding:14px 0;font-family:var(--ff-mono);letter-spacing:.08em;text-transform:uppercase}
+.ho-subhead{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);margin-bottom:10px;font-weight:600}
+.ho-foot{text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair-2)}
+.ho-foot a{font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:600;cursor:pointer;text-decoration:none}
+
+/* Prize Pool */
+.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.pp-cell{background:var(--surf-tint);border-radius:10px;padding:13px;text-align:center}
+.pp-cell .lbl{font-family:var(--ff-mono);font-size:9px;color:var(--sub);letter-spacing:.16em;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.pp-cell .v{font-family:var(--ff-display);font-weight:800;font-size:24px;color:var(--green);line-height:1;font-feature-settings:"tnum"}
+.pp-cell .v .dollar{color:var(--gold-deep);font-size:14px;vertical-align:top;margin-right:1px;font-weight:800}
+.pp-cell .sub{font-family:var(--ff-mono);font-size:9px;color:var(--sub);margin-top:5px;letter-spacing:.08em;text-transform:uppercase}
+.pp-section{border-top:1px solid var(--hair);padding-top:14px}
+.pp-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--hair-2);font-size:13px}
+.pp-row:last-child{border-bottom:none}
+.pp-row .l{color:var(--muted);font-size:12px}
+.pp-row .v{font-family:var(--ff-display);font-weight:800;color:var(--green);font-feature-settings:"tnum";font-size:14px}
+.pp-row.feature .v{color:var(--gold-deep);font-size:18px}
 .brand-logo{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px var(--hair),0 2px 8px rgba(0,0,0,.06);overflow:hidden;background:var(--card)}
 .brand-logo img{width:100%;height:100%;object-fit:cover;display:block}
 .brand-info{flex:1;min-width:0}
@@ -586,9 +619,7 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
     <div class="card">
       <div class="ctitle">Season Standings</div>
       <div id="home-standings"></div>
-      <div style="text-align:center;margin-top:10px">
-        <span class="cta-secondary" style="display:inline-flex;width:auto;padding:8px 14px;cursor:pointer" onclick="showPage('standings',document.getElementById('nb-standings'))">Full standings →</span>
-      </div>
+      <div class="ho-foot"><a onclick="showPage('standings',document.getElementById('nb-standings'))">Full standings →</a></div>
     </div>
     <div class="card">
       <div class="ctitle">Previous Round Scores</div>
@@ -2242,21 +2273,22 @@ function renderHomeStandings(){
     .sort((a,b)=>b.p-a.p).slice(0,5).map((x,i)=>({...x,rank:i+1}));
 
   if(!rows.some(r=>r.p>0)){
-    el.innerHTML=`<div style="color:var(--muted);font-size:13px;text-align:center;padding:8px 0">Season standings will appear after Round 1</div>`;
+    el.innerHTML=`<div class="ho-empty">Standings post after Round 1</div>`;
     return;
   }
 
   el.innerHTML=rows.map(p=>{
-    const medalBg=p.rank===1?'#FFD700':p.rank===2?'#C0C0C0':p.rank===3?'#CD7F32':'#eef1e8';
-    const medalColor=p.rank===1?'#5a4000':p.rank===2?'#333':p.rank===3?'#fff':'var(--muted)';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef1e8">
-      <div style="width:26px;height:26px;border-radius:50%;background:${medalBg};color:${medalColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${p.rank}</div>
-      <div style="width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${inits(p.n)}</div>
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:14px">${p.n}</div>
-        <div style="font-size:11px;color:var(--muted)">${p.played} round${p.played!==1?'s':''} played</div>
+    const podiumCls=p.rank<=3?` podium-${p.rank}`:'';
+    return `<div class="ho-row">
+      <div class="ho-pos${podiumCls}">${p.rank}</div>
+      <div class="ho-name-wrap">
+        <div class="ho-name">${p.n}</div>
+        <div class="ho-meta">${p.played} Round${p.played!==1?'s':''}</div>
       </div>
-      <div style="font-weight:800;color:var(--green);font-size:16px">${p.p>0?Math.round(p.p):'—'}</div>
+      <div>
+        <div class="ho-val">${p.p>0?Math.round(p.p):'—'}</div>
+        <div class="ho-val-sub">Pts</div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -2320,30 +2352,26 @@ function renderHomeRecentResults(){
 
   const cal=CALENDAR.find(c=>c.round===lastRoundName);
   el.innerHTML=`
-    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">${roundTitle(lastRoundName)}${cal?.date&&cal.date!=='TBD'?' · '+cal.date:''}</div>
+    <div class="ho-subhead">${roundTitle(lastRoundName)}${cal?.date&&cal.date!=='TBD'?' · '+cal.date:''}</div>
     ${players.map(p=>{
       const pos=posLabels[p.name]||'—';
       const posNum=parseInt(pos.replace('T',''));
-      const medalBg=posNum===1?'#FFD700':posNum===2?'#C0C0C0':posNum===3?'#CD7F32':'#eef1e8';
-      const medalColor=posNum===1?'#5a4000':posNum===2?'#333':posNum===3?'#fff':'var(--muted)';
+      const podiumCls=posNum>=1&&posNum<=3?` podium-${posNum}`:'';
       const nvpStr=fmtNvp(p.nvp);
-      const nvpColor=p.nvp<0?'var(--birdie)':p.nvp>0?'var(--bogey)':'var(--muted)';
-      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef1e8">
-        <div style="width:26px;height:26px;border-radius:50%;background:${medalBg};color:${medalColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${pos}</div>
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${inits(p.name)}</div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:14px">${p.name}</div>
-          <div style="font-size:11px;color:var(--muted)">HCP ${p.hcp} · Gross ${p.gross||'—'}</div>
+      const nvpCls=p.nvp<0?'under':p.nvp>0?'over':'';
+      return `<div class="ho-row">
+        <div class="ho-pos${podiumCls}">${pos}</div>
+        <div class="ho-name-wrap">
+          <div class="ho-name">${p.name}</div>
+          <div class="ho-meta">HCP ${p.hcp} · Gross ${p.gross||'—'}</div>
         </div>
-        <div style="text-align:right">
-          <div style="font-weight:800;font-size:16px;color:${nvpColor}">${nvpStr}</div>
-          <div style="font-size:10px;color:var(--muted)">Net ${p.effNet}</div>
+        <div>
+          <div class="ho-val ${nvpCls}">${nvpStr}</div>
+          <div class="ho-val-sub">Net ${p.effNet}</div>
         </div>
       </div>`;
     }).join('')}
-    <div style="text-align:center;margin-top:10px">
-      <span style="color:var(--green);font-size:13px;font-weight:700;cursor:pointer" onclick="showPage('schedule',document.getElementById('nb-schedule'))">Full results →</span>
-    </div>`;
+    <div class="ho-foot"><a onclick="showPage('schedule',document.getElementById('nb-schedule'))">Full results →</a></div>`;
 }
 
 function renderHomePrizePool(){
@@ -2369,33 +2397,35 @@ function renderHomePrizePool(){
   });
 
   el.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div style="background:var(--surf-tint);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Entry/Round</div>
-        <div style="font-size:20px;font-weight:800;color:var(--gd)">$${settings.entryFee}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">per player</div>
+    <div class="pp-grid">
+      <div class="pp-cell">
+        <div class="lbl">Entry / Round</div>
+        <div class="v"><span class="dollar">$</span>${settings.entryFee}</div>
+        <div class="sub">per player</div>
       </div>
-      <div style="background:var(--surf-tint);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Season Entry</div>
-        <div style="font-size:20px;font-weight:800;color:var(--gd)">$${settings.playoffEntryFee}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">per player</div>
+      <div class="pp-cell">
+        <div class="lbl">Season Entry</div>
+        <div class="v"><span class="dollar">$</span>${settings.playoffEntryFee}</div>
+        <div class="sub">per player</div>
       </div>
     </div>
-    <div style="border-top:1px solid #eef1e8;padding-top:10px;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Playoff Prize Pool</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:13px;color:var(--muted)">${PLAYERS.length} players × $${settings.playoffEntryFee}</span>
-        <span style="font-size:15px;font-weight:800;color:var(--gold)">$${playoffPool.toLocaleString()}</span>
+    <div class="pp-section">
+      <div class="ho-subhead">Playoff Prize Pool</div>
+      <div class="pp-row feature">
+        <span class="l">${PLAYERS.length} players × $${settings.playoffEntryFee}</span>
+        <span class="v">$${playoffPool.toLocaleString()}</span>
       </div>
       ${playoffPayouts.map((amt,i)=>`
-        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eef1e8">
-          <span style="font-size:13px;color:var(--muted)">${['🥇 1st','🥈 2nd','🥉 3rd','4th'][i]}</span>
-          <span style="font-size:13px;font-weight:700;color:var(--gd)">$${amt.toLocaleString()}</span>
+        <div class="pp-row">
+          <span class="l">${['1st','2nd','3rd','4th'][i]}</span>
+          <span class="v">$${amt.toLocaleString()}</span>
         </div>`).join('')}
     </div>
-    ${totalDistributed>0?`<div style="border-top:1px solid #eef1e8;padding-top:10px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;color:var(--muted)">Distributed so far</span>
-      <span style="font-size:15px;font-weight:800;color:var(--green)">$${totalDistributed.toLocaleString()}</span>
+    ${totalDistributed>0?`<div class="pp-section">
+      <div class="pp-row">
+        <span class="l">Distributed so far</span>
+        <span class="v">$${totalDistributed.toLocaleString()}</span>
+      </div>
     </div>`:''}`;
 }
 
@@ -2894,7 +2924,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v30</strong></div>
+          <div>SW cache: <strong>v31</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
