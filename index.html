@@ -102,7 +102,7 @@ input,textarea,select{font-family:var(--ff-body)}
 .hair{border:0;border-top:1px solid var(--hair);margin:0}
 
 /* ─── HEADER ─────────────────────────────── */
-.hdr{background:var(--bg);color:var(--green);padding:14px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--hair);position:relative;z-index:200}
+.hdr{background:var(--bg);color:var(--green);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;border-bottom:1px solid var(--hair);position:relative;z-index:200}
 .hdr-main{display:flex;align-items:center;gap:12px}
 .hdr-back{display:none;align-items:center;gap:6px;cursor:pointer;color:var(--green);border:none;background:none;padding:0}
 .hdr-back svg{width:22px;height:22px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -127,11 +127,16 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .pg{display:none}.pg.act{display:block}
 
 /* ─── HOME — brand block, live strip, hero, stats, tee times, CTA ─── */
-/* On home, neutralize scroll-area's side padding so cards can sit flush with mockup-style 16px margins */
-#pg-home{margin:-14px -14px 0}
-.brand-block{padding:18px 16px 4px;display:flex;align-items:center;gap:14px}
-.brand-logo{width:40px;height:48px;background:linear-gradient(135deg,var(--goldbright),var(--gold),var(--gold-deep));border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px var(--green),0 2px 8px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.4);flex-shrink:0}
-.brand-logo svg{width:22px;height:28px}
+/* On home, neutralize scroll-area's side padding so cards can sit flush with mockup-style 16px margins. Bottom margin gives breathing room above the nav; top safe-area inset clears the iPhone notch. */
+#pg-home{margin:-14px -14px 0;padding-top:env(safe-area-inset-top,0px);padding-bottom:8px}
+.brand-block{padding:14px 16px 6px;display:flex;align-items:center;gap:14px}
+.hero-sponsor{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--hair-2)}
+.hero-sponsor-lbl{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600}
+.hero-sponsor img{height:34px;width:auto;border-radius:5px;flex-shrink:0}
+.home-cards-wrap{padding:4px 16px 20px}
+.home-cards-wrap .card{margin-bottom:14px}
+.brand-logo{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px var(--hair),0 2px 8px rgba(0,0,0,.06);overflow:hidden;background:var(--card)}
+.brand-logo img{width:100%;height:100%;object-fit:cover;display:block}
 .brand-info{flex:1;min-width:0}
 .brand-name{font-family:var(--ff-display);font-weight:800;font-size:24px;letter-spacing:.01em;text-transform:uppercase;line-height:1;color:var(--green);white-space:nowrap}
 .brand-name em{font-style:italic;color:var(--green);position:relative}
@@ -526,10 +531,7 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
   <!-- Brand block -->
   <div class="brand-block">
     <div class="brand-logo">
-      <svg viewBox="0 0 22 28" fill="none">
-        <path d="M16 2v24" stroke="#1a4d2e" stroke-width="2" stroke-linecap="round"/>
-        <path d="M16 3c0 0-4.5 .5-7.5 2.5C7 6.5 7 8 8.5 9.5C10 11 13 11 16 9.5V3z" fill="#d94545"/>
-      </svg>
+      <img src="./icon-192.png" alt="The Pro Tour">
     </div>
     <div class="brand-info">
       <div class="brand-name">The Pro <em>Tour</em></div>
@@ -575,6 +577,26 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
       <span id="home-cta-label">Enter Scores</span>
       <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </button>
+  </div>
+
+  <!-- Carry-over cards (Standings / Recent Results / Prize Pool) — kept from the
+       prior home page; restyled by the new design tokens. -->
+  <div class="home-cards-wrap">
+    <div class="card">
+      <div class="ctitle">Season Standings</div>
+      <div id="home-standings"></div>
+      <div style="text-align:center;margin-top:10px">
+        <span class="cta-secondary" style="display:inline-flex;width:auto;padding:8px 14px;cursor:pointer" onclick="showPage('standings',document.getElementById('nb-standings'))">Full standings →</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Previous Round Scores</div>
+      <div id="home-recent"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Prize Pool</div>
+      <div id="home-prize"></div>
+    </div>
   </div>
 </div>
 
@@ -1931,7 +1953,12 @@ function renderHome(){
   const courseIcon=`<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
   const clockIcon=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
 
+  const sponsorImg = sponsorLogoImg(display.round, '34px');
+  const sponsorBand = sponsorImg
+    ? `<div class="hero-sponsor"><span class="hero-sponsor-lbl">Presented by</span>${sponsorImg}</div>`
+    : '';
   hero.innerHTML=`
+    ${sponsorBand}
     <div class="hero-meta">
       <span class="hero-meta-tag">${tag}</span>
       ${dateStr?`<span class="hero-meta-sep"></span><span class="hero-meta-date">${dateStr}</span>`:''}
@@ -2020,6 +2047,11 @@ function renderHome(){
       btn.onclick=()=>{ showPage('standings',document.getElementById('nb-standings')); };
     } else ctaWrap.style.display='none';
   }
+
+  // Carry-over cards — reuse the existing renderers so all data logic is preserved.
+  try { renderHomeStandings(); } catch(e){}
+  try { renderHomeRecentResults(); } catch(e){}
+  try { renderHomePrizePool(); } catch(e){}
 }
 
 function buildHomeTeeRow(round,gi,group){
@@ -2861,7 +2893,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v28</strong></div>
+          <div>SW cache: <strong>v29</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
