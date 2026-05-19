@@ -92,11 +92,10 @@ body.dark .cal-date{background:#4a7c59;color:#09090b}
 body.dark .dark-toggle{color:var(--green);border-color:var(--hair)}
 html,body{height:100vh;height:100dvh;overflow:hidden}
 html{background:var(--bg)}
-/* Top padding: force at least 44px so the iPhone clock/earpiece can never
-   overlap the brand block, even when env(safe-area-inset-top) reports 0 (iOS
-   PWA caching quirks, non-cover viewport contexts, etc.). Body has no bottom
-   padding — the nav handles its own home-indicator clearance below. */
-body{font-family:var(--ff-body);font-weight:500;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;padding-top:max(env(safe-area-inset-top,0px),44px)}
+/* Top padding adapts to the device's reported safe-area inset (notch / Dynamic
+   Island / status bar). Returns 0 on devices without one so we don't waste
+   space. Bottom padding is left to the nav itself. */
+body{font-family:var(--ff-body);font-weight:500;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;padding-top:env(safe-area-inset-top,0px)}
 input,textarea,select{font-family:var(--ff-body)}
 
 /* ─── Design system utilities (new mockup) ─────────────────────── */
@@ -2955,7 +2954,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v39</strong></div>
+          <div>SW cache: <strong>v40</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
