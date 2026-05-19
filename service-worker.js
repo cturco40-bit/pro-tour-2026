@@ -1,4 +1,4 @@
-const CACHE_NAME = 'protour2026-v49';
+const CACHE_NAME = 'protour2026-v50';
 
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
@@ -9,7 +9,8 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './apple-touch-icon.png'
+  './apple-touch-icon.png',
+  './logo-pro-tour.png'
 ];
 
 // Install — cache core assets (do NOT skipWaiting; let user confirm via prompt)

@@ -190,8 +190,8 @@ body.dark .icon-sun{display:none}
 .pp-row .l{color:var(--muted);font-size:12px}
 .pp-row .v{font-family:var(--ff-display);font-weight:800;color:var(--green);font-feature-settings:"tnum";font-size:14px}
 .pp-row.feature .v{color:var(--gold-deep);font-size:18px}
-.brand-logo{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px var(--hair),0 2px 8px rgba(0,0,0,.06);overflow:hidden;background:var(--card)}
-.brand-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.brand-logo{width:48px;height:60px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;flex-shrink:0}
+.brand-logo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
 .brand-info{flex:1;min-width:0}
 .brand-name{font-family:var(--ff-display);font-weight:800;font-size:24px;letter-spacing:.01em;text-transform:uppercase;line-height:1;color:var(--green);white-space:nowrap}
 .brand-name em{font-style:italic;color:var(--green);position:relative}
@@ -599,7 +599,7 @@ body.dark .icon-sun{display:none}
   <!-- Brand block -->
   <div class="brand-block">
     <div class="brand-logo">
-      <img src="./icon-192.png" alt="The Pro Tour">
+      <img src="./logo-pro-tour.png" alt="The Pro Tour">
     </div>
     <div class="brand-info">
       <div class="brand-name">The Pro <em>Tour</em></div>
@@ -2974,7 +2974,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v49</strong></div>
+          <div>SW cache: <strong>v50</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
