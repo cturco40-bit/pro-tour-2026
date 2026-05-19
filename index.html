@@ -901,7 +901,7 @@ body.dark .icon-sun{display:none}
         </div>
         <div class="as-row">
           <div><div class="as-row-lbl">Playoff Entry Fee</div><div class="as-row-sub">Per league player ($) — all 27 pay</div></div>
-          <input class="as-num" type="number" id="as-playoff-fee" min="0">
+          <input class="as-num" type="number" id="as-playoff-fee" min="0" oninput="updatePlayoffPrizePreview()">
         </div>
         <div class="as-row">
           <div><div class="as-row-lbl">Major Multiplier</div><div class="as-row-sub">Points multiplier for major rounds</div></div>
@@ -959,8 +959,8 @@ body.dark .icon-sun{display:none}
           <input class="as-num" type="number" id="as-prize-sponsor" min="0" style="width:72px" oninput="updatePrizePreview()">
         </div>
         <div class="as-row" style="border-bottom:none">
-          <div><div class="as-row-lbl">Season Winner Prize</div><div class="as-row-sub">Awarded to season points leader after Round 8, before playoffs ($)</div></div>
-          <input class="as-num" type="number" id="as-season-winner-prize" min="0" style="width:72px">
+          <div><div class="as-row-lbl">Season Winner Prize</div><div class="as-row-sub">Deducted from playoff entry pool; awarded to season points leader after Round 8 ($)</div></div>
+          <input class="as-num" type="number" id="as-season-winner-prize" min="0" style="width:72px" oninput="updatePlayoffPrizePreview()">
         </div>
         <div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;margin:10px 0 14px;font-size:12px;color:var(--muted);line-height:1.6">
           Pool = (players × fee) − sponsor discount<br>
@@ -979,6 +979,7 @@ body.dark .icon-sun{display:none}
           <span style="font-size:13px;font-weight:700;color:var(--muted)">Total</span>
           <span id="as-playoff-pct-total" style="font-size:14px;font-weight:800;color:var(--gd)">100%</span>
         </div>
+        <div id="as-playoff-prize-preview" style="margin-top:10px"></div>
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Preview — Example Round</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Enter player count to see dollar amounts</div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -2446,8 +2447,10 @@ function renderHomePrizePool(){
   const el=document.getElementById('home-prize');
   if(!el) return;
 
-  const playoffPool=PLAYERS.length*settings.playoffEntryFee;
+  const grossPlayoffPool=PLAYERS.length*settings.playoffEntryFee;
+  const playoffPool=calcPlayoffPool(); // entry pool minus season winner prize
   const playoffPayouts=calcPlayoffPayouts();
+  const swp=Math.max(0,settings.seasonWinnerPrize||0);
 
   // Season totals earned so far
   const earnedSoFar={};
@@ -2481,8 +2484,16 @@ function renderHomePrizePool(){
       <div class="ho-subhead">Playoff Prize Pool</div>
       <div class="pp-row feature">
         <span class="l">${PLAYERS.length} players × $${settings.playoffEntryFee}</span>
-        <span class="v">$${playoffPool.toLocaleString()}</span>
+        <span class="v">$${grossPlayoffPool.toLocaleString()}</span>
       </div>
+      ${swp>0?`<div class="pp-row">
+        <span class="l">− Season Winner</span>
+        <span class="v">$${swp.toLocaleString()}</span>
+      </div>
+      <div class="pp-row feature">
+        <span class="l">Playoff Pool</span>
+        <span class="v">$${playoffPool.toLocaleString()}</span>
+      </div>`:''}
       ${playoffPayouts.map((amt,i)=>`
         <div class="pp-row">
           <span class="l">${['1st','2nd','3rd','4th'][i]}</span>
@@ -4999,13 +5010,14 @@ function renderStandings(){
   } else if(activeTab==='playoffs'){
     // Combined Playoff 1 + Championship leaderboard
     const combined=buildPlayoffCombined();
-    const pool=PLAYERS.length*settings.playoffEntryFee;
+    const pool=calcPlayoffPool();
+    const swp=Math.max(0,settings.seasonWinnerPrize||0);
     const payouts=calcPlayoffPayouts();
     const ptsTable=settings.playoffPts||DEFAULT_SETTINGS.playoffPts;
 
     el.innerHTML=`<div class="info-b">
       Top 12 from season standings qualify. Combined net score over 2 rounds.<br>
-      Prize pool: <strong>$${pool.toLocaleString()}</strong> (${PLAYERS.length} players × $${settings.playoffEntryFee})
+      Prize pool: <strong>$${pool.toLocaleString()}</strong> (${PLAYERS.length} × $${settings.playoffEntryFee}${swp>0?' − $'+swp+' Season Winner':''})
     </div>`;
 
     if(!combined.length){
@@ -5145,7 +5157,7 @@ function renderStandings(){
 
     // Playoff combined (Playoff 1 + Championship carry-over)
     const playoffPayouts=calcPlayoffPayouts();
-    const playoffPool=PLAYERS.length*settings.playoffEntryFee;
+    const playoffPool=calcPlayoffPool(); // entry pool minus season winner prize
     const p1Players=buildPlayoffCombined();
     if(p1Players.length>0){
       const sorted=p1Players.sort((a,b)=>a.combinedNet-b.combinedNet);
@@ -5186,10 +5198,11 @@ function renderStandings(){
       </div>
     </div>`:'';
 
+    const grossPlayoffPool=PLAYERS.length*settings.playoffEntryFee;
     const playoffSummary=p1Players.length>0?`<div class="st-row earn">
       <div class="ho-name-wrap">
         <div class="ho-name">Playoffs (Combined)</div>
-        <div class="ho-meta">${PLAYERS.length} × $${settings.playoffEntryFee} · ${playoffPayouts.map((a,i)=>['1st','2nd','3rd','4th'][i]+' $'+a).join(' · ')}</div>
+        <div class="ho-meta">${PLAYERS.length} × $${settings.playoffEntryFee}${seasonWinnerPrize>0?' − $'+seasonWinnerPrize+' Season Winner':''} · ${playoffPayouts.map((a,i)=>['1st','2nd','3rd','4th'][i]+' $'+a).join(' · ')}</div>
       </div>
       <div>
         <div class="ho-val gold">$${playoffPool.toLocaleString()}</div>
@@ -6413,13 +6426,13 @@ const DEFAULT_SETTINGS={
   entryFee:60,
   sponsorDiscount:60,
   playoffEntryFee:100,
-  seasonWinnerPrize:200,
+  seasonWinnerPrize:500,
   majorMult:1.2,
   majorsOn:false,
   pts:[300,225,200,175,150,125,110,100,90,80,70,60,55,50,45,40,35,30,28,25,20,18,15,12,10,8,5,3],
   playoffPts:[750,650,550,500,450,400,350,300,250,200,175,150],
   prizePercentages:[52,26,14,8],         // regular rounds
-  playoffPrizePercentages:[50,25,15,10]  // playoffs — rounds to nearest $5
+  playoffPrizePercentages:[52,24,14,10]  // playoffs — applied to pool after season winner deducted
 };
 
 let settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -6485,10 +6498,19 @@ function calcRoundPayouts(round){
 }
 
 // Returns array of 4 dollar payouts for the playoff (rounded to nearest $5)
+// Pool = (players × playoffEntryFee) − seasonWinnerPrize.
+// The season winner prize is carved out of the entry pool before payouts.
 function calcPlayoffPayouts(){
-  const pool=PLAYERS.length*settings.playoffEntryFee;
+  const pool=calcPlayoffPool();
   const pcts=settings.playoffPrizePercentages||DEFAULT_SETTINGS.playoffPrizePercentages;
   return calcPayoutsFromPool(pool, pcts);
+}
+
+// Playoff payout pool — entry fees minus the season-winner prize.
+function calcPlayoffPool(){
+  const gross=PLAYERS.length*settings.playoffEntryFee;
+  const swp=Math.max(0,settings.seasonWinnerPrize||0);
+  return Math.max(0,gross-swp);
 }
 
 // PIN logic
@@ -6784,13 +6806,34 @@ function updatePrizePreview(){
 }
 
 function updatePlayoffPrizePreview(){
-  const pool=PLAYERS.length*(settings.playoffEntryFee||100);
+  const fee=parseFloat(document.getElementById('as-playoff-fee')?.value)||settings.playoffEntryFee||100;
+  const swp=Math.max(0,parseFloat(document.getElementById('as-season-winner-prize')?.value)||settings.seasonWinnerPrize||0);
+  const gross=PLAYERS.length*fee;
+  const pool=Math.max(0,gross-swp);
   const pcts=[0,1,2,3].map(i=>parseFloat(document.getElementById(`as-playoff-pct-${i}`)?.value)||0);
   const total=pcts.reduce((a,v)=>a+v,0);
   const totalEl=document.getElementById('as-playoff-pct-total');
   if(totalEl){
     totalEl.textContent=total.toFixed(1)+'%';
     totalEl.style.color=Math.abs(total-100)<0.1?'var(--green)':'var(--bogey)';
+  }
+  const prev=document.getElementById('as-playoff-prize-preview');
+  if(prev){
+    const posLabels=['1st Place','2nd Place','3rd Place','4th Place'];
+    const posColors=['var(--gold-deep)','var(--muted)','#a87038','var(--sub)'];
+    const payouts=pcts.map(p=>Math.round((pool*(p/100))/5)*5);
+    prev.innerHTML=`
+      <div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;border:1px solid var(--hair)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);letter-spacing:.14em;text-transform:uppercase">${PLAYERS.length} × $${fee}${swp>0?' − $'+swp+' SW':''}</span>
+          <span style="font-family:var(--ff-display);font-size:18px;font-weight:800;color:var(--green);line-height:1">$${pool.toLocaleString()}</span>
+        </div>
+        ${payouts.map((amt,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid var(--hair-2)">
+          <span style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:${posColors[i]};letter-spacing:.14em;text-transform:uppercase">${posLabels[i]}</span>
+          <span style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;letter-spacing:.12em">${pcts[i]}%</span>
+          <span style="font-family:var(--ff-display);font-size:16px;font-weight:800;color:var(--green)">$${amt.toLocaleString()}</span>
+        </div>`).join('')}
+      </div>`;
   }
 }
 
