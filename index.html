@@ -955,9 +955,13 @@ body.dark .icon-sun{display:none}
           <div><div class="as-row-lbl">Entry Fee</div><div class="as-row-sub">Per player, per round ($)</div></div>
           <input class="as-num" type="number" id="as-prize-fee" min="0" style="width:72px" oninput="updatePrizePreview()">
         </div>
-        <div class="as-row" style="border-bottom:none">
+        <div class="as-row">
           <div><div class="as-row-lbl">Sponsor Discount</div><div class="as-row-sub">1 free entry deducted ($)</div></div>
           <input class="as-num" type="number" id="as-prize-sponsor" min="0" style="width:72px" oninput="updatePrizePreview()">
+        </div>
+        <div class="as-row" style="border-bottom:none">
+          <div><div class="as-row-lbl">Season Winner Prize</div><div class="as-row-sub">Awarded to season points leader after Round 8, before playoffs ($)</div></div>
+          <input class="as-num" type="number" id="as-season-winner-prize" min="0" style="width:72px">
         </div>
         <div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;margin:10px 0 14px;font-size:12px;color:var(--muted);line-height:1.6">
           Pool = (players × fee) − sponsor discount<br>
@@ -5105,6 +5109,19 @@ function renderStandings(){
       Object.entries(moneyMap).forEach(([name,amt])=>{earn[name]=(earn[name]||0)+amt;});
     });
 
+    // Season Winner — awarded after all 8 regular rounds, before playoffs
+    const seasonWinnerPrize=Math.max(0,settings.seasonWinnerPrize||0);
+    const allRegularDone=REGULAR_ROUNDS.every(r=>done.has(r));
+    let seasonWinnerName=null;
+    if(allRegularDone && seasonWinnerPrize>0){
+      const {totals}=calcSeasonStandings();
+      const ranked=PLAYERS.map(n=>({n,p:totals[n]||0})).sort((a,b)=>b.p-a.p);
+      if(ranked.length && ranked[0].p>0){
+        seasonWinnerName=ranked[0].n;
+        earn[seasonWinnerName]=(earn[seasonWinnerName]||0)+seasonWinnerPrize;
+      }
+    }
+
     // Playoff combined (Playoff 1 + Championship carry-over)
     const playoffPayouts=calcPlayoffPayouts();
     const playoffPool=PLAYERS.length*settings.playoffEntryFee;
@@ -5137,6 +5154,17 @@ function renderStandings(){
       </div>`;
     }).filter(Boolean).join('');
 
+    const seasonWinnerSummary=seasonWinnerPrize>0?`<div class="lb-row earn">
+      <div class="ho-name-wrap">
+        <div class="ho-name">Season Winner</div>
+        <div class="ho-meta">${seasonWinnerName?seasonWinnerName.toUpperCase()+' · ':''}After Round 8 · Before Playoffs</div>
+      </div>
+      <div>
+        <div class="ho-val gold">$${seasonWinnerPrize.toLocaleString()}</div>
+        <div class="ho-val-sub">${seasonWinnerName?'Awarded':'Pending'}</div>
+      </div>
+    </div>`:'';
+
     const playoffSummary=p1Players.length>0?`<div class="lb-row earn">
       <div class="ho-name-wrap">
         <div class="ho-name">Playoffs (Combined)</div>
@@ -5149,7 +5177,7 @@ function renderStandings(){
     </div>`:'';
     const playoffPcts=settings.playoffPrizePercentages||DEFAULT_SETTINGS.playoffPrizePercentages;
     el.innerHTML=
-      (roundSummaries||playoffSummary?`<div class="card" style="padding:14px 16px"><div class="ctitle">Prize Pool</div>${roundSummaries}${playoffSummary}</div>`:'')+
+      (roundSummaries||seasonWinnerSummary||playoffSummary?`<div class="card" style="padding:14px 16px"><div class="ctitle">Prize Pool</div>${roundSummaries}${seasonWinnerSummary}${playoffSummary}</div>`:'')+
       `<div class="card" style="padding:14px 16px">
         <div class="ctitle">Season Earnings</div>
         ${rows.map(p=>`<div class="lb-row earn">
@@ -6361,6 +6389,7 @@ const DEFAULT_SETTINGS={
   entryFee:60,
   sponsorDiscount:60,
   playoffEntryFee:100,
+  seasonWinnerPrize:200,
   majorMult:1.2,
   majorsOn:false,
   pts:[300,225,200,175,150,125,110,100,90,80,70,60,55,50,45,40,35,30,28,25,20,18,15,12,10,8,5,3],
@@ -6384,6 +6413,7 @@ function loadSettings(){
       if(!settings.playoffPrizePercentages) settings.playoffPrizePercentages=DEFAULT_SETTINGS.playoffPrizePercentages;
       if(!settings.sponsorDiscount) settings.sponsorDiscount=DEFAULT_SETTINGS.sponsorDiscount;
       if(!settings.playoffEntryFee) settings.playoffEntryFee=DEFAULT_SETTINGS.playoffEntryFee;
+      if(settings.seasonWinnerPrize===undefined) settings.seasonWinnerPrize=DEFAULT_SETTINGS.seasonWinnerPrize;
       if(!Array.isArray(settings.playoffPts)) settings.playoffPts=DEFAULT_SETTINGS.playoffPts;
     }
     const r=localStorage.getItem(ROSTER_KEY);
@@ -6519,6 +6549,7 @@ function renderAdminSettings(){
 
   document.getElementById('as-prize-fee').value=settings.entryFee;
   document.getElementById('as-prize-sponsor').value=settings.sponsorDiscount;
+  if(document.getElementById('as-season-winner-prize')) document.getElementById('as-season-winner-prize').value=settings.seasonWinnerPrize||0;
   const posLabels=['1st Place','2nd Place','3rd Place','4th Place'];
   // Regular round percentages
   document.getElementById('as-pct-rows').innerHTML=settings.prizePercentages.map((pct,i)=>`
@@ -6739,6 +6770,7 @@ function updatePlayoffPrizePreview(){
 function savePrizes(){
   settings.entryFee=parseFloat(document.getElementById('as-prize-fee')?.value)||60;
   settings.sponsorDiscount=parseFloat(document.getElementById('as-prize-sponsor')?.value)||60;
+  settings.seasonWinnerPrize=Math.max(0,parseFloat(document.getElementById('as-season-winner-prize')?.value)||0);
   settings.prizePercentages=[0,1,2,3].map(i=>parseFloat(document.getElementById(`as-pct-${i}`)?.value)||0);
   settings.playoffPrizePercentages=[0,1,2,3].map(i=>parseFloat(document.getElementById(`as-playoff-pct-${i}`)?.value)||0);
   const regTotal=settings.prizePercentages.reduce((a,v)=>a+v,0);
