@@ -173,6 +173,11 @@ body.dark .icon-sun{display:none}
 .ho-val.over{color:var(--bogey)}
 .ho-val-sub{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);margin-top:3px;text-align:right;font-weight:600}
 .ho-empty{color:var(--sub);font-size:12px;text-align:center;padding:14px 0;font-family:var(--ff-mono);letter-spacing:.08em;text-transform:uppercase}
+
+/* Whole-line wrap: when a label can't fit, drop the entire label instead of
+   breaking mid-word. Applied to mono and display labels everywhere. */
+.ho-meta,.ho-subhead,.ho-val-sub,.ho-empty,.st-h,.lb-h,.cal-tag,.cut-label{word-break:keep-all;overflow-wrap:break-word;hyphens:none}
+.brand-name,.stitle,.display,.ho-name,.ho-val,.ho-pos,.lb-name,.lb-pos{word-break:keep-all;overflow-wrap:normal;hyphens:none}
 .ho-subhead{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);margin-bottom:10px;font-weight:600}
 .ho-foot{text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair-2)}
 .ho-foot a{font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:600;cursor:pointer;text-decoration:none}
@@ -329,14 +334,14 @@ body.dark .icon-sun{display:none}
 
 /* ─── SUMMARY SCORECARD (compact read) ───── */
 .sc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.sc-tbl{border-collapse:collapse;min-width:580px;width:100%;font-size:12px}
-.sc-tbl th{background:var(--surf-tint2);padding:6px 3px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:1px solid #cdd6c3;text-transform:uppercase;letter-spacing:.4px}
-.sc-tbl th.hl{background:var(--gd);color:#fff;text-align:left;padding-left:8px;min-width:72px}
-.sc-tbl th.sp{background:#c8dbbf;color:var(--gd)}
-.sc-tbl td{padding:5px 3px;border:1px solid #d0d8c6;text-align:center;vertical-align:middle}
-.sc-tbl td.pl{background:var(--surf-tint);font-size:11px;font-weight:700;color:var(--muted);text-align:left;padding-left:8px;white-space:nowrap}
-.sc-tbl td.tot{background:var(--surf-tint2);font-weight:800;color:var(--gd);font-size:13px}
-.sc-tbl td.nv{background:#d0edda;font-weight:800;color:var(--green-deep);font-size:13px}
+.sc-tbl{border-collapse:collapse;min-width:580px;width:100%;font-family:var(--ff-display);font-size:13px;font-feature-settings:"tnum"}
+.sc-tbl th{background:var(--surf-tint2);padding:8px 3px;text-align:center;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);border:1px solid var(--hair);text-transform:uppercase;letter-spacing:.14em;vertical-align:middle}
+.sc-tbl th.hl{background:var(--green);color:#fff;text-align:left;padding-left:10px;min-width:72px;letter-spacing:.16em}
+.sc-tbl th.sp{background:var(--surf-tint2);color:var(--green)}
+.sc-tbl td{padding:6px 3px;border:1px solid var(--hair);text-align:center;vertical-align:top;font-family:var(--ff-display);font-weight:600}
+.sc-tbl td.pl{background:var(--surf-tint);font-family:var(--ff-body);font-size:12px;font-weight:600;color:var(--green);text-align:left;padding-left:10px;white-space:nowrap;vertical-align:middle}
+.sc-tbl td.tot{background:var(--surf-tint2);font-family:var(--ff-display);font-weight:800;color:var(--green);font-size:14px}
+.sc-tbl td.nv{background:var(--surf-tint2);font-family:var(--ff-display);font-weight:800;color:var(--green-deep);font-size:14px}
 /* score colour cells — real golf scorecard style */
 .sc-eagle{color:var(--eagle);font-weight:900;position:relative}
 .sc-eagle .sc-inner{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid var(--eagle);line-height:1}
@@ -561,7 +566,7 @@ body.dark .icon-sun{display:none}
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Password</div>
         <div style="position:relative">
           <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;padding:12px 44px 12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:15px;background:var(--bg);color:var(--txt);box-sizing:border-box" onkeydown="if(event.key==='Enter')doLogin()">
-          <button type="button" onclick="toggleLoginPW(this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--muted);font-size:18px;line-height:1">👁</button>
+          <button type="button" onclick="toggleLoginPW(this)" aria-label="Toggle password visibility" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:6px;color:var(--muted);line-height:0;display:flex"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
       </div>
       <button type="submit" id="login-btn" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer">Sign In</button>
@@ -883,19 +888,6 @@ body.dark .icon-sun{display:none}
       </div>
     </div>
 
-    <!-- BULK HANDICAP UPDATE -->
-    <div class="as-section">
-      <div class="as-section-hdr" onclick="toggleAS('handicaps')">
-        <h3>Update Handicaps</h3>
-        <svg class="as-garr" id="as-garr-handicaps" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="as-section-body" id="as-body-handicaps">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">Update all player handicaps before each round. Changes apply to new scorecards — already submitted rounds are unaffected.</div>
-        <div id="hcp-bulk-list"></div>
-        <button class="as-save-btn" onclick="saveAllHandicaps()">Save All Handicaps</button>
-      </div>
-    </div>
-
     <!-- SEASON INFO -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('season-info')">
@@ -1108,7 +1100,7 @@ body.dark .icon-sun{display:none}
       </div>
       <div class="as-section-body" id="as-body-clear-scores">
         <div style="background:var(--surf-red);border-left:4px solid var(--bogey);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--red-deep);margin-bottom:14px;line-height:1.6">
-          ⚠️ Clearing scores cannot be undone. Enter your PIN to confirm any action.
+          Clearing scores cannot be undone. Enter your PIN to confirm any action.
         </div>
 
         <!-- PIN -->
@@ -1125,9 +1117,9 @@ body.dark .icon-sun{display:none}
           <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear Groups for a Round</div>
           <select class="fsel" id="clear-groups-round-sel" style="margin-bottom:8px;border-color:#f5c0c0"></select>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-            <button onclick="doGroupAction('players')" style="flex:1;padding:9px 6px;background:#c0392b;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🗑️ Clear Players</button>
-            <button onclick="doGroupAction('hcp')" style="flex:1;padding:9px 6px;background:#c0392b;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🗑️ Clear HCPs</button>
-            <button onclick="doGroupAction('all')" style="flex:1;padding:9px 6px;background:#8b0000;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">🗑️ Clear All Groups</button>
+            <button onclick="doGroupAction('players')" style="flex:1;padding:9px 6px;background:#c0392b;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Clear Players</button>
+            <button onclick="doGroupAction('hcp')" style="flex:1;padding:9px 6px;background:#c0392b;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Clear HCPs</button>
+            <button onclick="doGroupAction('all')" style="flex:1;padding:9px 6px;background:#8b0000;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Clear All Groups</button>
           </div>
           <div style="font-size:11px;color:var(--muted)">Clears all groups / all players / all handicaps for the selected round.</div>
         </div>
@@ -1137,7 +1129,7 @@ body.dark .icon-sun{display:none}
           <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear ALL Groups (Every Round)</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Removes all group setups for the entire season.</div>
           <button onclick="clearAllGroups()" style="width:100%;padding:10px;background:#8b0000;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-            🗑️ Clear Every Round's Groups
+            Clear Every Round's Groups
           </button>
         </div>
 
@@ -1149,7 +1141,7 @@ body.dark .icon-sun{display:none}
           <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear a Specific Round's Scores</div>
           <select class="fsel" id="clear-round-sel" style="margin-bottom:8px;border-color:#f5c0c0"></select>
           <button onclick="clearRoundScores()" style="width:100%;padding:10px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-            🗑️ Clear This Round's Scores
+            Clear This Round's Scores
           </button>
         </div>
 
@@ -1161,7 +1153,7 @@ body.dark .icon-sun{display:none}
             <option value="">— Select player —</option>
           </select>
           <button onclick="clearPlayerScore()" style="width:100%;padding:10px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-            🗑️ Remove This Player's Score
+            Remove This Player's Score
           </button>
         </div>
 
@@ -1170,7 +1162,7 @@ body.dark .icon-sun{display:none}
           <div style="font-size:13px;font-weight:700;color:var(--red-deep);margin-bottom:8px">Clear ALL Scores</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Deletes every submitted scorecard for the entire season.</div>
           <button onclick="clearAllScores()" style="width:100%;padding:10px;background:#8b0000;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-            🗑️ Delete All Scores Permanently
+            Delete All Scores Permanently
           </button>
         </div>
       </div>
@@ -1311,20 +1303,20 @@ body.dark .icon-sun{display:none}
 
       <!-- Change password toggle -->
       <div style="padding:10px 0;border-bottom:1px solid var(--bdr)">
-        <button onclick="showInlineChangePW()" style="width:100%;padding:11px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;font-size:13px;font-weight:700;color:var(--txt);cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">
-          <span style="font-size:16px">🔑</span> Change Password
-          <span style="margin-left:auto;color:var(--muted);font-size:16px">›</span>
+        <button onclick="showInlineChangePW()" style="width:100%;padding:13px 14px;background:var(--bg);border:1px solid var(--hair);border-radius:12px;font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;letter-spacing:.16em;text-transform:uppercase">
+          Change Password
+          <span style="margin-left:auto;color:var(--sub);font-size:18px;line-height:1">›</span>
         </button>
         <div id="inline-cpw" style="display:none;margin-top:10px">
           <div id="inline-cpw-err" style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--red-deep);margin-bottom:8px;display:none"></div>
           <div id="inline-cpw-ok" style="background:var(--surf-tint);border:1px solid #b7ebc0;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--green-deep);margin-bottom:8px;display:none"></div>
           <div style="position:relative;margin-bottom:8px">
             <input id="inline-cpw-cur" type="password" placeholder="Current password" style="width:100%;padding:10px 44px 10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:var(--bg);color:var(--txt);box-sizing:border-box">
-            <button type="button" onclick="toggleLoginPW(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--muted);font-size:16px;line-height:1">👁</button>
+            <button type="button" onclick="toggleLoginPW(this)" aria-label="Toggle password visibility" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:6px;color:var(--muted);line-height:0;display:flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
           </div>
           <div style="position:relative;margin-bottom:8px">
             <input id="inline-cpw-new" type="password" placeholder="New password (min 6 chars)" style="width:100%;padding:10px 44px 10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;background:var(--bg);color:var(--txt);box-sizing:border-box">
-            <button type="button" onclick="toggleLoginPW(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--muted);font-size:16px;line-height:1">👁</button>
+            <button type="button" onclick="toggleLoginPW(this)" aria-label="Toggle password visibility" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:6px;color:var(--muted);line-height:0;display:flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
           </div>
           <div style="display:flex;gap:8px">
             <button onclick="document.getElementById('inline-cpw').style.display='none'" style="flex:1;padding:10px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer">Cancel</button>
@@ -1334,33 +1326,25 @@ body.dark .icon-sun{display:none}
       </div>
 
       <!-- Dark mode -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--bdr)">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:16px">🌙</span>
-          <div style="font-size:13px;font-weight:700;color:var(--txt)">Dark Mode</div>
-        </div>
-        <button onclick="toggleDarkMode()" id="acct-dark-btn" style="padding:6px 16px;border-radius:20px;border:1.5px solid var(--bdr);background:var(--bg);color:var(--txt);font-size:12px;font-weight:700;cursor:pointer">Toggle</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--hair)">
+        <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Dark Mode</div>
+        <button onclick="toggleDarkMode()" id="acct-dark-btn" style="padding:7px 16px;border-radius:20px;border:1px solid var(--hair);background:var(--bg);color:var(--green);font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Toggle</button>
       </div>
 
       <!-- Notifications -->
-      <div style="padding:12px 0;border-bottom:1px solid var(--bdr)" id="notif-toggle-row">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:16px">🔔</span>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--txt)">Score Notifications</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">Get notified when groups submit</div>
-            </div>
+      <div style="padding:14px 0;border-bottom:1px solid var(--hair)" id="notif-toggle-row">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Score Notifications</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Get notified when groups submit</div>
           </div>
-          <button onclick="requestNotifPermission()" style="padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">Enable</button>
+          <button onclick="requestNotifPermission()" style="padding:7px 16px;background:var(--green);color:#fff;border:none;border-radius:20px;font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;flex-shrink:0">Enable</button>
         </div>
       </div>
 
       <!-- Sign out -->
-      <div style="padding:12px 0 0">
-        <button onclick="signOut()" style="width:100%;padding:12px;background:var(--surf-red);border:1.5px solid #f5c0c0;border-radius:10px;font-size:13px;font-weight:800;color:var(--red-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-          <span style="font-size:15px">🚪</span> Sign Out
-        </button>
+      <div style="padding:14px 0 0">
+        <button onclick="signOut()" style="width:100%;padding:13px;background:var(--surf-red);border:1px solid #f5c0c0;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--red-deep);cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Sign Out</button>
       </div>
     </div>
 
@@ -1419,7 +1403,7 @@ body.dark .icon-sun{display:none}
 
     <!-- Sign Out -->
     <button onclick="signOut()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surf-red);border:1.5px solid #f5c0c0;border-radius:14px;margin-bottom:20px;cursor:pointer;text-align:left">
-      <div style="width:42px;height:42px;border-radius:50%;background:#f5c0c0;color:var(--red-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🚪</div>
+      <div style="width:42px;height:42px;border-radius:50%;background:#f5c0c0;color:var(--red-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
       <div>
         <div style="font-size:15px;font-weight:800;color:var(--red-deep)">Sign Out</div>
         <div style="font-size:12px;color:var(--muted)">Sign out of The Pro Tour</div>
@@ -1535,13 +1519,13 @@ body.dark .icon-sun{display:none}
 <!-- CONFIRM SUBMIT MODAL -->
 <div id="confirm-submit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--card);border-radius:18px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 40px rgba(0,0,0,.35)">
-    <div style="font-size:36px;text-align:center;margin-bottom:12px">🏌️</div>
-    <div style="font-size:19px;font-weight:900;color:var(--gd);text-align:center;margin-bottom:8px">Submit Scorecard?</div>
-    <div style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;line-height:1.5">This will finalise the round for all players in this group. Scores cannot be changed without admin access.</div>
-    <div id="confirm-submit-summary" style="background:var(--surf-tint);border-radius:10px;padding:12px;margin-bottom:18px;font-size:13px;color:var(--gd)"></div>
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 14px"><polyline points="20 6 9 17 4 12"/></svg>
+    <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);text-align:center;margin-bottom:10px;letter-spacing:.01em;text-transform:uppercase;line-height:1.05">Submit Scorecard?</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.5">This finalises the round for all players in this group. Scores can't be changed without admin access.</div>
+    <div id="confirm-submit-summary" style="background:var(--surf-tint);border-radius:12px;padding:12px;margin-bottom:18px;font-size:13px;color:var(--green);border:1px solid var(--hair)"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <button id="confirm-submit-yes" style="padding:14px;background:var(--green);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer">✓ Yes, Submit</button>
-      <button onclick="closeConfirmSubmit(true)" style="padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:11px;font-size:14px;font-weight:700;cursor:pointer">← Go Back</button>
+      <button id="confirm-submit-yes" style="padding:14px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Yes, Submit</button>
+      <button onclick="closeConfirmSubmit(true)" style="padding:13px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Go Back</button>
     </div>
   </div>
 </div>
@@ -2279,7 +2263,7 @@ function renderHomeCurrentRound(){
           <div style="font-size:16px;font-weight:800;line-height:1.2">${roundTitle(display.round)}</div>
         </div>
         ${display.course?`<div style="font-size:12px;color:var(--muted);margin-top:3px">📍 ${display.course}</div>`:''}
-        ${display.teeTime?`<div style="font-size:12px;color:var(--green);font-weight:700;margin-top:3px">⛳ First tee: ${display.teeTime}</div>`:''}
+        ${display.teeTime?`<div style="font-family:var(--ff-mono);font-size:9px;color:var(--green);font-weight:600;margin-top:6px;letter-spacing:.16em;text-transform:uppercase">First Tee · ${display.teeTime}</div>`:''}
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -2576,7 +2560,7 @@ function scorecardCell(gross, par, hcp, siVal, tdStyle){
     const starsEl = strokes > 0
       ? `<span style="position:absolute;top:2px;right:4px;font-size:11px;font-weight:800;color:var(--gold-deep);line-height:1;letter-spacing:-1px;pointer-events:none">${'*'.repeat(strokes)}</span>`
       : '';
-    return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);font-size:12px;color:var(--sub);position:relative">${starsEl}—</td>`;
+    return `<td style="${tdStyle||''}text-align:center;padding:6px 2px;border:1px solid var(--hair);font-family:var(--ff-display);font-size:14px;font-weight:600;color:var(--sub);position:relative;vertical-align:top">${starsEl}—</td>`;
   }
 
   // PLAYED — show gross with its birdie/bogey shape; when strokes apply on
@@ -2609,7 +2593,7 @@ function scorecardCell(gross, par, hcp, siVal, tdStyle){
     ? `<div style="font-family:var(--ff-mono);font-size:9px;font-weight:700;color:var(--gold-deep);line-height:1;margin-top:2px">${netScore}</div>`
     : '';
 
-  return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);vertical-align:middle;position:relative"><div style="display:flex;flex-direction:column;align-items:center;gap:0">${shapeEl}${netEl}</div></td>`;
+  return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);vertical-align:top;position:relative"><div style="display:flex;flex-direction:column;align-items:center;gap:0">${shapeEl}${netEl}</div></td>`;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2740,7 +2724,7 @@ function renderSetup(){
     const {totals}=calcSeasonStandings();
     const qualifiers=PLAYERS.filter(n=>totals[n]>0).sort((a,b)=>(totals[b]||0)-(totals[a]||0)).slice(0,12);
     html+=`<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
-      <div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:6px">⛳ Playoff 1 — Handicap Advantages</div>
+      <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);margin-bottom:8px;letter-spacing:.16em;text-transform:uppercase">Playoff 1 — Handicap Advantages</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.7">
         Group 1 (1st–4th): <strong>HCP +2</strong><br>
         Group 2 (5th–8th): <strong>HCP +1</strong><br>
@@ -3013,7 +2997,7 @@ function renderFoursomePage(){
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
 
-    document.getElementById('foursome-list').innerHTML=`<div style="text-align:center;padding:30px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">🏌️</div><div style="font-size:14px;font-weight:600">No groups configured for this device</div><div style="font-size:12px;color:var(--sub);margin-top:6px">If you set up groups in Admin and don't see them here, check the diagnostic below</div>${diag}</div>`;
+    document.getElementById('foursome-list').innerHTML=`<div style="text-align:center;padding:38px 20px"><div class="ho-empty" style="margin-bottom:10px">No groups configured for this device</div><div style="font-size:12px;color:var(--sub);margin-top:6px">If you set up groups in Admin and don't see them here, check the diagnostic below</div>${diag}</div>`;
     return;
   }
 
@@ -3501,61 +3485,73 @@ function showDetailedStats(name){
   document.getElementById('player-breakdown-modal')?.remove();
   const modal=document.createElement('div');
   modal.id='player-breakdown-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(13,46,26,.55);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.onclick=e=>{ if(e.target===modal) modal.remove(); };
 
-  const statBox=(label,val,color='var(--gd)')=>`
-    <div style="background:var(--surf-tint);border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:18px;font-weight:800;color:${color}">${val}</div>
-      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px">${label}</div>
+  const statBox=(label,val,color='var(--green)')=>`
+    <div style="background:var(--surf-tint);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid var(--hair)">
+      <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:${color};line-height:1;font-feature-settings:'tnum'">${val}</div>
+      <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">${label}</div>
     </div>`;
 
-  const pct=n=>total>0?Math.round(n/total*100)+'%':'—';
+  const sectionLbl=(t)=>`<div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.16em;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:var(--gold)"></span>${t}</div>`;
 
   modal.innerHTML=`
-    <div style="background:var(--surf);border-radius:18px;padding:20px;width:100%;max-width:360px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-size:17px;font-weight:900;color:var(--gd)">${name}</div>
-          <div style="font-size:12px;color:var(--muted)">${playerData.rounds} rounds · ${playerData.holes} holes</div>
+    <div style="background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:360px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(13,46,26,.25);border:1px solid var(--hair)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:10px">
+        <div style="min-width:0;flex:1">
+          <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1.05;word-break:keep-all;overflow-wrap:normal">${name}</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:6px">${playerData.rounds} Round${playerData.rounds!==1?'s':''} · ${playerData.holes} Holes</div>
         </div>
-        <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--surf-tint);border:none;font-size:18px;cursor:pointer;color:var(--gd)">×</button>
+        <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--surf-tint);border:1px solid var(--hair);font-size:18px;cursor:pointer;color:var(--green);line-height:1;flex-shrink:0">×</button>
       </div>
 
-      ${totalEarnings>0?`<div style="background:var(--surf-tint);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--hair)"><span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">Season Earnings</span><span style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(totalEarnings).toLocaleString()}</span></div>`:''}
+      ${totalEarnings>0?`<div style="background:var(--surf-tint);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--hair);gap:10px;flex-wrap:wrap"><span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">Season Earnings</span><span style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(totalEarnings).toLocaleString()}</span></div>`:''}
 
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Scoring</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        ${statBox('Avg Score',avg.toFixed(1))}
+      ${sectionLbl('Scoring')}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px">
+        ${statBox('Avg',avg.toFixed(1))}
         ${statBox('Best',best,'var(--birdie)')}
         ${statBox('Worst',worst,'var(--bogey)')}
       </div>
 
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Score Breakdown</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        ${statBox('🦅 Eagles',playerData.eagles,'var(--eagle)')}
-        ${statBox('🐦 Birdies',playerData.birdies,'var(--birdie)')}
-        ${statBox('⛳ Pars',playerData.pars,'var(--muted)')}
+      ${sectionLbl('Score Breakdown')}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px">
+        ${statBox('Eagles',playerData.eagles,'var(--eagle)')}
+        ${statBox('Birdies',playerData.birdies,'var(--birdie)')}
+        ${statBox('Pars',playerData.pars,'var(--green)')}
         ${statBox('Bogeys',playerData.bogeys,'var(--bogey)')}
         ${statBox('Doubles',playerData.doubles,'var(--dbl)')}
-        ${statBox('Worse',playerData.worse,'#8b0000')}
+        ${statBox('Worse',playerData.worse,'var(--red-deep)')}
       </div>
 
       ${avgRoundMs?`
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Pace of Play</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      ${sectionLbl('Pace of Play')}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
         ${statBox('Avg Round',fmtElapsed(avgRoundMs))}
-        ${statBox('Avg / Hole',fmtElapsed(avgHoleMs))}
+        ${statBox('Per Hole',fmtElapsed(avgHoleMs))}
       </div>`:''}
 
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Hole Insights</div>
-      ${bestHole?`<div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--surf-tint);border-radius:10px;margin-bottom:6px">
-        <span style="font-size:13px;font-weight:600;color:var(--gd)">💚 Best Hole</span>
-        <span style="font-size:13px;font-weight:800;color:var(--birdie)">Hole ${bestHole.hole} (${bestHole.avg>=0?'+':''}${bestHole.avg.toFixed(1)} avg)</span>
+      ${sectionLbl('Hole Insights')}
+      ${bestHole?`<div style="display:grid;grid-template-columns:1fr auto;gap:10px;padding:11px 14px;background:var(--surf-tint);border-radius:12px;margin-bottom:8px;border:1px solid var(--hair);align-items:center">
+        <div>
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">Best Hole</div>
+          <div style="font-family:var(--ff-display);font-size:18px;font-weight:800;color:var(--green);line-height:1;margin-top:4px">Hole ${bestHole.hole}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--ff-display);font-size:18px;font-weight:800;color:var(--birdie);line-height:1">${bestHole.avg>=0?'+':''}${bestHole.avg.toFixed(1)}</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:4px">Avg</div>
+        </div>
       </div>`:''}
-      ${worstHole&&worstHole.hole!==bestHole?.hole?`<div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--surf-red);border-radius:10px">
-        <span style="font-size:13px;font-weight:600;color:var(--red-deep)">❌ Toughest Hole</span>
-        <span style="font-size:13px;font-weight:800;color:var(--bogey)">Hole ${worstHole.hole} (+${worstHole.avg.toFixed(1)} avg)</span>
+      ${worstHole&&worstHole.hole!==bestHole?.hole?`<div style="display:grid;grid-template-columns:1fr auto;gap:10px;padding:11px 14px;background:var(--surf-red);border-radius:12px;border:1px solid #f5c0c0;align-items:center">
+        <div>
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--red-deep);font-weight:600">Toughest Hole</div>
+          <div style="font-family:var(--ff-display);font-size:18px;font-weight:800;color:var(--red-deep);line-height:1;margin-top:4px">Hole ${worstHole.hole}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--ff-display);font-size:18px;font-weight:800;color:var(--bogey);line-height:1">+${worstHole.avg.toFixed(1)}</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:4px">Avg</div>
+        </div>
       </div>`:''}
     </div>`;
   document.body.appendChild(modal);
@@ -4149,12 +4145,12 @@ function showHalfwayReview(onConfirm){
     <div style="background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto">
       <div style="background:var(--green);padding:16px 18px;border-radius:18px 18px 0 0">
         <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.7)">Halfway Check — Group ${gi+1}</div>
-        <div style="font-size:18px;font-weight:900;color:#fff;margin-top:2px">⛳ Confirm Front 9 Scores</div>
+        <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:#fff;margin-top:2px;letter-spacing:.01em;text-transform:uppercase;line-height:1">Confirm Front 9 Scores</div>
         <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">Review before continuing to the back nine</div>
       </div>
       <div style="padding:16px">
         <div style="background:var(--surf-amber);border-left:4px solid #e65100;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13px;color:var(--amber-deep);margin-bottom:14px;line-height:1.5">
-          ⚠️ Check each score carefully. If anything looks wrong tap <strong>Go Back</strong> to correct it. Tap a player's name on the scorecard to edit that hole.
+          Check each score carefully. If anything looks wrong tap <strong>Go Back</strong> to correct it. Tap a player's name on the scorecard to edit that hole.
         </div>
         ${tableHTML}
         <div style="display:flex;gap:10px;margin-top:4px">
@@ -4207,7 +4203,7 @@ function showFinalReview(doSubmit, onCancel){
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr)">
       <div>
         <div style="font-size:13px;font-weight:700;color:var(--txt)">${pl.name} <span style="font-size:11px;color:var(--muted)">HCP ${pl.hcp}</span></div>
-        ${missing>0?`<div style="font-size:11px;color:var(--bogey);font-weight:700">⚠️ ${missing} hole${missing>1?'s':''} missing — will be DNF</div>`:''}
+        ${missing>0?`<div style="font-size:11px;color:var(--bogey);font-weight:700">${missing} hole${missing>1?'s':''} missing — will be DNF</div>`:''}
       </div>
       <div style="display:flex;gap:14px;align-items:center">
         <div style="text-align:center"><div style="font-size:15px;font-weight:900;color:var(--gd)">${gross}</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">Gross</div></div>
@@ -4225,7 +4221,7 @@ function showFinalReview(doSubmit, onCancel){
       </div>
       <div style="padding:16px">
         <div style="background:var(--surf-amber);border-left:4px solid #e65100;border-radius:0 8px 8px 0;padding:10px 13px;font-size:13px;color:var(--amber-deep);margin-bottom:14px;line-height:1.5">
-          ⚠️ Once submitted scores are final. Review carefully — tap <strong>Go Back</strong> to fix any errors.
+          Once submitted scores are final. Review carefully — tap <strong>Go Back</strong> to fix any errors.
         </div>
         ${frontHTML}
         ${backHTML}
@@ -4338,7 +4334,7 @@ function showMissingScoreModal(names, hole, round, gi){
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.innerHTML=`
     <div style="background:var(--card);border-radius:16px;padding:22px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.3)">
-      <div style="font-size:17px;font-weight:800;color:var(--gd);margin-bottom:8px">⚠️ Missing Score</div>
+      <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);margin-bottom:10px;letter-spacing:.01em;text-transform:uppercase;line-height:1">Missing Score</div>
       <div style="font-size:14px;color:var(--txt);margin-bottom:6px">No score entered for hole ${hole+1}:</div>
       <div style="font-size:14px;font-weight:700;color:var(--bogey);margin-bottom:14px">${names.join(', ')}</div>
       <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surf-amber);border:1.5px solid #ffcc80;border-radius:10px;margin-bottom:14px;cursor:pointer">
@@ -4427,7 +4423,7 @@ function showMissingBeforeSubmitModal(allMissing, onProceed, onCancel){
   const rows=allMissing.map(p=>`<div style="padding:5px 0;border-bottom:1px solid #f5c0c0;font-size:13px"><strong>${p.name}</strong> — Hole${p.holes.length>1?'s':''} ${p.holes.join(', ')}</div>`).join('');
   modal.innerHTML=`
     <div style="background:var(--card);border-radius:16px;padding:22px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
-      <div style="font-size:32px;text-align:center;margin-bottom:8px">⚠️</div>
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--bogey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       <div style="font-size:17px;font-weight:900;color:var(--bogey);text-align:center;margin-bottom:6px">Missing Scores</div>
       <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">The following holes have no score entered:</div>
       <div style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:10px;padding:10px 14px;margin-bottom:18px">${rows}</div>
@@ -4550,7 +4546,7 @@ function showRoundResultsModal(round){
       const nvpCol=p.nvp<0?'var(--birdie)':p.nvp>0?'var(--bogey)':'var(--muted)';
       return `<tr style="border-bottom:1px solid #eef1e8">
         <td style="padding:9px 6px;text-align:center"><span style="width:26px;height:26px;border-radius:50%;background:${posCls};color:${posTextCls};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">${pos}</span></td>
-        <td style="padding:9px 4px;font-weight:700;font-size:13px">${p.name}${p.name===overrideWinner?' 🏆':''}</td>
+        <td style="padding:9px 4px;font-weight:700;font-size:13px">${p.name}${p.name===overrideWinner?' <span style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--gold-deep);letter-spacing:.16em;text-transform:uppercase;margin-left:6px">Winner</span>':''}</td>
         <td style="padding:9px 4px;text-align:center;font-weight:800;color:${nvpCol}">${nvpStr}</td>
         <td style="padding:9px 4px;text-align:right;font-weight:700;font-size:12px;color:var(--muted)">${pts?Math.round(pts):'—'}</td>
         <td style="padding:9px 4px;text-align:right;font-weight:800;color:var(--gd);font-size:13px">${money&&money>0?'$'+Math.round(money):'—'}</td>
@@ -4564,7 +4560,7 @@ function showRoundResultsModal(round){
   const needsPlayoff=allSubmitted && tiedForFirst && !overrideWinner;
   const playoffHTML=needsPlayoff && tiedPlayers.length>0 && isAdmin ? `
     <div style="background:var(--surf-amber);border:2px solid #f57c00;border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:800;color:var(--amber-deep);margin-bottom:8px">⚔️ Tie for 1st — Declare Playoff Winner</div>
+      <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--amber-deep);margin-bottom:10px;letter-spacing:.16em;text-transform:uppercase">Tie for 1st — Declare Playoff Winner</div>
       <div style="font-size:12px;color:var(--red-deep);margin-bottom:10px">These players tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}:<br>${tiedPlayers.map(p=>p.name).join(', ')}</div>
       <select id="playoff-winner-sel" style="width:100%;padding:8px 10px;border:1.5px solid #f57c00;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;background:var(--surf)">
         <option value="">— Select playoff winner —</option>
@@ -4572,30 +4568,23 @@ function showRoundResultsModal(round){
       </select>
       <button onclick="declarePlayoffWinner('${round}')" style="width:100%;padding:10px;background:#e65100;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">✓ Declare Winner</button>
     </div>` : needsPlayoff && tiedPlayers.length>0 ? `
-    <div style="background:var(--surf-amber);border:2px solid #f57c00;border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-      <div style="font-size:22px">⚔️</div>
-      <div>
-        <div style="font-size:13px;font-weight:800;color:var(--amber-deep)">Tie for 1st — Playoff Needed</div>
-        <div style="font-size:12px;color:var(--red-deep);margin-top:2px">${tiedPlayers.map(p=>p.name).join(' · ')} tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}</div>
-      </div>
+    <div style="background:var(--surf-amber);border:1px solid #f57c00;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--amber-deep);letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px">Tie for 1st — Playoff Needed</div>
+      <div style="font-size:13px;color:var(--red-deep);font-weight:600">${tiedPlayers.map(p=>p.name).join(' · ')} tied at ${tiedPlayers[0]?fmtNvp(tiedPlayers[0].nvp):''}</div>
     </div>` : '';
 
   const winnerHTML=allSubmitted && (overrideWinner || !tiedForFirst) ? `
-    <div style="background:var(--surf-amber);border:2px solid var(--gold);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
-      <div style="font-size:36px">🏆</div>
-      <div>
-        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gold)">${overrideWinner?'Winner (Playoff)':'Winner'}</div>
-        <div style="font-size:18px;font-weight:900;color:var(--gd)">${effectiveWinner.name}</div>
+    <div style="background:var(--surf-amber);border:1px solid var(--gold);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-deep)">${overrideWinner?'Winner (Playoff)':'Winner'}</div>
+      <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1.05;margin-top:6px">${effectiveWinner.name}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:1px">${fmtNvp(effectiveWinner.nvp)} net · Gross ${effectiveWinner.gross}</div>
       </div>
       ${finalMoneyMap[effectiveWinner.name]>0?`<div style="margin-left:auto;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--gd)">$${Math.round(finalMoneyMap[effectiveWinner.name])}</div><div style="font-size:10px;color:var(--muted);font-weight:700">Prize</div></div>`:''}
     </div>`
-  : allSubmitted ? '' : `<div style="background:var(--surf-tint);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-      <div style="font-size:22px">⏳</div>
-      <div>
-        <div style="font-size:13px;font-weight:800;color:var(--gd)">${submittedCount} of ${totalGroups} groups in</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Winner declared when all groups submit</div>
-      </div>
+  : allSubmitted ? '' : `<div style="background:var(--surf-tint);border:1px solid var(--hair);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);letter-spacing:.16em;text-transform:uppercase">In Progress</div>
+      <div style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--green);line-height:1;margin-top:6px">${submittedCount} of ${totalGroups} Groups In</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Winner declared when all groups submit</div>
     </div>`;
 
   const headerLabel=allSubmitted?'Round Complete':'Scorecard Submitted';
@@ -4679,13 +4668,13 @@ function renderAdminTieBreaker(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:13px;font-weight:800;color:${statusColor}">${roundTitle(round)}</div>
         <div style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;background:${currentOverride?'#1a5c2a':'#e65100'};color:#fff">
-          ${currentOverride ? '✓ Declared' : '⚔️ Tied'}
+          ${currentOverride ? 'Declared' : 'Tied'}
         </div>
       </div>`;
 
     if(currentOverride){
       html += `<div style="font-size:13px;color:var(--green-deep);margin-bottom:10px">
-        🏆 <strong>${currentOverride}</strong> declared winner
+        <strong>${currentOverride}</strong> declared winner
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Tied players: ${tied.map(p=>p.name).join(', ')} — all at ${fmtNvp(topScore)}</div>
       <button onclick="clearPlayoffWinner('${round}')" style="width:100%;padding:9px;background:var(--surf);border:1.5px solid #e65100;border-radius:8px;font-size:12px;font-weight:700;color:var(--amber-deep);cursor:pointer">↩ Undo / Change Winner</button>`;
@@ -4697,7 +4686,7 @@ function renderAdminTieBreaker(){
         <option value="">— Select playoff winner —</option>
         ${tied.map(p=>`<option value="${p.name}">${p.name}</option>`).join('')}
       </select>
-      <button onclick="adminDeclareWinner('${round}')" style="width:100%;padding:11px;background:#e65100;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">✓ Declare Winner</button>`;
+      <button onclick="adminDeclareWinner('${round}')" style="width:100%;padding:11px;background:#e65100;color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Declare Winner</button>`;
     }
 
     html += `</div>`;
@@ -5617,14 +5606,13 @@ function buildScheduleResults(round, submittedGroups){
   let html='';
   if(winner1st){
     const winnerData=allPlayers.find(p=>p.name===winner1st);
-    html+=`<div style="background:var(--surf-amber);border:2px solid var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
-      <div style="font-size:28px">🏆</div>
-      <div>
-        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--gold)">${isTieWithOverride?'Winner (Playoff Declared)':'Winner'}</div>
-        <div style="font-size:16px;font-weight:900;color:var(--gd)">${winner1st}</div>
-        ${winnerData?`<div style="font-size:12px;color:var(--muted)">${fmtNvp(calcNetVsPar(winnerData.holes,winnerData.hcp,pars,si))} net · Gross ${winnerData.gross}</div>`:''}
+    html+=`<div style="background:var(--surf-amber);border:1px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="min-width:0;flex:1">
+        <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-deep)">${isTieWithOverride?'Winner (Playoff Declared)':'Winner'}</div>
+        <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1.05;margin-top:6px">${winner1st}</div>
+        ${winnerData?`<div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:6px;font-weight:600">${fmtNvp(calcNetVsPar(winnerData.holes,winnerData.hcp,pars,si))} Net · Gross ${winnerData.gross}</div>`:''}
       </div>
-      ${moneyMap[winner1st]>0?`<div style="margin-left:auto;text-align:center"><div style="font-size:18px;font-weight:900;color:var(--gd)">$${Math.round(moneyMap[winner1st])}</div><div style="font-size:10px;color:var(--muted);font-weight:700">Prize</div></div>`:''}
+      ${moneyMap[winner1st]>0?`<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(moneyMap[winner1st])}</div><div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:4px;font-weight:600">Prize</div></div>`:''}
     </div>`;
   }
   html+=`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Final Leaderboard</div>`;
@@ -5726,7 +5714,7 @@ async function searchCourse(){
   }
 
   const btn = document.getElementById('course-search-btn');
-  btn.textContent = '⏳'; btn.disabled = true;
+  btn.textContent = '…'; btn.disabled = true;
   document.getElementById('course-search-results').innerHTML =
     '<div style="color:var(--muted);font-size:13px;padding:8px 0">Searching…</div>';
 
@@ -5746,7 +5734,7 @@ async function searchCourse(){
   } catch(err){
     showCourseSearchError(`Search failed: ${err.message}. Check your API key or internet connection.`);
   } finally {
-    btn.textContent = '🔍 Search'; btn.disabled = false;
+    btn.textContent = 'Search'; btn.disabled = false;
   }
 }
 
@@ -7218,7 +7206,7 @@ function fireSubmitNotification(round, playerNames){
   // Don't notify the submitter (they're on this device) — only notify others
   // We can't know who "this device" is, so always fire — it's useful for spectators
   try{
-    const n = new Notification('⛳ Scorecard Submitted', {
+    const n = new Notification('Scorecard Submitted', {
       body: `${round} — ${playerNames} finished`,
       icon: './icon-192.png',
       badge: './icon-192.png',
@@ -7262,13 +7250,12 @@ function maybePromptNotif(){
   banner.id = 'notif-banner';
   banner.style.cssText = 'position:fixed;bottom:70px;left:14px;right:14px;z-index:9990;background:var(--card);border:1.5px solid var(--green);border-radius:14px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px;animation:slideUp .3s ease';
   banner.innerHTML = `
-    <div style="font-size:24px;flex-shrink:0">🔔</div>
-    <div style="flex:1">
-      <div style="font-size:13px;font-weight:800;color:var(--txt)">Enable Notifications?</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">Get notified when groups submit their scorecard</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Enable Notifications?</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Get notified when groups submit their scorecard</div>
     </div>
-    <button onclick="requestNotifPermission();document.getElementById('notif-banner')?.remove()" style="padding:7px 12px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Yes</button>
-    <button onclick="document.getElementById('notif-banner')?.remove()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;flex-shrink:0;padding:0 4px">×</button>`;
+    <button onclick="requestNotifPermission();document.getElementById('notif-banner')?.remove()" style="padding:7px 14px;background:var(--green);color:#fff;border:none;border-radius:20px;font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;flex-shrink:0;letter-spacing:.16em;text-transform:uppercase">Yes</button>
+    <button onclick="document.getElementById('notif-banner')?.remove()" style="background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;flex-shrink:0;padding:0 4px;line-height:1">×</button>`;
   document.body.appendChild(banner);
   setTimeout(()=>banner.remove(), 12000);
 }
@@ -7569,7 +7556,9 @@ function toggleLoginPW(btn){
   if(!input) return;
   const isHidden = input.type === 'password';
   input.type = isHidden ? 'text' : 'password';
-  btn.textContent = isHidden ? '🙈' : '👁';
+  const eyeOpen = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eyeOff = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A10.93 10.93 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  btn.innerHTML = isHidden ? eyeOff : eyeOpen;
 }
 
 function doLogin(){
