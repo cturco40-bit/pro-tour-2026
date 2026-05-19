@@ -153,7 +153,7 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .ho-pos.podium-2{color:var(--muted)}
 .ho-pos.podium-3{color:#a87038}
 .ho-name-wrap{min-width:0}
-.ho-name{font-size:14px;font-weight:600;color:var(--txt);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ho-name{font-family:var(--ff-body);font-size:14px;font-weight:600;color:var(--green);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ho-meta{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);margin-top:3px}
 .ho-val{font-family:var(--ff-display);font-weight:800;font-size:22px;color:var(--green);line-height:1;font-feature-settings:"tnum";text-align:right}
 .ho-val.under{color:var(--birdie)}
@@ -232,7 +232,7 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .tee-time{font-family:var(--ff-display);font-weight:800;font-size:22px;color:var(--green);letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
 .tee-meta{font-family:var(--ff-mono);font-size:9px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase}
 .tee-players{display:flex;flex-direction:column;gap:4px;min-width:0}
-.tee-player{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--green);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tee-player{display:flex;align-items:center;gap:9px;font-family:var(--ff-body);font-size:14px;font-weight:600;color:var(--green);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tee-player::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;box-shadow:0 0 0 1px rgba(26,77,46,.2)}
 .tee-player.done{color:var(--sub);text-decoration:line-through;text-decoration-color:var(--ink-4)}
 .tee-arrow{color:var(--sub);width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--surf-tint);border-radius:50%;flex-shrink:0}
@@ -2947,7 +2947,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v32</strong></div>
+          <div>SW cache: <strong>v33</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
