@@ -91,7 +91,7 @@ body.dark .cal-date{background:#4a7c59;color:#09090b}
 .dark-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:1px solid var(--hair);border-radius:50%;color:var(--green);font-size:14px;width:36px;height:36px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 body.dark .dark-toggle{color:var(--green);border-color:var(--hair)}
 html,body{height:100%;overflow:hidden}
-body{font-family:var(--ff-body);font-weight:500;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:var(--ff-body);font-weight:500;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 input,textarea,select{font-family:var(--ff-body)}
 
 /* ─── Design system utilities (new mockup) ─────────────────────── */
@@ -102,7 +102,7 @@ input,textarea,select{font-family:var(--ff-body)}
 .hair{border:0;border-top:1px solid var(--hair);margin:0}
 
 /* ─── HEADER ─────────────────────────────── */
-.hdr{background:var(--bg);color:var(--green);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;flex-shrink:0;border-bottom:1px solid var(--hair);position:relative;z-index:200}
+.hdr{background:var(--bg);color:var(--green);padding:14px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--hair);position:relative;z-index:200}
 .hdr-main{display:flex;align-items:center;gap:12px}
 .hdr-back{display:none;align-items:center;gap:6px;cursor:pointer;color:var(--green);border:none;background:none;padding:0}
 .hdr-back svg{width:22px;height:22px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -115,7 +115,7 @@ body.dark .hdr{background:var(--bg);border-bottom-color:var(--hair)}
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 0}
 
 /* ─── BOTTOM NAV ─────────────────────────── */
-.bnav{flex-shrink:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--hair);display:flex;padding:14px 0 8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.bnav{flex-shrink:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--hair);display:flex;padding:14px 0 10px}
 body.dark .bnav{background:rgba(22,30,24,.92)}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 4px;cursor:pointer;border:none;background:none;color:var(--sub);font-family:var(--ff-mono);font-size:8px;font-weight:600;gap:6px;transition:color .15s;text-transform:uppercase;letter-spacing:.16em;position:relative}
 .nb.act{color:var(--green)}
@@ -127,8 +127,9 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .pg{display:none}.pg.act{display:block}
 
 /* ─── HOME — brand block, live strip, hero, stats, tee times, CTA ─── */
-/* On home, neutralize scroll-area's side padding so cards can sit flush with mockup-style 16px margins. Bottom margin gives breathing room above the nav; top safe-area inset clears the iPhone notch. */
-#pg-home{margin:-14px -14px 0;padding-top:env(safe-area-inset-top,0px);padding-bottom:8px}
+/* Body handles the top/bottom safe-area insets so home content doesn't go behind
+   the iPhone clock. Bottom margin gives breathing room above the nav. */
+#pg-home{margin:-14px -14px 0;padding-bottom:14px}
 .brand-block{padding:14px 16px 6px;display:flex;align-items:center;gap:14px}
 .hero-sponsor{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--hair-2)}
 .hero-sponsor-lbl{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600}
@@ -2893,7 +2894,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v29</strong></div>
+          <div>SW cache: <strong>v30</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
