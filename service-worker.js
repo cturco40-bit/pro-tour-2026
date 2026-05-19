@@ -1,4 +1,4 @@
-const CACHE_NAME = 'protour2026-v61';
+const CACHE_NAME = 'protour2026-v62';
 
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();

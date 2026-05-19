@@ -609,22 +609,18 @@ body.dark .icon-sun{display:none}
 <!-- ─── MAIN APP (hidden until signed in) ──────────────────────────────── -->
 <div id="app" style="display:none;flex-direction:column;position:fixed;inset:0">
 
-<!-- APP HEADER -->
+<!-- APP HEADER (shows on every page except Home, which has its own brand block) -->
 <div class="hdr" style="display:none">
   <div class="hdr-main">
-    <button class="hdr-back" id="hdr-back" onclick="closeScorecard()">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      <span id="hdr-back-lbl">Foursomes</span>
-    </button>
-    <button class="dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
+    <img id="hdr-logo" src="./logo-pro-tour.png" alt="The Pro Tour" style="height:42px;width:auto;flex-shrink:0">
+    <div style="flex:1;min-width:0">
+      <div id="hdr-title">The Pro Tour</div>
+      <div id="hdr-sub" style="color:var(--sub)">Golf League</div>
+    </div>
+    <button class="dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode" style="flex-shrink:0">
       <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1m17.7-7.7l-4.2 4.2m-7 7l-4.2 4.2m15.4 0l-4.2-4.2m-7-7L4.3 4.3"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
-    <img id="hdr-logo" src="./logo-pro-tour.png" alt="The Pro Tour" style="height:38px;width:auto;flex-shrink:0">
-    <div style="flex:1">
-      <div id="hdr-title">The Pro Tour</div>
-      <div id="hdr-sub">Golf League</div>
-    </div>
   </div>
 </div>
 
@@ -5406,31 +5402,29 @@ function buildPlayoffCombined(){
 // ─── Schedule with scorecard history ─────────────────────────────────────
 function renderSchedule(){
   document.getElementById('schedule-list').innerHTML=CALENDAR.map(c=>{
-    const pts=c.date.split(' ');
     const hasG=activeGroups[c.round]?.length>0;
     const submittedGroups=Object.values(roundScores).filter(sc=>sc.round===c.round&&sc.submitted);
     const hasResults=submittedGroups.length>0;
-    const isTBD=c.date==='TBD';
     const rid=c.round.replace(/\s/g,'_');
     const hasActions = hasG || hasResults;
+    const sponsorSrc = sponsorLogos[c.round]||'';
+    const sponsorTile = sponsorSrc
+      ? `<div style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;background:var(--surf-tint);border-radius:12px;padding:8px;flex-shrink:0;border:1px solid var(--hair)"><img src="${sponsorSrc}" style="max-width:100%;max-height:100%;width:auto;height:auto" alt="sponsor"></div>`
+      : `<div style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;background:var(--surf-tint);border-radius:12px;flex-shrink:0;border:1px solid var(--hair);font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600">No Logo</div>`;
     return `<div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start">
-        <div class="cal-date${isTBD?' tbd':''}">
-          <div class="day">${pts[1]?pts[1].replace(',',''):'—'}</div>
-          <div class="mon">${pts[0]?pts[0].slice(0,3):'—'}</div>
-        </div>
+      <div style="padding:12px 16px 0;font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>${c.date}</span>
+        <span style="opacity:.5">·</span>
+        <span style="color:${c.type==='playoff'?'var(--amber-deep)':'var(--green)'}">${c.type==='playoff'?'Playoff':'Regular'}</span>
+        ${hasResults?`<span style="margin-left:auto;color:var(--green)">Results In</span>`:hasG?`<span style="margin-left:auto;color:var(--green)">Groups Ready</span>`:''}
+      </div>
+      <div style="padding:14px 16px ${hasActions?'14px':'18px'};display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:start">
+        ${sponsorTile}
         <div style="min-width:0">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-            ${sponsorLogoImg(c.round)}
-            <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">${c.type==='playoff'?'Playoff':'Regular'} · ${c.date}</div>
-          </div>
           <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1.05;word-break:keep-all;overflow-wrap:normal">${roundTitle(c.round)}</div>
           ${c.course||c.teeTime?`<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
             ${c.course?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600">${c.course}</span>`:''}
             ${c.teeTime?`<span style="font-family:var(--ff-mono);background:var(--surf-tint);color:var(--green);font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.16em;text-transform:uppercase">Tee · ${c.teeTime}</span>`:''}
-          </div>`:''}
-          ${hasResults||hasG?`<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
-            ${hasResults?`<span class="cal-tag results">Results In</span>`:hasG?`<span class="cal-tag groups">Groups Ready</span>`:''}
           </div>`:''}
         </div>
       </div>
