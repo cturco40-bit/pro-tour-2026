@@ -2520,7 +2520,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v21</strong></div>
+          <div>SW cache: <strong>v26</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
