@@ -119,7 +119,7 @@ body.dark .hdr{background:var(--bg);border-bottom-color:var(--hair)}
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 0}
 
 /* ─── BOTTOM NAV ─────────────────────────── */
-.bnav{flex-shrink:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--hair);display:flex;padding:12px 0 max(env(safe-area-inset-bottom,0px),10px)}
+.bnav{flex-shrink:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--hair);display:flex;padding:10px 0 env(safe-area-inset-bottom,6px)}
 body.dark .bnav{background:rgba(22,30,24,.92)}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 4px;cursor:pointer;border:none;background:none;color:var(--sub);font-family:var(--ff-mono);font-size:8px;font-weight:600;gap:6px;transition:color .15s;text-transform:uppercase;letter-spacing:.16em;position:relative}
 .nb.act{color:var(--green)}
@@ -132,8 +132,9 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 
 /* ─── HOME — brand block, live strip, hero, stats, tee times, CTA ─── */
 /* Body handles the top/bottom safe-area insets so home content doesn't go behind
-   the iPhone clock. Bottom margin gives breathing room above the nav. */
-#pg-home{margin:-14px -14px 0;padding-bottom:14px}
+   the iPhone clock. No bottom padding here — the nav owns the space above the
+   home indicator on its own. */
+#pg-home{margin:-14px -14px 0}
 .brand-block{padding:14px 16px 6px;display:flex;align-items:center;gap:14px}
 /* Sponsor logo sits inline to the LEFT of the round title, scaled to match the
    title's visual height so it reads as a paired mark, not a small afterthought. */
@@ -141,8 +142,9 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .hero-title-row .hero-title{flex:1;min-width:0;margin-bottom:0}
 .hero-title-row .hero-sponsor-mark{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:104px;height:104px;background:var(--card);border:1px solid var(--hair);border-radius:14px;padding:8px}
 .hero-title-row .hero-sponsor-mark img{max-height:100%;max-width:100%;width:auto;height:auto;object-fit:contain;border-radius:0;display:block}
-.home-cards-wrap{padding:4px 16px 20px}
+.home-cards-wrap{padding:4px 16px 6px}
 .home-cards-wrap .card{margin-bottom:14px}
+.home-cards-wrap .card:last-child{margin-bottom:0}
 
 /* Shared row style for home carry-over cards (standings / previous round / etc) */
 .ho-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair-2);gap:12px}
@@ -2948,7 +2950,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v36</strong></div>
+          <div>SW cache: <strong>v37</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
