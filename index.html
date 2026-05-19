@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="The Pro Tour">
 <meta name="theme-color" content="#1a5c2a">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,7 +93,7 @@ input,textarea,select{text-transform:none}
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 0}
 
 /* ─── BOTTOM NAV ─────────────────────────── */
-.bnav{flex-shrink:0;background:var(--surf);border-top:1px solid var(--bdr);display:flex;box-shadow:0 -2px 6px rgba(0,0,0,.07)}
+.bnav{flex-shrink:0;background:var(--surf);border-top:1px solid var(--bdr);display:flex;box-shadow:0 -2px 6px rgba(0,0,0,.07);padding-bottom:env(safe-area-inset-bottom,0px)}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 8px;cursor:pointer;border:none;background:none;color:var(--muted);font-size:9px;font-weight:700;gap:3px;transition:color .12s;text-transform:uppercase;letter-spacing:.5px}
 .nb.act{color:var(--green)}
 .nb.act svg{stroke:var(--green)}
@@ -2520,7 +2520,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v26</strong></div>
+          <div>SW cache: <strong>v27</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
@@ -6745,7 +6745,7 @@ function showPWABanner(isIOS=false){
   banner.style.cssText = `
     position:fixed;bottom:0;left:0;right:0;z-index:9998;
     background:#1a5c2a;color:#fff;
-    padding:14px 16px 14px;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));
     display:flex;align-items:center;gap:12px;
     box-shadow:0 -4px 20px rgba(0,0,0,.35);
     animation:slideUp .3s ease;
