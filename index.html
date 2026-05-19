@@ -2954,7 +2954,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v40</strong></div>
+          <div>SW cache: <strong>v41</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
@@ -7729,6 +7729,42 @@ function startDevMode(){
 // Firebase SDKs are loaded — now safe to run everything
 try { loadSettings(); } catch(e){ console.warn('loadSettings:', e); }
 try { initDarkMode(); } catch(e){}
+
+// ─── Adaptive top safe-area for PWA ───────────────────────────────────
+// iOS PWAs occasionally report env(safe-area-inset-top) as 0 (cached install,
+// older iOS, viewport-fit not picked up at install). This measures what env
+// actually resolves to and, in standalone mode, applies a device-aware
+// fallback so the status bar / clock can never overlap the brand block.
+(function applyAdaptiveTopInset(){
+  function measure(){
+    const probe = document.createElement('div');
+    probe.style.cssText = 'padding-top:env(safe-area-inset-top,0px);position:fixed;top:0;left:0;visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+    const envValue = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+    probe.remove();
+
+    if (envValue > 0) {
+      document.body.style.paddingTop = '';   // env works — let CSS handle it
+      return;
+    }
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                      || window.navigator.standalone === true;
+    if (!isStandalone) {
+      document.body.style.paddingTop = '';   // browser mode — no inset needed
+      return;
+    }
+    // Standalone but env=0. Estimate from screen aspect:
+    //  - notched/Dynamic Island iPhones (height >= 812 logical px): ~47-59
+    //  - classic Home-button iPhones: ~20
+    const h = window.screen.height, w = window.screen.width;
+    const ratio = Math.max(h, w) / Math.min(h, w);
+    const fallback = (ratio >= 2.0) ? 47 : 20;
+    document.body.style.paddingTop = fallback + 'px';
+  }
+  measure();
+  window.addEventListener('orientationchange', measure);
+  window.addEventListener('resize', measure);
+})();
 
 if(DEV_MODE){
   // Skip Firebase entirely in preview/local — go straight to dev mode
