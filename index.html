@@ -180,10 +180,10 @@ body.dark .icon-sun{display:none}
 /* Leaderboard rows — extra columns for playoff / earnings */
 .st-row{display:grid;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair-2);gap:10px}
 .st-row:last-child{border-bottom:none}
-.st-row.season{grid-template-columns:34px 1fr 44px 44px auto}
-.st-row.world{grid-template-columns:34px 1fr auto}
+.st-row.season{grid-template-columns:34px minmax(0,1fr) 40px 40px 64px}
+.st-row.world{grid-template-columns:34px minmax(0,1fr) 78px}
 .st-row.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
-.st-row.earn{grid-template-columns:1fr auto}
+.st-row.earn{grid-template-columns:minmax(0,1fr) 88px}
 .st-cell{font-family:var(--ff-display);font-weight:800;font-size:15px;color:var(--green);text-align:center;line-height:1;font-feature-settings:"tnum"}
 .st-cell.sub{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:2px}
 .st-cell.under{color:var(--birdie)}
@@ -191,8 +191,8 @@ body.dark .icon-sun{display:none}
 .st-cell.mute{color:var(--sub);font-weight:400}
 .st-cell.gold{color:var(--gold-deep)}
 .st-head{display:grid;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--hair);gap:10px;margin-bottom:4px}
-.st-head.season{grid-template-columns:34px 1fr 44px 44px auto}
-.st-head.world{grid-template-columns:34px 1fr auto}
+.st-head.season{grid-template-columns:34px minmax(0,1fr) 40px 40px 64px}
+.st-head.world{grid-template-columns:34px minmax(0,1fr) 78px}
 .st-head.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
 .st-h{font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;text-align:center}
 .st-h.left{text-align:left}
@@ -486,13 +486,13 @@ body.dark .icon-sun{display:none}
 .cal-tag.results{background:var(--green);color:#fff}
 .cal-tag.groups{background:var(--surf-tint2);color:var(--green)}
 
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a2414;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;pointer-events:none}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--green);color:#fff;padding:11px 18px;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;pointer-events:none;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 4px 18px rgba(13,46,26,.25)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ─── ADMIN PAGE ─────────────────────────── */
 .pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
-.pin-screen h2{font-size:20px;font-weight:800;margin-bottom:6px}
-.pin-screen p{font-size:13px;color:var(--muted);margin-bottom:24px}
+.pin-screen h2{font-family:var(--ff-display);font-size:28px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1;margin-bottom:10px}
+.pin-screen p{font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:24px}
 .pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
 .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bdr);background:var(--surf);transition:background .15s}
 .pin-dot.filled{background:var(--green);border-color:var(--green)}
@@ -503,9 +503,12 @@ body.dark .icon-sun{display:none}
 .pin-key.wide{grid-column:span 1}
 .pin-error{color:var(--bogey);font-size:13px;font-weight:600;margin-top:8px;min-height:20px}
 
-.as-section{background:var(--surf);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
-.as-section-hdr{background:var(--gd);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
-.as-section-hdr h3{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+.as-section{background:var(--card);border-radius:16px;border:1px solid var(--hair);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.as-section-hdr{background:var(--card);color:var(--green);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .15s}
+.as-section-hdr.open{border-bottom-color:var(--hair)}
+.as-section-hdr h3{font-family:var(--ff-mono);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:8px}
+.as-section-hdr h3::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.as-section-hdr svg.as-garr{stroke:var(--green) !important}
 .as-section-body{display:none;padding:14px 16px}
 .as-section-body.open{display:block}
 .as-garr{transition:transform .2s}
@@ -564,7 +567,7 @@ body.dark .icon-sun{display:none}
       <button type="submit" id="login-btn" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer">Sign In</button>
     </form>
     <div style="text-align:center;margin-top:16px">
-      <button onclick="showChangePassword()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">Change my password</button>
+      <button onclick="showChangePassword()" style="background:none;border:none;color:var(--sub);font-family:var(--ff-mono);font-size:9px;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;font-weight:600">Change My Password</button>
     </div>
   </div>
 </div>
@@ -573,8 +576,9 @@ body.dark .icon-sun{display:none}
 <div id="change-pw-screen" style="position:fixed;inset:0;background:var(--bg);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:340px">
     <div style="text-align:center;margin-bottom:24px">
-      <div style="font-size:20px;font-weight:900;color:var(--gd)">Change Password</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:4px">Enter your current and new password</div>
+      <img src="./logo-pro-tour.png" alt="The Pro Tour" style="height:96px;width:auto;margin:0 auto 14px;display:block">
+      <div style="font-family:var(--ff-display);font-size:26px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1">Change Password</div>
+      <div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:10px">Enter Current + New Password</div>
     </div>
     <form onsubmit="event.preventDefault();doChangePassword();return false" style="background:var(--card);border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.12)">
       <div id="cpw-error" style="background:var(--surf-red);border:1px solid #f5c0c0;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red-deep);margin-bottom:14px;display:none"></div>
@@ -744,9 +748,9 @@ body.dark .icon-sun{display:none}
 <div id="pg-admin" class="pg">
   <!-- PIN LOCK SCREEN -->
   <div id="admin-pin-screen" class="pin-screen">
-    <div style="font-size:36px;margin-bottom:10px">🔒</div>
-    <h2>Admin Settings</h2>
-    <p>Enter your 4-digit PIN to access settings</p>
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <h2>Admin</h2>
+    <p>Enter your 4-digit PIN</p>
     <div class="pin-dots" id="pin-dots">
       <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
       <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -772,13 +776,13 @@ body.dark .icon-sun{display:none}
   <div id="admin-settings" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="stitle" style="margin-bottom:0">Admin</div>
-      <span style="background:var(--surf-tint);color:var(--gd);font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px">🔓 Unlocked</span>
+      <span style="background:var(--green);color:#fff;font-family:var(--ff-mono);font-size:9px;font-weight:600;padding:5px 11px;border-radius:20px;letter-spacing:.16em;text-transform:uppercase">Unlocked</span>
     </div>
 
     <!-- GROUPS SETUP -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('groups')">
-        <h3>👥 Groups Setup</h3>
+        <h3>Groups Setup</h3>
         <svg class="as-garr" id="as-garr-groups" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-groups">
@@ -794,7 +798,7 @@ body.dark .icon-sun{display:none}
     <!-- COURSE INFO -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('course')">
-        <h3>⛳ Course Info</h3>
+        <h3>Course Info</h3>
         <svg class="as-garr" id="as-garr-course" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-course">
@@ -814,7 +818,7 @@ body.dark .icon-sun{display:none}
           <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Search Course</div>
           <div style="display:flex;gap:8px">
             <input class="finp" type="text" id="course-search-inp" placeholder="e.g. Angus Glen" style="flex:1;font-size:14px" onkeydown="if(event.key==='Enter')searchCourse()">
-            <button onclick="searchCourse()" id="course-search-btn" style="padding:9px 14px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">🔍 Search</button>
+            <button onclick="searchCourse()" id="course-search-btn" style="padding:9px 16px;background:var(--green);color:#fff;border:none;border-radius:20px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;letter-spacing:.16em;text-transform:uppercase">Search</button>
           </div>
           <div id="course-search-results" style="margin-top:8px"></div>
         </div>
@@ -869,7 +873,7 @@ body.dark .icon-sun{display:none}
     <!-- CALENDAR -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('calendar')">
-        <h3>📅 Calendar</h3>
+        <h3>Calendar</h3>
         <svg class="as-garr" id="as-garr-calendar" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-calendar">
@@ -882,7 +886,7 @@ body.dark .icon-sun{display:none}
     <!-- BULK HANDICAP UPDATE -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('handicaps')">
-        <h3>⛳ Update Handicaps</h3>
+        <h3>Update Handicaps</h3>
         <svg class="as-garr" id="as-garr-handicaps" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-handicaps">
@@ -895,7 +899,7 @@ body.dark .icon-sun{display:none}
     <!-- SEASON INFO -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('season-info')">
-        <h3>📋 Season Info</h3>
+        <h3>Season Info</h3>
         <svg class="as-garr" id="as-garr-season-info" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-season-info">
@@ -922,7 +926,7 @@ body.dark .icon-sun{display:none}
     <!-- POINTS PER FINISH -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('points')">
-        <h3>🏅 Points Per Finish</h3>
+        <h3>Points Per Finish</h3>
         <svg class="as-garr" id="as-garr-points" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-points">
@@ -936,7 +940,7 @@ body.dark .icon-sun{display:none}
     <!-- PLAYOFF POINTS -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('playoff-pts')">
-        <h3>🏆 Playoff Points</h3>
+        <h3>Playoff Points</h3>
         <svg class="as-garr" id="as-garr-playoff-pts" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-playoff-pts">
@@ -950,7 +954,7 @@ body.dark .icon-sun{display:none}
     <!-- PRIZE PAYOUTS -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('prizes')">
-        <h3>💰 Prize Payouts</h3>
+        <h3>Prize Payouts</h3>
         <svg class="as-garr" id="as-garr-prizes" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-prizes">
@@ -997,7 +1001,7 @@ body.dark .icon-sun{display:none}
     <!-- PLAYER ROSTER -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('roster')">
-        <h3>👤 Player Roster</h3>
+        <h3>Player Roster</h3>
         <svg class="as-garr" id="as-garr-roster" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-roster">
@@ -1012,7 +1016,7 @@ body.dark .icon-sun{display:none}
     <!-- PENALTY STROKES -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('penalties')">
-        <h3>⚠️ Penalty Strokes</h3>
+        <h3>Penalty Strokes</h3>
         <svg class="as-garr" id="as-garr-penalties" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-penalties">
@@ -1050,7 +1054,7 @@ body.dark .icon-sun{display:none}
     <!-- SCORECARD EDITOR -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('sc-editor')">
-        <h3>✏️ Edit Scorecards</h3>
+        <h3>Edit Scorecards</h3>
         <svg class="as-garr" id="as-garr-sc-editor" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-sc-editor">
@@ -1062,7 +1066,7 @@ body.dark .icon-sun{display:none}
     <!-- TIE BREAKER -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('tiebreak');renderAdminTieBreaker()">
-        <h3>⚔️ Tie Breaker</h3>
+        <h3>Tie Breaker</h3>
         <svg class="as-garr" id="as-garr-tiebreak" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-tiebreak">
@@ -1078,7 +1082,7 @@ body.dark .icon-sun{display:none}
     <!-- EXPORT SEASON DATA -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('export')">
-        <h3>📊 Export Season Data</h3>
+        <h3>Export Season Data</h3>
         <svg class="as-garr" id="as-garr-export" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-export">
@@ -1099,7 +1103,7 @@ body.dark .icon-sun{display:none}
     <!-- CLEAR SCORES -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('clear-scores')" style="background:#8b0000">
-        <h3>🗑️ Clear Scores</h3>
+        <h3>Clear Scores</h3>
         <svg class="as-garr" id="as-garr-clear-scores" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-clear-scores">
@@ -1177,7 +1181,7 @@ body.dark .icon-sun{display:none}
       <!-- SCORECARD PHOTOS -->
       <div class="as-section">
         <div class="as-section-hdr" onclick="toggleAS('sc-photos');renderAdminPhotos()">
-          <h3>📷 Scorecard Photos</h3>
+          <h3>Scorecard Photos</h3>
           <svg class="as-garr" id="as-garr-sc-photos" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="as-section-body" id="as-body-sc-photos">
@@ -1189,12 +1193,12 @@ body.dark .icon-sun{display:none}
       </div>
 
       <div class="as-section-hdr" onclick="toggleAS('audit');if(!document.getElementById('as-body-audit').classList.contains('open')){}else{renderAuditLog()}">
-        <h3>🔍 Audit Log</h3>
+        <h3>Audit Log</h3>
         <svg class="as-garr" id="as-garr-audit" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-audit">
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Last 100 score, group, and penalty changes — who made them and when.</div>
-        <button onclick="renderAuditLog()" style="width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">🔄 Refresh Log</button>
+        <button onclick="renderAuditLog()" style="width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;margin-bottom:12px;letter-spacing:.16em;text-transform:uppercase">Refresh Log</button>
         <div id="audit-log-list"></div>
       </div>
     </div>
@@ -1202,7 +1206,7 @@ body.dark .icon-sun{display:none}
     <!-- NOTIFICATIONS -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('notif')">
-        <h3>🔔 Notifications</h3>
+        <h3>Notifications</h3>
         <svg class="as-garr" id="as-garr-notif" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-notif">
@@ -1213,7 +1217,7 @@ body.dark .icon-sun{display:none}
     <!-- CHANGE PIN -->
     <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('pin')">
-        <h3>🔑 Change PIN</h3>
+        <h3>Change PIN</h3>
         <svg class="as-garr" id="as-garr-pin" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-pin">
@@ -1225,7 +1229,7 @@ body.dark .icon-sun{display:none}
       </div>
     </div>
 
-    <button class="as-logout" onclick="lockAdmin()">🔒 Lock Admin</button>
+    <button class="as-logout" onclick="lockAdmin()">Lock Admin</button>
     <div style="height:20px"></div>
   </div>
 </div>
@@ -1505,25 +1509,25 @@ body.dark .icon-sun{display:none}
 <div class="toast" id="toast"></div>
 
 <!-- MID-ROUND LEADERBOARD MODAL -->
-<div id="mid-lb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;overflow-y:auto">
-  <div style="background:var(--card);margin:20px auto;max-width:480px;border-radius:18px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4)">
-    <div style="background:#0a1f0f;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+<div id="mid-lb-modal" style="display:none;position:fixed;inset:0;background:rgba(13,46,26,.55);z-index:700;overflow-y:auto">
+  <div style="background:var(--card);margin:20px auto;max-width:480px;border-radius:18px;overflow:hidden;box-shadow:0 8px 40px rgba(13,46,26,.25);border:1px solid var(--hair)">
+    <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hair)">
       <div>
-        <div style="font-size:16px;font-weight:900;color:#FFE033" id="mid-lb-title">Live Leaderboard</div>
-        <div style="font-size:11px;color:#7a9e82;margin-top:2px" id="mid-lb-sub">In Progress</div>
+        <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);line-height:1" id="mid-lb-title">Live Leaderboard</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:5px" id="mid-lb-sub">In Progress</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite"></div><span style="font-size:10px;font-weight:700;color:#4ade80">LIVE</span></div>
-        <button onclick="document.getElementById('mid-lb-modal').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 1.5s infinite"></div><span style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--gold-deep);letter-spacing:.18em;text-transform:uppercase">Live</span></div>
+        <button onclick="document.getElementById('mid-lb-modal').style.display='none'" style="background:var(--surf-tint);border:1px solid var(--hair);color:var(--green);width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
       </div>
     </div>
-    <div style="background:#0a1f0f;padding:6px 12px 8px;display:grid;grid-template-columns:32px 1fr 52px 44px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#7a9e82;border-bottom:1px solid #1e3d22">
-      <span style="text-align:center">POS</span><span style="padding-left:6px">PLAYER</span><span style="text-align:right">NET</span><span style="text-align:right">THRU</span>
+    <div style="padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;background:var(--surf-tint);border-bottom:1px solid var(--hair-2)">
+      <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right">Net</span><span class="st-h right">Thru</span>
     </div>
-    <div id="mid-lb-rows" style="background:#0a1f0f;max-height:60vh;overflow-y:auto"></div>
-    <div style="padding:12px 16px;border-top:1px solid var(--bdr)">
-      <div style="font-size:11px;color:var(--muted);text-align:center">Scores update when players tap "Next" on each hole</div>
-      <button onclick="refreshMidLB()" style="width:100%;margin-top:10px;padding:11px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🔄 Refresh</button>
+    <div id="mid-lb-rows" style="max-height:60vh;overflow-y:auto"></div>
+    <div style="padding:14px 16px;border-top:1px solid var(--hair)">
+      <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);text-align:center;font-weight:600">Updates when players tap Next on each hole</div>
+      <button onclick="refreshMidLB()" style="width:100%;margin-top:10px;padding:11px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Refresh</button>
     </div>
   </div>
 </div>
@@ -1856,7 +1860,7 @@ function showPlayerScorecard(idx){
             <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px">Net</div>
           </div>
         </div>
-        ${h.earned>0?`<div style="background:var(--surf-tint);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--gd)">💰 Prize Earnings</span><span style="font-size:18px;font-weight:900;color:var(--gd)">$${h.earned}</span></div>`:''}
+        ${h.earned>0?`<div style="background:var(--surf-tint);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--hair)"><span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">Prize Earnings</span><span style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--gold-deep);line-height:1">$${h.earned}</span></div>`:''}
         <!-- Front 9 -->
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Front Nine</div>
         <div style="overflow-x:auto;margin-bottom:12px">
@@ -3518,7 +3522,7 @@ function showDetailedStats(name){
         <button onclick="document.getElementById('player-breakdown-modal').remove()" style="width:32px;height:32px;border-radius:50%;background:var(--surf-tint);border:none;font-size:18px;cursor:pointer;color:var(--gd)">×</button>
       </div>
 
-      ${totalEarnings>0?`<div style="background:var(--surf-tint);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--gd)">💰 Season Earnings</span><span style="font-size:20px;font-weight:900;color:var(--gd)">$${Math.round(totalEarnings).toLocaleString()}</span></div>`:''}
+      ${totalEarnings>0?`<div style="background:var(--surf-tint);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--hair)"><span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">Season Earnings</span><span style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(totalEarnings).toLocaleString()}</span></div>`:''}
 
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Scoring</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
@@ -4053,9 +4057,9 @@ function _renderLiveStandingsInner(){
     const thruCls = p.done ? 'done' : '';
     return `<div class="lb-row${isLead?' lb-lead':''}${p.isMe?' lb-me':''}">
       <div class="lb-pos ${posCls}">${p.posStr}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span><span style="font-size:9px;font-weight:400;color:${p.done?'#c9a227':'#5a8060'};margin-left:5px;opacity:.8">${clockStr}</span></div>
+      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clockStr}</span>`:''}</div>
       <div class="lb-score ${nvpCls(p.nvp)}${isLead?' lead':''}">${nvpStr}</div>
-      <div class="lb-thru ${thruCls}" style="font-size:10px">${thruStr}</div>
+      <div class="lb-thru ${thruCls}">${thruStr}</div>
     </div>`;
   }).join('');
 }
@@ -4623,8 +4627,8 @@ function showRoundResultsModal(round){
         ${allPlayers.length>10?`<div style="text-align:center;padding:8px;font-size:12px;color:var(--muted)">+ ${allPlayers.length-10} more — see full Standings</div>`:''}
       </div>
       <div style="padding:14px 16px 20px;display:flex;flex-direction:column;gap:8px">
-        ${!allSubmitted?`<button onclick="document.getElementById('round-results-modal').remove();showPage('foursomes',document.getElementById('nb-foursomes'));setTimeout(()=>switchFSTab('lb',document.getElementById('fs-tab-lb')),100)" style="width:100%;padding:13px;background:#0a1f0f;color:#4ade80;border:1.5px solid #2d8a45;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">📊 Watch Live Leaderboard →</button>`:''}
-        <button onclick="document.getElementById('round-results-modal').remove();showPage('standings',document.getElementById('nb-standings'))" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">${allSubmitted?'View Full Standings →':'View Standings'}</button>
+        ${!allSubmitted?`<button onclick="document.getElementById('round-results-modal').remove();showPage('foursomes',document.getElementById('nb-foursomes'));setTimeout(()=>switchFSTab('lb',document.getElementById('fs-tab-lb')),100)" style="width:100%;padding:13px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Watch Live Leaderboard →</button>`:''}
+        <button onclick="document.getElementById('round-results-modal').remove();showPage('standings',document.getElementById('nb-standings'))" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">${allSubmitted?'View Full Standings →':'View Standings'}</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -6405,7 +6409,7 @@ function showSyncBanner(msg){
   if(!b){
     b=document.createElement('div');
     b.id='sync-banner';
-    b.style.cssText='position:fixed;top:0;left:0;right:0;background:#c9a227;color:var(--amber-deep);font-size:12px;font-weight:700;text-align:center;padding:6px;z-index:9999';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;background:var(--gold);color:var(--gd);font-family:var(--ff-mono);font-size:10px;font-weight:600;text-align:center;padding:7px;z-index:9999;letter-spacing:.16em;text-transform:uppercase';
     document.body.appendChild(b);
   }
   b.textContent=msg;
@@ -6546,9 +6550,12 @@ function toggleAS(id){
   // close all
   document.querySelectorAll('.as-section-body').forEach(b=>b.classList.remove('open'));
   document.querySelectorAll('.as-garr').forEach(a=>a.classList.remove('open'));
+  document.querySelectorAll('.as-section-hdr').forEach(h=>h.classList.remove('open'));
   if(!open){
     body.classList.add('open');
     arr.classList.add('open');
+    const hdr=arr.closest('.as-section-hdr');
+    if(hdr) hdr.classList.add('open');
     // Repopulate dropdowns when clear section opens
     if(id==='clear-scores') populateClearDropdowns();
   }
@@ -7341,30 +7348,30 @@ function showPWABanner(isIOS=false){
   banner.id = 'pwa-banner';
   banner.style.cssText = `
     position:fixed;bottom:0;left:0;right:0;z-index:9998;
-    background:#1a5c2a;color:#fff;
+    background:var(--green);color:#fff;
     padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));
     display:flex;align-items:center;gap:12px;
-    box-shadow:0 -4px 20px rgba(0,0,0,.35);
+    box-shadow:0 -4px 20px rgba(13,46,26,.35);
     animation:slideUp .3s ease;
   `;
 
   if(isIOS){
     banner.innerHTML=`
-      <div style="font-size:28px;flex-shrink:0">⛳</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:800;letter-spacing:.3px">Install Pro Tour 2026</div>
-        <div style="font-size:11px;opacity:.8;margin-top:2px">Tap <strong>Share</strong> then <strong>"Add to Home Screen"</strong></div>
+      <img src="./logo-pro-tour.png" alt="" style="height:36px;width:auto;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--ff-display);font-size:18px;font-weight:800;letter-spacing:.01em;line-height:1">Install The Pro Tour</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-top:5px;font-weight:600">Tap Share · Add to Home Screen</div>
       </div>
-      <button onclick="dismissPWABanner()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">×</button>`;
+      <button onclick="dismissPWABanner()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>`;
   } else {
     banner.innerHTML=`
-      <div style="font-size:28px;flex-shrink:0">⛳</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:800;letter-spacing:.3px">Install Pro Tour 2026</div>
-        <div style="font-size:11px;opacity:.8;margin-top:2px">Add to your home screen for the best experience</div>
+      <img src="./logo-pro-tour.png" alt="" style="height:36px;width:auto;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--ff-display);font-size:18px;font-weight:800;letter-spacing:.01em;line-height:1">Install The Pro Tour</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-top:5px;font-weight:600">Add to home screen</div>
       </div>
-      <button onclick="triggerPWAInstall()" style="background:#FFE033;color:var(--amber-deep);border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Install</button>
-      <button onclick="dismissPWABanner()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">×</button>`;
+      <button onclick="triggerPWAInstall()" style="background:var(--gold);color:var(--gd);border:none;border-radius:20px;padding:8px 14px;font-family:var(--ff-mono);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;letter-spacing:.16em;text-transform:uppercase">Install</button>
+      <button onclick="dismissPWABanner()" style="background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>`;
   }
   document.body.appendChild(banner);
 }
@@ -7458,7 +7465,7 @@ function _buildMidLBInner(){
 
   if(!allPlayers.length){
     document.getElementById('mid-lb-sub').textContent='No scores yet';
-    document.getElementById('mid-lb-rows').innerHTML='<div style="padding:20px;text-align:center;color:#4a6e52;font-size:13px">No scores entered yet this round</div>';
+    document.getElementById('mid-lb-rows').innerHTML='<div class="ho-empty" style="padding:24px 12px">No scores entered yet this round</div>';
     return;
   }
 
@@ -7485,9 +7492,9 @@ function _buildMidLBInner(){
     const thruStr3 = p.done ? (p.elapsed ? `F · ${p.elapsed}` : 'F') : String(p.thru);
     return `<div class="lb-row${pos===1?' lb-lead':''}">
       <div class="lb-pos ${posCls}">${posStr}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr3?`<span style="font-size:9px;font-weight:400;color:${p.done?'#c9a227':'#5a8060'};margin-left:5px;opacity:.8">${clockStr3}</span>`:''}</div>
+      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr3?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clockStr3}</span>`:''}</div>
       <div class="lb-score ${nvpCls2}${pos===1?' lead':''}">${nvpStr}</div>
-      <div class="lb-thru${p.done?' done':''}" style="font-size:10px">${p.done?'F':thruStr3}</div>
+      <div class="lb-thru${p.done?' done':''}">${p.done?'F':thruStr3}</div>
     </div>`;
   }).join('');
   document.getElementById('mid-lb-rows').innerHTML=rows;
