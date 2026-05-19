@@ -328,104 +328,106 @@ body.dark .icon-sun{display:none}
 .sc-overlay.open{display:flex}
 
 /* Overlay header */
-.sc-ohdr{background:var(--gd);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.sc-ohdr-left{display:flex;align-items:center;gap:10px}
-.sc-ohdr button{background:none;border:none;color:#fff;cursor:pointer;padding:4px}
-.sc-ohdr button svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.sc-ohdr-title{font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:1px}
-.sc-ohdr-sub{font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:.6px}
+.sc-ohdr{background:var(--card);color:var(--green);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--hair)}
+.sc-ohdr-left{display:flex;align-items:center;gap:12px;min-width:0}
+.sc-ohdr button{background:none;border:none;color:var(--green);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center}
+.sc-ohdr button svg{width:22px;height:22px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sc-ohdr-title{font-family:var(--ff-display);font-size:20px;font-weight:800;text-transform:uppercase;letter-spacing:.01em;color:var(--green);line-height:1}
+.sc-ohdr-sub{font-family:var(--ff-mono);font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:.16em;margin-top:5px;font-weight:600}
 
 /* Hole progress bar */
-.hole-prog{height:4px;background:rgba(255,255,255,.2);flex-shrink:0}
-.hole-prog-fill{height:100%;background:var(--surf);transition:width .3s}
+.hole-prog{height:3px;background:var(--hair-2);flex-shrink:0}
+.hole-prog-fill{height:100%;background:var(--gold);transition:width .3s}
 
 /* Hole info band */
-.hole-band{background:var(--green);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.hole-num{font-size:28px;font-weight:900;line-height:1}
-.hole-label{font-size:10px;opacity:.7;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.hole-band{background:var(--green);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-shrink:0}
+.hole-num{font-family:var(--ff-display);font-size:34px;font-weight:800;line-height:1;color:#fff;letter-spacing:-.02em}
+.hole-label{font-family:var(--ff-mono);font-size:9px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:#fff;margin-bottom:4px}
 .hole-par{text-align:center}
-.hole-par .val{font-size:28px;font-weight:900}
-.hole-par .lbl{font-size:11px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.hole-hcp-info{text-align:right}
-.hole-hcp-info .val{font-size:18px;font-weight:800}
-.hole-hcp-info .lbl{font-size:11px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.hole-par .val{font-family:var(--ff-display);font-size:26px;font-weight:800;color:#fff;line-height:1}
+.hole-par .lbl{font-family:var(--ff-mono);font-size:9px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:#fff;margin-bottom:4px}
+.hole-hcp-info{text-align:center}
+.hole-hcp-info .val{font-family:var(--ff-display);font-size:20px;font-weight:800;color:#fff;line-height:1}
+.hole-hcp-info .lbl{font-family:var(--ff-mono);font-size:9px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:#fff;margin-bottom:4px}
 
 /* Player score blocks */
 .players-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 
-.player-block{background:var(--surf);border-radius:10px;border:1.5px solid var(--bdr);padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.pb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.pb-name{font-size:13px;font-weight:800;color:var(--txt)}
-.pb-hcp{font-size:11px;color:var(--muted);font-weight:600}
-.pb-thru{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surf-tint);color:var(--green)}
+.player-block{background:var(--card);border-radius:14px;border:1px solid var(--hair);padding:10px 12px;box-shadow:var(--sh)}
+.pb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.pb-name{font-family:var(--ff-body);font-size:14px;font-weight:600;color:var(--green);display:flex;align-items:center;gap:9px;min-width:0}
+.pb-name::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;box-shadow:0 0 0 1px rgba(26,77,46,.2)}
+.pb-hcp{font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600}
+.pb-thru{font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;border-radius:100px;background:var(--surf-tint);color:var(--green)}
 
 /* +/- score input */
-.score-ctrl{display:flex;align-items:center;justify-content:center;gap:0}
-.sc-minus,.sc-plus{width:48px;height:48px;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:26px;font-weight:300;transition:transform .1s,background .1s;flex-shrink:0}
-.sc-minus{background:var(--surf-red);color:var(--red-deep)}
-.sc-plus{background:var(--surf-tint);color:#1a5c2a}
-.sc-minus:active,.sc-plus:active{transform:scale(.9)}
-.sc-display{width:70px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}
-.sc-num{font-size:38px;font-weight:900;line-height:1;color:var(--txt);transition:color .15s}
+.score-ctrl{display:flex;align-items:center;justify-content:center;gap:6px}
+.sc-minus,.sc-plus{width:48px;height:48px;border:1px solid var(--hair);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:300;transition:transform .1s,background .1s;flex-shrink:0;background:var(--card)}
+.sc-minus{color:var(--bogey)}
+.sc-plus{color:var(--green)}
+.sc-minus:active,.sc-plus:active{transform:scale(.92)}
+.sc-display{width:84px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.sc-num{font-family:var(--ff-display);font-size:42px;font-weight:800;line-height:1;color:var(--txt);transition:color .15s;letter-spacing:-.02em}
 .sc-num.eagle{color:var(--eagle)}
 .sc-num.birdie{color:var(--birdie)}
 .sc-num.bogey{color:var(--bogey)}
 .sc-num.dbl{color:var(--dbl)}
-.sc-rel{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:1px}
+.sc-rel{font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:3px 10px;border-radius:100px;margin-top:2px}
 .sc-rel.eagle{background:var(--surf-blue);color:var(--eagle)}
-.sc-rel.birdie{background:var(--surf-tint);color:var(--green-deep)}
-.sc-rel.par{background:#e8e8e8;color:#444}
+.sc-rel.birdie{background:var(--surf-tint);color:var(--birdie)}
+.sc-rel.par{background:var(--surf-tint);color:var(--muted)}
 .sc-rel.bogey{background:var(--surf-red);color:var(--bogey)}
-.sc-rel.dbl{background:#fcc;color:var(--dbl)}
-.sc-rel.trip{background:#f5b5b5;color:var(--red-deep)}
+.sc-rel.dbl{background:var(--surf-red);color:var(--dbl)}
+.sc-rel.trip{background:var(--surf-red);color:var(--red-deep)}
 
 /* Running total strip */
-.pb-totals{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid #eef1e8}
-.pb-tot-box{flex:1;text-align:center}
-.pb-tot-box .tv{font-size:14px;font-weight:800;color:var(--gd)}
-.pb-tot-box .tl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:0}
-.pb-net-box .tv{color:var(--green)}
+.pb-totals{display:flex;gap:0;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair-2)}
+.pb-tot-box{flex:1;text-align:center;position:relative}
+.pb-tot-box + .pb-tot-box::before{content:'';position:absolute;left:0;top:18%;bottom:18%;width:1px;background:var(--hair-2)}
+.pb-tot-box .tv{font-family:var(--ff-display);font-size:18px;font-weight:800;color:var(--green);line-height:1;font-feature-settings:"tnum"}
+.pb-tot-box .tl{font-family:var(--ff-mono);font-size:8px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.16em;margin-top:5px}
+.pb-net-box .tv{color:var(--gold-deep)}
 
 /* Navigation buttons */
-.hole-nav{display:flex;gap:8px;padding:8px 12px;flex-shrink:0;background:var(--surf);border-top:1px solid var(--bdr)}
-.hnav-btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;transition:background .12s;text-transform:uppercase;letter-spacing:.8px}
-.hnav-prev{background:#f0f3eb;color:var(--gd)}
-.hnav-next{background:var(--green);color:#fff}
-.hnav-next:active{background:var(--gd)}
-.hnav-prev:active{background:#d8ddd0}
+.hole-nav{display:flex;gap:10px;padding:12px;flex-shrink:0;background:var(--card);border-top:1px solid var(--hair)}
+.hnav-btn{flex:1;padding:14px;border:none;border-radius:12px;font-family:var(--ff-display);font-size:14px;font-weight:800;cursor:pointer;transition:transform .1s,background .12s;text-transform:uppercase;letter-spacing:.14em}
+.hnav-prev{background:var(--card);color:var(--green);border:1px solid var(--hair);font-family:var(--ff-mono);font-size:11px;letter-spacing:.16em;font-weight:600}
+.hnav-next{background:var(--green);color:#fff;box-shadow:0 4px 0 var(--gd),0 6px 14px rgba(26,77,46,.18);position:relative}
+.hnav-next::before{content:'';position:absolute;inset:3px;border:1px solid var(--gold);border-radius:9px;pointer-events:none;opacity:.45}
+.hnav-next:active{transform:translateY(2px);box-shadow:0 2px 0 var(--gd),0 4px 10px rgba(26,77,46,.18)}
+.hnav-prev:active{background:var(--surf-tint)}
 .hnav-btn:disabled{opacity:.35;cursor:not-allowed}
 
-/* ─── PGA TOUR LEADERBOARD ─────────────────── */
-.live-std{background:#0a1f0f;border-top:3px solid #c9a227;flex-shrink:0;max-height:160px;overflow-y:auto}
-.lb-header{background:#0a1f0f;padding:8px 12px 6px;display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;border-bottom:1px solid #1e3d22;position:sticky;top:0;z-index:2}
-.lb-header span{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#7a9e82}
+/* ─── LIVE LEADERBOARD (in scorecard overlay) ─────────────────── */
+.live-std{background:var(--gd);border-top:2px solid var(--gold);flex-shrink:0;max-height:160px;overflow-y:auto}
+.lb-header{background:var(--gd);padding:8px 14px 6px;display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:2}
+.lb-header span{font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.55)}
 .lb-header span.right{text-align:right}
-.lb-row{display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;align-items:center;padding:5px 10px;border-bottom:1px solid #142618;transition:background .1s}
+.lb-row{display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;align-items:center;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,.05);transition:background .1s}
 .lb-row:last-child{border-bottom:none}
-.lb-row:nth-child(even){background:rgba(255,255,255,.03)}
-.lb-row.lb-lead{background:rgba(201,162,39,.1);}
-.lb-row.lb-me{background:rgba(45,138,69,.15);border-left:3px solid #2d8a45}
-.lb-pos{font-size:12px;font-weight:800;color:#7a9e82;text-align:center}
-.lb-pos.gold{color:#c9a227;font-size:13px}
-.lb-pos.silver{color:#9da8a0}
-.lb-pos.bronze{color:var(--amber-deep)}
-.lb-name{font-size:12px;font-weight:800;color:#e8f0ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;text-transform:uppercase;letter-spacing:.4px}
-.lb-name .lb-flag{font-size:10px;color:#5a8060;margin-left:4px;font-weight:500}
-.lb-score{font-size:14px;font-weight:900;text-align:right;padding-right:4px}
-.lb-score.under{color:#4ade80}
-.lb-score.even{color:#9da8a0}
+.lb-row.lb-lead{background:rgba(244,217,64,.07)}
+.lb-row.lb-me{background:rgba(107,168,127,.12);border-left:3px solid var(--green)}
+.lb-pos{font-family:var(--ff-display);font-size:14px;font-weight:800;color:rgba(255,255,255,.55);text-align:center;line-height:1}
+.lb-pos.gold{color:var(--gold);font-size:15px}
+.lb-pos.silver{color:rgba(255,255,255,.7)}
+.lb-pos.bronze{color:#c8881a}
+.lb-name{font-family:var(--ff-body);font-size:13px;font-weight:600;color:#e8f0ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+.lb-name .lb-flag{font-family:var(--ff-mono);font-size:9px;color:rgba(255,255,255,.45);margin-left:4px;font-weight:500;letter-spacing:.08em}
+.lb-score{font-family:var(--ff-display);font-size:16px;font-weight:800;text-align:right;padding-right:4px;line-height:1;font-feature-settings:"tnum"}
+.lb-score.under{color:var(--birdie)}
+.lb-score.even{color:rgba(255,255,255,.7)}
 .lb-score.over{color:#f87171}
-.lb-score.lead{color:#c9a227}
-.lb-today{font-size:12px;font-weight:700;text-align:right;padding-right:4px}
-.lb-today.under{color:#4ade80}
-.lb-today.even{color:#6b7f6e}
+.lb-score.lead{color:var(--gold)}
+.lb-today{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-align:right;padding-right:4px;letter-spacing:.08em}
+.lb-today.under{color:var(--birdie)}
+.lb-today.even{color:rgba(255,255,255,.5)}
 .lb-today.over{color:#f87171}
-.lb-thru{font-size:11px;font-weight:600;color:#5a8060;text-align:right}
-.lb-thru.done{color:#c9a227;font-weight:800}
-.lb-empty{padding:14px 12px;font-size:12px;color:#4a6e52;font-style:italic}
-.lb-title-bar{background:#071509;padding:6px 12px;display:flex;align-items:center;justify-content:space-between}
-.lb-title-bar span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#c9a227}
-.lb-pulse{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite}
+.lb-thru{font-family:var(--ff-mono);font-size:10px;font-weight:600;color:rgba(255,255,255,.55);text-align:right;letter-spacing:.08em}
+.lb-thru.done{color:var(--gold);font-weight:700}
+.lb-empty{padding:18px 14px;font-family:var(--ff-mono);font-size:10px;color:rgba(255,255,255,.45);text-align:center;letter-spacing:.14em;text-transform:uppercase}
+.lb-title-bar{background:rgba(0,0,0,.25);padding:8px 14px;display:flex;align-items:center;justify-content:space-between}
+.lb-title-bar span{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--gold)}
+.lb-pulse{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(217,69,69,.18);animation:livepulse 1.6s infinite ease-in-out}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 
@@ -1428,32 +1430,30 @@ body.dark .icon-sun{display:none}
       <div class="lbl">S.I.</div>
       <div class="val" id="ov-si">1</div>
     </div>
-    <div id="gps-yardage-box" style="text-align:right;cursor:pointer" onclick="requestGPS()" title="Tap to refresh GPS">
-      <div style="text-align:center">
-        <div style="font-size:8px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.5px;color:#fff">YDS</div>
-        <div style="font-size:22px;font-weight:900;color:#fff" id="gps-yards">—</div>
-      </div>
+    <div id="gps-yardage-box" style="text-align:center;cursor:pointer" onclick="requestGPS()" title="Tap to refresh GPS">
+      <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:.16em;color:#fff;margin-bottom:4px">Yds</div>
+      <div style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:#fff;line-height:1" id="gps-yards">—</div>
     </div>
   </div>
 
   <!-- Pace of play bar -->
-  <div id="pace-bar" style="background:#0f3a1a;padding:5px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="font-size:12px">⏱</span>
-      <span style="font-size:12px;font-weight:700;color:#fff">Hole: <span id="pace-hole-time">0:00</span></span>
+  <div id="pace-bar" style="background:var(--gd);padding:7px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase">
+    <div style="display:flex;align-items:center;gap:6px;color:#fff;font-weight:600">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      Hole <span id="pace-hole-time" style="color:#fff;font-weight:700">0:00</span>
     </div>
-    <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7)">Round: <span id="pace-round-time">0:00</span></div>
-    <div id="pace-warning" style="font-size:11px;font-weight:800;color:#ff6b6b;display:none">⚠️ Slow!</div>
+    <div style="color:rgba(255,255,255,.75);font-weight:600">Round <span id="pace-round-time" style="color:#fff;font-weight:700">0:00</span></div>
+    <div id="pace-warning" style="color:#ff8a8a;font-weight:800;display:none">Slow</div>
   </div>
 
   <!-- Player score blocks (scrollable) -->
   <div class="players-area" id="ov-players"></div>
 
-  <!-- PGA Tour Leaderboard -->
+  <!-- Live Leaderboard -->
   <div class="live-std" id="ov-live-std">
     <div class="lb-title-bar">
       <span id="ov-round-lbl">LIVE LEADERBOARD</span>
-      <div style="display:flex;align-items:center;gap:6px"><div class="lb-pulse"></div><span style="font-size:10px;font-weight:700;color:#4ade80;letter-spacing:.8px">LIVE</span></div>
+      <div style="display:flex;align-items:center;gap:7px"><div class="lb-pulse"></div><span style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--red);letter-spacing:.14em">LIVE</span></div>
     </div>
     <div class="lb-header">
       <span style="text-align:center">POS</span>
@@ -2533,20 +2533,22 @@ function syncCourseNameToCalendar(){
 //   eagle/double-eagle = double circle, birdie = circle, bogey = square, double+ = double square
 //   * after number if player receives a stroke on that hole
 function scorecardCell(gross, par, hcp, siVal, tdStyle){
-  // Strokes received on this hole — computed up front so we can mark the
-  // top-right corner with an asterisk per stroke EVEN if the hole hasn't
-  // been played yet. One * = one stroke; ** = two strokes (very high hcp).
-  const strokes  = strokesOnHole(hcp, siVal);
-  const starsEl  = strokes > 0
-    ? `<span style="position:absolute;top:2px;right:4px;font-size:11px;font-weight:800;color:var(--gold-deep);line-height:1;letter-spacing:-1px;pointer-events:none">${'*'.repeat(strokes)}</span>`
-    : '';
+  const strokes = strokesOnHole(hcp, siVal);
 
+  // UNPLAYED — show dash and the stroke marker (asterisk per stroke received)
+  // so the player can see ahead which holes they'll get a stroke on.
   if(gross===null||gross===undefined){
+    const starsEl = strokes > 0
+      ? `<span style="position:absolute;top:2px;right:4px;font-size:11px;font-weight:800;color:var(--gold-deep);line-height:1;letter-spacing:-1px;pointer-events:none">${'*'.repeat(strokes)}</span>`
+      : '';
     return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);font-size:12px;color:var(--sub);position:relative">${starsEl}—</td>`;
   }
+
+  // PLAYED — show gross with its birdie/bogey shape; when strokes apply on
+  // this hole, the net score appears below in small gold. No asterisk once
+  // the hole's been played (the net number replaces it).
   const grossRel = gross - par;
 
-  // Shape + colour based on gross-vs-par (par = no shape, plain number)
   let shape='', col='var(--txt)', fw='600';
   if(grossRel <= -2)      { shape='double-circle'; col='var(--eagle)';  fw='800'; }
   else if(grossRel === -1){ shape='circle';        col='var(--birdie)'; fw='800'; }
@@ -2566,7 +2568,13 @@ function scorecardCell(gross, par, hcp, siVal, tdStyle){
     shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-family:var(--ff-display);font-size:13px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
   }
 
-  return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);vertical-align:middle;position:relative">${starsEl}${shapeEl}</td>`;
+  // Net score below the gross — only when handicap strokes apply on this hole
+  const netScore = gross - strokes;
+  const netEl = strokes > 0
+    ? `<div style="font-family:var(--ff-mono);font-size:9px;font-weight:700;color:var(--gold-deep);line-height:1;margin-top:2px">${netScore}</div>`
+    : '';
+
+  return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);vertical-align:middle;position:relative"><div style="display:flex;flex-direction:column;align-items:center;gap:0">${shapeEl}${netEl}</div></td>`;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2966,7 +2974,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v48</strong></div>
+          <div>SW cache: <strong>v49</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
@@ -3144,32 +3152,47 @@ function buildSummaryTable(round,gi,grp,sc){
   for(let h=9;h<18;h++){html+=`<td style="color:var(--muted);font-size:11px">${pars[h]}</td>`;parIn+=pars[h];}
   html+=`<td class="tot">${parIn}</td><td class="tot">${parOut+parIn}</td><td class="nv">—</td></tr>`;
   // Player rows
+  // Helper: stacked dual-line gross/net cell for the OUT/IN/TOT columns. When
+  // strokes are received in this segment, shows gross on top and a small gold
+  // net total below. When no strokes apply, gross is shown solo.
+  const dualTotal = (gross, strokes, done) => {
+    if(!done) return '—';
+    if(strokes > 0){
+      const net = gross - strokes;
+      return `<div style="line-height:1.1">${gross}</div><div style="font-family:var(--ff-mono);font-size:9px;font-weight:700;color:var(--gold-deep);line-height:1.1;margin-top:1px">${net}</div>`;
+    }
+    return gross;
+  };
+
   (sc?.players||grp.players.map(p=>({...p,holes:Array(18).fill(null),gross:0,net:0}))).forEach((pl,pi)=>{
     // Defend against malformed scorecards where holes is missing or stored as an object
     const holesArr = Array.isArray(pl.holes) ? pl.holes : (pl.holes && typeof pl.holes==='object' ? Object.keys(pl.holes).sort((a,b)=>Number(a)-Number(b)).map(k=>pl.holes[k]) : Array(18).fill(null));
     html+=`<tr><td class="pl">${(pl.name||'').split(' ').slice(-1)[0]}<br><span style="font-size:10px;color:var(--muted)">${pl.hcp||0}</span></td>`;
-    let out=0,outDone=true,inp=0,inDone=true;
+    let out=0,outDone=true,inp=0,inDone=true,outStrokes=0,inStrokes=0;
     for(let h=0;h<9;h++){
       const v=holesArr[h];
       if(v===null||v===undefined){html+=`<td>—</td>`;outDone=false;}
       else{
         html+=scorecardCell(v,pars[h],pl.hcp,si[h]);
         out+=v;
+        outStrokes += strokesOnHole(pl.hcp, si[h]);
       }
     }
-    html+=`<td class="tot">${outDone?out:'—'}</td>`;
+    html+=`<td class="tot">${dualTotal(out, outStrokes, outDone)}</td>`;
     for(let h=9;h<18;h++){
       const v=holesArr[h];
       if(v===null||v===undefined){html+=`<td>—</td>`;inDone=false;}
       else{
         html+=scorecardCell(v,pars[h],pl.hcp,si[h]);
         inp+=v;
+        inStrokes += strokesOnHole(pl.hcp, si[h]);
       }
     }
     const gross=out+inp;
+    const totStrokes=outStrokes+inStrokes;
     const nvp=sc?calcNetVsPar(holesArr,pl.hcp,pars,si):0;
     const nvpStr=fmtNvp(nvp);
-    html+=`<td class="tot">${inDone?inp:'—'}</td><td class="tot">${(outDone&&inDone)?gross:'—'}</td><td class="nv" style="color:${nvp<0?'#145c28':nvp>0?'var(--bogey)':'var(--muted)'}">${(outDone&&inDone)?nvpStr:'—'}</td></tr>`;
+    html+=`<td class="tot">${dualTotal(inp, inStrokes, inDone)}</td><td class="tot">${dualTotal(gross, totStrokes, outDone&&inDone)}</td><td class="nv" style="color:${nvp<0?'#145c28':nvp>0?'var(--bogey)':'var(--muted)'}">${(outDone&&inDone)?nvpStr:'—'}</td></tr>`;
   });
   html+=`</table></div>`;
   return html;
