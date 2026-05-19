@@ -2440,10 +2440,16 @@ function renderFoursomePage(){
   // Show every configured round (including ones where all groups have submitted).
   // Hiding submitted rounds caused groups to disappear from this tab — players
   // still need to view/expand their scorecards from here after the round.
-  // Default the visible round to the first one that isn't fully submitted; if all
-  // are submitted, default to the last one.
+  // Order: in-progress rounds first (calendar order), then fully-submitted rounds
+  // last — so the current round sits leftmost and previous rounds trail to the right.
   const done=fullySubmittedRounds();
-  const activeRounds=configured;
+  const _roundOrder=[...REGULAR_ROUNDS,'Playoff 1','Championship'];
+  const _calIdx=r=>{ const i=_roundOrder.indexOf(r); return i<0?999:i; };
+  const activeRounds=[...configured].sort((a,b)=>{
+    const da=done.has(a)?1:0, db=done.has(b)?1:0;
+    if(da!==db) return da-db;          // not-done first
+    return _calIdx(a)-_calIdx(b);      // calendar order within each group
+  });
   const firstActiveIdx = activeRounds.findIndex(r=>!done.has(r));
   const defaultRound = firstActiveIdx >= 0 ? activeRounds[firstActiveIdx] : activeRounds[activeRounds.length-1];
 
@@ -3897,8 +3903,16 @@ function showRoundResultsModal(round){
   }).join('');
 
   // Winner card — only when ALL groups have submitted
-  const overrideWinner=(window._roundWinnerOverrides||{})[round]||null;
   const tiedForFirst=allSubmitted && allPlayers.length>1 && allPlayers[0].effNet===allPlayers[1].effNet;
+  // Only honor a stored playoff override if there's actually a tie for 1st AND the
+  // override is one of the tied players. Without this, a stale override (left over
+  // from a prior round attempt that was reset/re-played) would falsely crown a
+  // player as "Winner (Playoff)" even though no tie exists this time.
+  const rawOverride=(window._roundWinnerOverrides||{})[round]||null;
+  const tiedNamesForOverride=tiedForFirst
+    ? allPlayers.filter(p=>p.effNet===allPlayers[0].effNet).map(p=>p.name)
+    : [];
+  const overrideWinner=(rawOverride && tiedNamesForOverride.includes(rawOverride)) ? rawOverride : null;
   const effectiveWinner=overrideWinner
     ? allPlayers.find(p=>p.name===overrideWinner)||allPlayers[0]
     : allPlayers[0];
@@ -4854,7 +4868,14 @@ function buildScheduleResults(round, submittedGroups){
   });
 
   // Assign finishing positions with ties — respect winner override
-  const overrideWinner=(window._roundWinnerOverrides||{})[round]||null;
+  // Only honor a stored override if a real tie for 1st exists AND the override is in it.
+  // Guards against stale overrides from a previous (reset) attempt at this round.
+  const _rawOverride=(window._roundWinnerOverrides||{})[round]||null;
+  const _tiedForFirst=allPlayers.length>1 && allPlayers[0].effNet===allPlayers[1].effNet;
+  const _tiedNames=_tiedForFirst
+    ? allPlayers.filter(p=>p.effNet===allPlayers[0].effNet).map(p=>p.name)
+    : [];
+  const overrideWinner=(_rawOverride && _tiedNames.includes(_rawOverride)) ? _rawOverride : null;
   const payouts=calcRoundPayouts(round);
 
   // Points — apply override same way as calcSeasonStandings
@@ -5356,6 +5377,7 @@ function saveOneScorecard(key){
 // Mirrors roundScores to localStorage on every change so a closed browser /
 // dropped connection at the course doesn't lose entered holes.
 const RSCORES_BACKUP_KEY='protour_rscores_backup_v1';
+const NOTIFIED_SUBMITS_KEY='protour_notified_submits_v1';
 function backupRoundScoresLocal(){
   try{ localStorage.setItem(RSCORES_BACKUP_KEY, JSON.stringify(roundScores)); }catch(e){}
 }
@@ -5434,7 +5456,12 @@ function initFirebase(){
 
   // Live listener: round scores (most important — live scoring)
   fbOn('roundScores', data=>{
-    const prevSubmitted = new Set(Object.entries(roundScores).filter(([,v])=>v.submitted).map(([k])=>k));
+    // Persisted set of scorecard keys we've already fired a notification for.
+    // Without this, every app open re-notifies for every already-submitted card,
+    // because `roundScores` starts empty on each page load.
+    let notifiedSubmits;
+    try{ notifiedSubmits = new Set(JSON.parse(localStorage.getItem(NOTIFIED_SUBMITS_KEY)||'[]')); }
+    catch(e){ notifiedSubmits = new Set(); }
 
     // Snapshot the currently-open scorecard key so we don't overwrite it mid-entry
     const overlayOpen = document.getElementById('sc-overlay')?.classList.contains('open');
@@ -5474,21 +5501,62 @@ function initFirebase(){
       });
     } else { roundScores={}; }
 
-    // Restore in-progress scorecard if it was overwritten — local state wins while overlay is open
+    // Merge the open scorecard: take fresh cloud data for every hole except the one
+    // the scorer is currently on — that hole's local value wins so an in-flight tap
+    // (not yet saved on hole-advance) isn't clobbered by a remote echo. This lets
+    // two people in the same group on different devices see each other's entries
+    // live without "go back and reopen" workarounds.
     if(activeKey && activeSnapshot && !activeSnapshot.submitted){
-      roundScores[activeKey] = activeSnapshot;
+      const cloud = roundScores[activeKey];
+      if(!cloud){
+        // Cloud doesn't have this key yet (brand-new group) — keep local as-is
+        roundScores[activeKey] = activeSnapshot;
+      } else {
+        const curHole = (typeof ov.hole === 'number') ? ov.hole : -1;
+        const localPlayers = activeSnapshot.players || [];
+        const cloudPlayers = cloud.players || [];
+        cloudPlayers.forEach((cp, pi) => {
+          const lp = localPlayers[pi];
+          if(!lp || !Array.isArray(lp.holes) || !Array.isArray(cp.holes)) return;
+          if(curHole >= 0 && curHole < cp.holes.length){
+            // Preserve local in-flight value on the active hole only
+            cp.holes[curHole] = lp.holes[curHole];
+          }
+        });
+        // Preserve fields we treat as local-only state on the active card
+        if(activeSnapshot.lastHole !== undefined) cloud.lastHole = activeSnapshot.lastHole;
+        if(activeSnapshot.holeStartedAt !== undefined) cloud.holeStartedAt = activeSnapshot.holeStartedAt;
+        if(activeSnapshot.roundStartedAt !== undefined) cloud.roundStartedAt = activeSnapshot.roundStartedAt;
+      }
+    }
+
+    // If the scorecard overlay is open and the merge changed anything, repaint it
+    // so other players' freshly-entered scores show up immediately.
+    if(overlayOpen && activeKey){
+      try { renderHole(); } catch(e){ /* ignore — guarded by renderHole's own try */ }
     }
 
     // B2: keep local backup in sync with what we just learned from the cloud
     backupRoundScoresLocal();
 
-    // Detect newly submitted groups and fire notification
+    // Detect newly submitted groups and fire notification (once per scorecard, ever).
+    // If a card is no longer submitted (admin cleared it), drop it from the set so
+    // a future re-submission will notify again.
+    let notifiedChanged = false;
     Object.entries(roundScores).forEach(([k,v])=>{
-      if(v.submitted && !prevSubmitted.has(k)){
+      if(v.submitted && !notifiedSubmits.has(k)){
         const playerNames = (v.players||[]).map(p=>(p?.name||'?').split(' ')[0]).join(', ');
         fireSubmitNotification(roundTitle(v.round), playerNames);
+        notifiedSubmits.add(k);
+        notifiedChanged = true;
+      } else if(!v.submitted && notifiedSubmits.has(k)){
+        notifiedSubmits.delete(k);
+        notifiedChanged = true;
       }
     });
+    if(notifiedChanged){
+      try{ localStorage.setItem(NOTIFIED_SUBMITS_KEY, JSON.stringify([...notifiedSubmits])); }catch(e){}
+    }
     // Re-render affected views
     if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
     if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
