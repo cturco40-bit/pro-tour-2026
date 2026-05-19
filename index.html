@@ -508,12 +508,19 @@ body.dark .icon-sun{display:none}
 .pin-key.wide{grid-column:span 1}
 .pin-error{color:var(--bogey);font-size:13px;font-weight:600;margin-top:8px;min-height:20px}
 
-.as-section{background:var(--card);border-radius:16px;border:1px solid var(--hair);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
-.as-section-hdr{background:var(--card);color:var(--green);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .15s}
+.as-section{background:var(--card);border-radius:16px;border:1px solid var(--hair);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
+.as-section-hdr{background:var(--card);color:var(--green);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .15s}
 .as-section-hdr.open{border-bottom-color:var(--hair)}
-.as-section-hdr h3{font-family:var(--ff-mono);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:8px}
-.as-section-hdr h3::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.as-section-hdr svg.as-garr{stroke:var(--green) !important}
+.as-section-hdr h3{font-family:var(--ff-mono);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:10px}
+.as-section-hdr h3::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.as-section-hdr svg.as-garr{stroke:var(--green) !important;flex-shrink:0}
+/* Danger-accent variant (Clear Scores) — light red tint, red dot, red title */
+.as-section.as-danger{border-color:#f5c0c0}
+.as-section.as-danger .as-section-hdr{background:var(--surf-red);color:var(--red-deep)}
+.as-section.as-danger .as-section-hdr h3{color:var(--red-deep)}
+.as-section.as-danger .as-section-hdr h3::before{background:var(--bogey)}
+.as-section.as-danger .as-section-hdr svg.as-garr{stroke:var(--red-deep) !important}
+.as-section.as-danger.as-section .as-section-hdr.open{border-bottom-color:#f5c0c0}
 .as-section-body{display:none;padding:14px 16px}
 .as-section-body.open{display:block}
 .as-garr{transition:transform .2s}
@@ -1090,10 +1097,10 @@ body.dark .icon-sun{display:none}
     </div>
 
     <!-- CLEAR SCORES -->
-    <div class="as-section">
-      <div class="as-section-hdr" onclick="toggleAS('clear-scores')" style="background:#8b0000">
+    <div class="as-section as-danger">
+      <div class="as-section-hdr" onclick="toggleAS('clear-scores')">
         <h3>Clear Scores</h3>
-        <svg class="as-garr" id="as-garr-clear-scores" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg class="as-garr" id="as-garr-clear-scores" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-clear-scores">
         <div style="background:var(--surf-red);border-left:4px solid var(--bogey);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--red-deep);margin-bottom:14px;line-height:1.6">
@@ -1165,25 +1172,25 @@ body.dark .icon-sun{display:none}
       </div>
     </div>
 
-    <!-- AUDIT LOG -->
+    <!-- SCORECARD PHOTOS -->
     <div class="as-section">
-      <!-- SCORECARD PHOTOS -->
-      <div class="as-section">
-        <div class="as-section-hdr" onclick="toggleAS('sc-photos');renderAdminPhotos()">
-          <h3>Scorecard Photos</h3>
-          <svg class="as-garr" id="as-garr-sc-photos" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div class="as-section-body" id="as-body-sc-photos">
-          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Review uploaded scorecard photos and compare against digital scores. Tap any photo to expand.</p>
-          <div id="as-photos-content">
-            <div style="font-size:13px;color:var(--muted);text-align:center;padding:12px 0">Loading…</div>
-          </div>
+      <div class="as-section-hdr" onclick="toggleAS('sc-photos');renderAdminPhotos()">
+        <h3>Scorecard Photos</h3>
+        <svg class="as-garr" id="as-garr-sc-photos" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="as-section-body" id="as-body-sc-photos">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Review uploaded scorecard photos and compare against digital scores. Tap any photo to expand.</p>
+        <div id="as-photos-content">
+          <div style="font-size:13px;color:var(--muted);text-align:center;padding:12px 0">Loading…</div>
         </div>
       </div>
+    </div>
 
+    <!-- AUDIT LOG -->
+    <div class="as-section">
       <div class="as-section-hdr" onclick="toggleAS('audit');if(!document.getElementById('as-body-audit').classList.contains('open')){}else{renderAuditLog()}">
         <h3>Audit Log</h3>
-        <svg class="as-garr" id="as-garr-audit" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg class="as-garr" id="as-garr-audit" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="as-section-body" id="as-body-audit">
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Last 100 score, group, and penalty changes — who made them and when.</div>
@@ -1228,53 +1235,53 @@ body.dark .icon-sun{display:none}
   <div style="padding:16px 16px 24px">
 
     <!-- Profile header -->
-    <div style="background:var(--green);border-radius:18px;padding:22px 18px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
-      <div id="acct-avatar" style="width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;flex-shrink:0;border:2px solid rgba(255,255,255,.4)">?</div>
+    <div style="background:var(--green);border-radius:18px;padding:22px 20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
+      <div id="acct-avatar" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:24px;font-weight:800;flex-shrink:0;border:1.5px solid rgba(255,255,255,.35);letter-spacing:.04em">?</div>
       <div style="flex:1;min-width:0">
-        <div id="acct-name" style="font-size:20px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
-        <div id="acct-username" style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px">—</div>
+        <div id="acct-name" style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.01em;line-height:1.05;word-break:keep-all">—</div>
+        <div id="acct-username" style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-top:8px;font-weight:600">—</div>
       </div>
     </div>
 
     <!-- Season stats grid -->
-    <div class="card" style="margin-bottom:12px;padding:16px">
+    <div class="card" style="margin-bottom:12px;padding:14px 16px">
       <div class="ctitle">Season Stats</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:24px;font-weight:900;color:var(--gd)" id="acct-rank">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Rank</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);line-height:1;font-feature-settings:'tnum'" id="acct-rank">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Rank</div>
         </div>
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:24px;font-weight:900;color:var(--gd)" id="acct-pts">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Points</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);line-height:1;font-feature-settings:'tnum'" id="acct-pts">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Points</div>
         </div>
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:24px;font-weight:900;color:var(--gd)" id="acct-rounds">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Rounds</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);line-height:1;font-feature-settings:'tnum'" id="acct-rounds">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Rounds</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:20px;font-weight:900;color:var(--gd)" id="acct-earnings">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Earnings</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1" id="acct-earnings">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Earnings</div>
         </div>
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:20px;font-weight:900;color:var(--gd)" id="acct-best">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Best Finish</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);line-height:1" id="acct-best">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Best Finish</div>
         </div>
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:20px;font-weight:900;color:var(--gd)" id="acct-avg-score">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Avg Score</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);line-height:1" id="acct-avg-score">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Avg Score</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:16px;font-weight:900;color:var(--gd)" id="acct-avg-round">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Avg Round</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--green);line-height:1" id="acct-avg-round">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Avg Round</div>
         </div>
-        <div style="text-align:center;background:var(--bg);border-radius:10px;padding:10px 4px">
-          <div style="font-size:16px;font-weight:900;color:var(--gd)" id="acct-avg-hole">—</div>
-          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Avg / Hole</div>
+        <div style="text-align:center;background:var(--surf-tint);border-radius:12px;padding:12px 6px;border:1px solid var(--hair)">
+          <div style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--green);line-height:1" id="acct-avg-hole">—</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.14em;margin-top:6px">Avg Per Hole</div>
         </div>
       </div>
     </div>
@@ -1290,12 +1297,12 @@ body.dark .icon-sun{display:none}
       <div class="ctitle">Account</div>
 
       <!-- Username display -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bdr)">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--txt)">Username</div>
-          <div id="acct-username-display" style="font-size:12px;color:var(--muted);margin-top:2px">—</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--hair);gap:10px">
+        <div style="min-width:0;flex:1">
+          <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Username</div>
+          <div id="acct-username-display" style="font-family:var(--ff-display);font-size:16px;font-weight:700;color:var(--txt);margin-top:6px;line-height:1">—</div>
         </div>
-        <span style="font-size:11px;background:var(--bg);border:1px solid var(--bdr);padding:3px 10px;border-radius:20px;color:var(--muted);font-weight:600">@protour2026.com</span>
+        <span style="font-family:var(--ff-mono);font-size:9px;background:var(--bg);border:1px solid var(--hair);padding:5px 11px;border-radius:20px;color:var(--sub);font-weight:600;letter-spacing:.14em;flex-shrink:0">@protour2026.com</span>
       </div>
 
       <!-- Change password toggle -->
@@ -1370,40 +1377,41 @@ body.dark .icon-sun{display:none}
 </nav>
 
 <!-- ─── MENU DRAWER ──────────────────────────────────────────────────────── -->
-<div id="menu-overlay" onclick="closeMenu()" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;opacity:0;transition:opacity .2s"></div>
-<div id="menu-drawer" style="position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--card);border-radius:20px 20px 0 0;z-index:1001;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);padding-bottom:env(safe-area-inset-bottom,0px)">
-  <div style="width:36px;height:4px;background:var(--bdr);border-radius:2px;margin:12px auto 0"></div>
-  <div style="padding:16px 20px 8px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:12px">Menu</div>
+<div id="menu-overlay" onclick="closeMenu()" style="position:fixed;inset:0;background:rgba(13,46,26,.55);z-index:1000;display:none;opacity:0;transition:opacity .2s"></div>
+<div id="menu-drawer" style="position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;z-index:1001;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);padding-bottom:env(safe-area-inset-bottom,0px);border:1px solid var(--hair);border-bottom:none">
+  <div style="width:40px;height:4px;background:var(--hair);border-radius:2px;margin:12px auto 0"></div>
+  <div style="padding:18px 20px 12px">
+    <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:.01em;color:var(--green);margin-bottom:4px;line-height:1">Menu</div>
+    <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:16px">More Options</div>
 
     <!-- My Account -->
-    <button onclick="openAccount();closeMenu()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:14px;margin-bottom:10px;cursor:pointer;text-align:left">
-      <div style="width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0" id="menu-avatar">?</div>
-      <div>
-        <div style="font-size:15px;font-weight:800;color:var(--txt)" id="menu-username">My Account</div>
-        <div style="font-size:12px;color:var(--muted)">Stats, history &amp; settings</div>
+    <button onclick="openAccount();closeMenu()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--hair);border-radius:14px;margin-bottom:10px;cursor:pointer;text-align:left">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:16px;font-weight:800;flex-shrink:0;letter-spacing:.04em" id="menu-avatar">?</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase" id="menu-username">My Account</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Stats, history &amp; settings</div>
       </div>
-      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
 
     <!-- Admin -->
-    <button onclick="closeMenu();showPage('admin',document.getElementById('nb-menu'))" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:14px;margin-bottom:10px;cursor:pointer;text-align:left">
-      <div style="width:42px;height:42px;border-radius:50%;background:#8b0000;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M12 14c-5 0-8 2-8 3v1h16v-1c0-1-3-3-8-3z"/></svg>
+    <button onclick="closeMenu();showPage('admin',document.getElementById('nb-menu'))" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--hair);border-radius:14px;margin-bottom:10px;cursor:pointer;text-align:left">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--gd);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
-      <div>
-        <div style="font-size:15px;font-weight:800;color:var(--txt)">Admin</div>
-        <div style="font-size:12px;color:var(--muted)">Groups, scores, settings</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Admin</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Groups, scores, settings</div>
       </div>
-      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg style="margin-left:auto;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
 
     <!-- Sign Out -->
-    <button onclick="signOut()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surf-red);border:1.5px solid #f5c0c0;border-radius:14px;margin-bottom:20px;cursor:pointer;text-align:left">
-      <div style="width:42px;height:42px;border-radius:50%;background:#f5c0c0;color:var(--red-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-      <div>
-        <div style="font-size:15px;font-weight:800;color:var(--red-deep)">Sign Out</div>
-        <div style="font-size:12px;color:var(--muted)">Sign out of The Pro Tour</div>
+    <button onclick="signOut()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surf-red);border:1px solid #f5c0c0;border-radius:14px;margin-bottom:20px;cursor:pointer;text-align:left">
+      <div style="width:44px;height:44px;border-radius:50%;background:#f5c0c0;color:var(--red-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+      <div style="min-width:0;flex:1">
+        <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--red-deep);letter-spacing:.16em;text-transform:uppercase">Sign Out</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Sign out of The Pro Tour</div>
       </div>
     </button>
 
