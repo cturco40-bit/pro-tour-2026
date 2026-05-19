@@ -2128,6 +2128,68 @@ function scorecardCell(gross, par, hcp, siVal, tdStyle){
 // Group 0 (top 4) = +2, Group 1 (5-8) = +1, Group 2 (9-12) = +0
 function playoffHcpBonus(gi){ return gi===0?2:gi===1?1:0; }
 
+// Auto-assign groups for a regular round (2..8) using the previous round's finish.
+// Order: previous-round finishers first, sorted by [finishing position, season pts desc,
+// world rank asc] for tie-breaks; players who didn't play (or DNF'd) the previous
+// round drop to the last groups. Admin can still adjust after.
+function autoAssignByPrevRound(targetRound){
+  const idx = REGULAR_ROUNDS.indexOf(targetRound);
+  if(idx <= 0) return null; // not a regular round, or it's Round 1
+  const prevRound = REGULAR_ROUNDS[idx - 1];
+  if(!fullySubmittedRounds().has(prevRound)) return null;
+
+  // Tiebreaker data: season points + world ranking
+  const {totals} = calcSeasonStandings();
+  const wrMap = {};
+  try { calcWorldRankings().forEach(p => { wrMap[p.n] = p.r; }); } catch(e){}
+  const tieBreak = (a, b) => {
+    const pa = totals[a.name] || 0, pb = totals[b.name] || 0;
+    if(pa !== pb) return pb - pa;          // higher season pts first
+    const ra = wrMap[a.name] || 999, rb = wrMap[b.name] || 999;
+    return ra - rb;                         // lower world rank first
+  };
+
+  // Walk every player slot in the previous round
+  const finishers = []; // played the full round
+  const dnfList = [];   // played but DNF / missing holes
+  const seen = new Set();
+  Object.values(roundScores).forEach(sc => {
+    if(!sc.submitted || sc.round !== prevRound) return;
+    (sc.players||[]).forEach(p => {
+      if(!p || !p.name || seen.has(p.name)) return;
+      seen.add(p.name);
+      const miss = (p.holes||[]).filter(h => h===null || h===undefined).length;
+      const dnf = p.dnf === true || miss > 0;
+      const entry = { name:p.name, effNet:getEffectiveNet(p, prevRound) };
+      if(dnf) dnfList.push(entry); else finishers.push(entry);
+    });
+  });
+
+  finishers.sort((a, b) => (a.effNet !== b.effNet) ? a.effNet - b.effNet : tieBreak(a, b));
+  dnfList.sort(tieBreak);
+
+  // Players who didn't appear in the previous round at all — drop to the bottom
+  const noPlay = PLAYERS.filter(n => !seen.has(n)).map(n => ({ name:n }));
+  noPlay.sort(tieBreak);
+
+  const ranked = [...finishers, ...dnfList, ...noPlay];
+
+  // Chunk into 7 groups of 4 (matching regular-round group count).
+  // Handicaps are left blank by design — admin enters them manually.
+  const numGroups = 7;
+  const groups = [];
+  for(let g = 0; g < numGroups; g++){
+    const slice = ranked.slice(g*4, g*4+4);
+    if(!slice.length) break;
+    groups.push({
+      players: slice.map(p => ({ name:p.name, hcp:0 })),
+      teeTime: '',
+      autoAssigned: true,
+    });
+  }
+  return groups;
+}
+
 // Auto-assign top 12 season standings into 3 playoff groups of 4
 function autoAssignPlayoffGroups(){
   const {totals}=calcSeasonStandings();
@@ -2167,8 +2229,24 @@ function renderSetup(){
   const existing=activeGroups[round]||[];
   const numGroups=isPlayoff1?3:7;
 
-  // For Playoff 1 with no existing groups: offer auto-assign button
+  // For regular rounds 2-8 with the previous round complete: offer auto-assign
+  // by previous-round finishing position (with season-pts and world-rank tiebreakers).
   let html='';
+  const regIdx = REGULAR_ROUNDS.indexOf(round);
+  if(regIdx > 0){
+    const prevRound = REGULAR_ROUNDS[regIdx - 1];
+    if(fullySubmittedRounds().has(prevRound)){
+      html += `<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
+        <div style="font-size:12px;font-weight:700;color:var(--gd);margin-bottom:4px">✨ Auto-Seed from ${roundTitle(prevRound)}</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:8px">
+          Top 4 finishers → Group 1, next 4 → Group 2, etc. Ties broken by season points, then world ranking. Players who didn't play ${roundTitle(prevRound)} drop to the last groups. Adjust after.
+        </div>
+        <button onclick="doAutoAssignByPrev()" style="width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">
+          Auto-Seed Groups from ${roundTitle(prevRound)}
+        </button>
+      </div>`;
+    }
+  }
   if(isPlayoff1){
     const {totals}=calcSeasonStandings();
     const qualifiers=PLAYERS.filter(n=>totals[n]>0).sort((a,b)=>(totals[b]||0)-(totals[a]||0)).slice(0,12);
@@ -2218,6 +2296,20 @@ function doAutoAssign(){
   activeGroups['Playoff 1']=groups;
   renderSetup();
   showToast('Top 12 auto-assigned — adjust as needed, then Save');
+}
+
+function doAutoAssignByPrev(){
+  const round = document.getElementById('setup-round').value;
+  const groups = autoAssignByPrevRound(round);
+  if(!groups || !groups.length){
+    showToast('Previous round not fully submitted yet — can’t seed');
+    return;
+  }
+  activeGroups[round] = groups;
+  renderSetup();
+  const idx = REGULAR_ROUNDS.indexOf(round);
+  const prev = idx > 0 ? REGULAR_ROUNDS[idx - 1] : '';
+  showToast(`Seeded from ${prev} — adjust as needed, then Save`);
 }
 
 function renderAdminCalendar(){
@@ -4366,7 +4458,7 @@ function renderStandings(){
           const played=roundsPlayed[p.n]||0;
           const counts=Math.min(played,5);
           const r8blocked=played===8;
-          return `<tr onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
+          const playerRow = `<tr onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
             <td><span class="rnk ${p.rank<=3?'r'+p.rank:'rn'}">${p.rank}</span></td>
             <td>
               <div style="font-weight:700;color:var(--green);text-decoration:underline dotted">${p.n}</div>
@@ -4376,6 +4468,17 @@ function renderStandings(){
             <td style="text-align:center;font-size:13px;color:var(--muted)">${played>0?counts:'—'}</td>
             <td class="ptsv">${p.p>0?Math.round(p.p):'<span style="color:var(--sub);font-weight:400">—</span>'}</td>
           </tr>`;
+          // After rank 12, drop a visual cut line — top 12 qualify for the playoffs
+          if(p.rank===12 && rows.length>12){
+            return playerRow + `<tr class="cut-line-row"><td colspan="5" style="padding:0">
+              <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg, transparent, var(--surf-amber) 12%, var(--surf-amber) 88%, transparent);padding:7px 12px;border-top:2px dashed #e65100;border-bottom:2px dashed #e65100">
+                <span style="font-size:13px">✂️</span>
+                <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--amber-deep)">Playoff Cut Line</span>
+                <span style="font-size:11px;color:var(--amber-deep);font-weight:600;margin-left:auto">Top 12 make the playoffs</span>
+              </div>
+            </td></tr>`;
+          }
+          return playerRow;
         }).join('')}</tbody>
       </table></div>`;
   } else if(activeTab==='playoffs'){
