@@ -178,25 +178,25 @@ body.dark .icon-sun{display:none}
 .ho-foot a{font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:600;cursor:pointer;text-decoration:none}
 
 /* Leaderboard rows — extra columns for playoff / earnings */
-.lb-row{display:grid;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair-2);gap:10px}
-.lb-row:last-child{border-bottom:none}
-.lb-row.season{grid-template-columns:34px 1fr 44px 44px auto}
-.lb-row.world{grid-template-columns:34px 1fr auto}
-.lb-row.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
-.lb-row.earn{grid-template-columns:1fr auto}
-.lb-cell{font-family:var(--ff-display);font-weight:800;font-size:15px;color:var(--green);text-align:center;line-height:1;font-feature-settings:"tnum"}
-.lb-cell.sub{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:2px}
-.lb-cell.under{color:var(--birdie)}
-.lb-cell.over{color:var(--bogey)}
-.lb-cell.mute{color:var(--sub);font-weight:400}
-.lb-cell.gold{color:var(--gold-deep)}
-.lb-head{display:grid;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--hair);gap:10px;margin-bottom:4px}
-.lb-head.season{grid-template-columns:34px 1fr 44px 44px auto}
-.lb-head.world{grid-template-columns:34px 1fr auto}
-.lb-head.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
-.lb-h{font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;text-align:center}
-.lb-h.left{text-align:left}
-.lb-h.right{text-align:right}
+.st-row{display:grid;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair-2);gap:10px}
+.st-row:last-child{border-bottom:none}
+.st-row.season{grid-template-columns:34px 1fr 44px 44px auto}
+.st-row.world{grid-template-columns:34px 1fr auto}
+.st-row.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
+.st-row.earn{grid-template-columns:1fr auto}
+.st-cell{font-family:var(--ff-display);font-weight:800;font-size:15px;color:var(--green);text-align:center;line-height:1;font-feature-settings:"tnum"}
+.st-cell.sub{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:2px}
+.st-cell.under{color:var(--birdie)}
+.st-cell.over{color:var(--bogey)}
+.st-cell.mute{color:var(--sub);font-weight:400}
+.st-cell.gold{color:var(--gold-deep)}
+.st-head{display:grid;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--hair);gap:10px;margin-bottom:4px}
+.st-head.season{grid-template-columns:34px 1fr 44px 44px auto}
+.st-head.world{grid-template-columns:34px 1fr auto}
+.st-head.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
+.st-h{font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;text-align:center}
+.st-h.left{text-align:left}
+.st-h.right{text-align:right}
 
 /* Playoff cut line — top 12 make playoffs */
 .cut-divider{display:flex;align-items:center;gap:10px;padding:10px 0;margin:2px 0}
@@ -219,7 +219,7 @@ body.dark .icon-sun{display:none}
 .brand-logo{width:48px;height:60px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;flex-shrink:0}
 .brand-logo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
 .brand-info{flex:1;min-width:0}
-.brand-name{font-family:var(--ff-display);font-weight:800;font-size:24px;letter-spacing:.01em;text-transform:none;line-height:1;color:var(--green);white-space:nowrap}
+.brand-name{font-family:var(--ff-display);font-weight:800;font-size:28px;letter-spacing:.01em;text-transform:uppercase;line-height:1;color:var(--green);white-space:nowrap}
 .brand-meta{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;color:var(--sub);margin-top:5px;text-transform:uppercase}
 .brand-meta .sep{color:var(--gold-deep);margin:0 6px}
 .brand-action{width:36px;height:36px;border:1px solid var(--hair);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--green);cursor:pointer;background:none;flex-shrink:0}
@@ -475,13 +475,16 @@ body.dark .icon-sun{display:none}
 .ptsv{font-weight:800;color:var(--green);font-size:15px;text-align:right}
 
 /* Calendar */
-.cal-item{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #eef1e8}
-.cal-date{min-width:46px;text-align:center;background:var(--green);color:#fff;border-radius:9px;padding:5px 3px}
-.cal-date .day{font-size:20px;font-weight:800;line-height:1}
-.cal-date .mon{font-size:10px;font-weight:700;opacity:.85;text-transform:uppercase}
-.cal-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:4px}
-.cal-tag.regular{background:var(--surf-tint);color:#1a5c2a}
+.cal-item{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--hair-2)}
+.cal-date{min-width:52px;text-align:center;background:var(--green);color:#fff;border-radius:10px;padding:7px 4px;flex-shrink:0}
+.cal-date.tbd{background:var(--sub)}
+.cal-date .day{font-family:var(--ff-display);font-size:24px;font-weight:800;line-height:1;letter-spacing:.01em}
+.cal-date .mon{font-family:var(--ff-mono);font-size:9px;font-weight:600;opacity:.9;text-transform:uppercase;letter-spacing:.16em;margin-top:3px}
+.cal-tag{display:inline-block;font-family:var(--ff-mono);font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.16em;text-transform:uppercase}
+.cal-tag.regular{background:var(--surf-tint);color:var(--green)}
 .cal-tag.playoff{background:var(--surf-amber);color:var(--amber-deep)}
+.cal-tag.results{background:var(--green);color:#fff}
+.cal-tag.groups{background:var(--surf-tint2);color:var(--green)}
 
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a2414;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -610,7 +613,7 @@ body.dark .icon-sun{display:none}
     </button>
     <img id="hdr-logo" src="./logo-pro-tour.png" alt="The Pro Tour" style="height:38px;width:auto;flex-shrink:0">
     <div style="flex:1">
-      <div id="hdr-title">The Pro Tour 2026</div>
+      <div id="hdr-title">The Pro Tour</div>
       <div id="hdr-sub">Golf League</div>
     </div>
   </div>
@@ -701,21 +704,21 @@ body.dark .icon-sun{display:none}
     <div id="foursome-list"><div style="text-align:center;padding:38px 20px;color:var(--muted)"><div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:10px">No Groups Configured</div><div style="font-size:14px;font-weight:600;color:var(--green)">Set up groups in Admin first</div><div style="font-size:12px;color:var(--sub);margin-top:6px">Admin → Groups Setup → save groups for a round</div></div></div>
   </div>
   <div id="fs-pane-lb" style="display:none">
-    <div style="background:#0a1f0f;border-radius:var(--r);overflow:hidden;border:1px solid #1e3d22">
-      <div style="background:#071509;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hair)">
         <div>
-          <div style="font-size:14px;font-weight:900;color:#FFE033" id="fs-lb-title">Leaderboard</div>
-          <div style="font-size:11px;color:#7a9e82;margin-top:2px" id="fs-lb-sub"></div>
+          <div class="display" style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);line-height:1" id="fs-lb-title">Leaderboard</div>
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:5px" id="fs-lb-sub"></div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite" id="fs-lb-pulse"></div>
-          <span style="font-size:10px;font-weight:700;color:#4ade80;letter-spacing:.8px">LIVE</span>
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 1.5s infinite" id="fs-lb-pulse"></div>
+          <span style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--gold-deep);letter-spacing:.18em;text-transform:uppercase">Live</span>
         </div>
       </div>
-      <div style="background:#0a1f0f;padding:6px 12px 8px;display:grid;grid-template-columns:32px 1fr 52px 44px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#7a9e82;border-bottom:1px solid #1e3d22">
-        <span style="text-align:center">POS</span><span style="padding-left:6px">PLAYER</span><span style="text-align:right">NET</span><span style="text-align:right">THRU</span>
+      <div style="padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;gap:0;border-bottom:1px solid var(--hair-2);background:var(--surf-tint)">
+        <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right">Net</span><span class="st-h right">Thru</span>
       </div>
-      <div id="fs-lb-rows" style="background:#0a1f0f;max-height:60vh;overflow-y:auto"></div>
+      <div id="fs-lb-rows" style="max-height:60vh;overflow-y:auto"></div>
     </div>
   </div>
 </div>
@@ -723,7 +726,7 @@ body.dark .icon-sun{display:none}
 <div id="pg-standings" class="pg">
   <div class="stitle">Standings</div>
   <div class="tbar">
-    <button class="tbtn act" onclick="switchTab('season',this)">Season Points</button>
+    <button class="tbtn act" onclick="switchTab('season',this)">Season</button>
     <button class="tbtn" onclick="switchTab('world',this)">World Rankings</button>
     <button class="tbtn" onclick="switchTab('playoffs',this)">Playoffs</button>
     <button class="tbtn" onclick="switchTab('earnings',this)">Earnings</button>
@@ -1415,7 +1418,7 @@ body.dark .icon-sun{display:none}
       <div style="width:42px;height:42px;border-radius:50%;background:#f5c0c0;color:var(--red-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🚪</div>
       <div>
         <div style="font-size:15px;font-weight:800;color:var(--red-deep)">Sign Out</div>
-        <div style="font-size:12px;color:var(--muted)">Sign out of Pro Tour 2026</div>
+        <div style="font-size:12px;color:var(--muted)">Sign out of The Pro Tour</div>
       </div>
     </button>
 
@@ -2922,7 +2925,7 @@ function _renderFoursomesInlineLBInner(){
   const roundOrder=['Round 1','Round 2','Round 3','Round 4','Round 5','Round 6','Round 7','Round 8','Playoff 1','Championship'];
   const allRounds=Object.keys(activeGroups);
   if(!allRounds.length){
-    rowsEl.innerHTML='<div style="padding:20px;text-align:center;color:#4a6e52;font-size:13px">No groups configured yet</div>';
+    rowsEl.innerHTML='<div class="ho-empty" style="padding:24px 12px">No groups configured yet</div>';
     return;
   }
   let activeRound=allRounds[0];
@@ -2947,9 +2950,9 @@ function _renderFoursomesInlineLBInner(){
   });
 
   if(!allPlayers.length){
-    if(subEl) subEl.textContent='No scores entered yet';
-    if(pulseEl) pulseEl.style.background='#5a8060';
-    rowsEl.innerHTML='<div style="padding:20px;text-align:center;color:#4a6e52;font-size:13px">Scores will appear here once groups start playing</div>';
+    if(subEl) subEl.textContent='No scores yet';
+    if(pulseEl) pulseEl.style.background='var(--sub)';
+    rowsEl.innerHTML='<div class="ho-empty" style="padding:24px 12px">Scores will appear once groups start</div>';
     return;
   }
 
@@ -2957,7 +2960,7 @@ function _renderFoursomesInlineLBInner(){
 
   const inProgress=allPlayers.filter(p=>!p.done).length;
   if(subEl) subEl.textContent=inProgress>0?`${inProgress} player${inProgress>1?'s':''} still playing`:'Round complete';
-  if(pulseEl) pulseEl.style.background=inProgress>0?'#4ade80':'#c9a227';
+  if(pulseEl) pulseEl.style.background=inProgress>0?'var(--birdie)':'var(--gold-deep)';
 
   let pos=1;
   rowsEl.innerHTML=allPlayers.map((p,i,arr)=>{
@@ -2967,7 +2970,6 @@ function _renderFoursomesInlineLBInner(){
     const posCls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
     const nvpStr=fmtNvp(p.nvp);
     const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
-    const thruStr=p.done?(p.elapsed?'F · '+p.elapsed:'F'):String(p.thru);
     const lastName=(p.name||'?').split(' ').slice(-1)[0];
     const firstName=(p.name||'?').split(' ')[0];
     const clockStr2 = p.done
@@ -2976,9 +2978,9 @@ function _renderFoursomesInlineLBInner(){
     const thruStr2 = p.done ? 'F' : String(p.thru);
     return `<div class="lb-row${pos===1?' lb-lead':''}">
       <div class="lb-pos ${posCls}">${posStr}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr2?`<span style="font-size:9px;font-weight:400;color:${p.done?'#c9a227':'#5a8060'};margin-left:5px;opacity:.8">${clockStr2}</span>`:''}</div>
+      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr2?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clockStr2}</span>`:''}</div>
       <div class="lb-score ${nvpCls2}${pos===1?' lead':''}">${nvpStr}</div>
-      <div class="lb-thru${p.done?' done':''}" style="font-size:10px">${thruStr2}</div>
+      <div class="lb-thru${p.done?' done':''}">${thruStr2}</div>
     </div>`;
   }).join('');
 }
@@ -4935,9 +4937,22 @@ function renderStandings(){
   const el=document.getElementById('standings-content');
   if(activeTab==='season'){
     const {totals,breakdown,byRound,playerRoundPts}=calcSeasonStandings();
-    const rows=PLAYERS.map(n=>({n,p:totals[n]||0,rounds:(breakdown[n]||[]).length}))
-      .sort((a,b)=>b.p-a.p)
-      .map((x,i)=>({...x,rank:i+1}));
+    const sortedRows=PLAYERS.map(n=>({n,p:totals[n]||0,rounds:(breakdown[n]||[]).length}))
+      .sort((a,b)=>b.p-a.p);
+    // Tie-aware ranking: players with the same points share a rank (T-prefixed)
+    const rows=[];
+    let i=0;
+    while(i<sortedRows.length){
+      let j=i;
+      while(j<sortedRows.length && sortedRows[j].p===sortedRows[i].p) j++;
+      const tied=j-i>1;
+      // Only count actual scoring rows for ties — zero-point players shouldn't all be T1
+      const validTie=tied && sortedRows[i].p>0;
+      for(let k=i;k<j;k++){
+        rows.push({...sortedRows[k], rank:i+1, rankLabel:validTie?'T'+(i+1):String(i+1)});
+      }
+      i=j;
+    }
 
     const done=fullySubmittedRounds();
     const roundsPlayed={};
@@ -4951,32 +4966,34 @@ function renderStandings(){
         <strong>5 of 8 rule.</strong> Top 5 rounds count. Tap a player for their round breakdown.
       </div>
       <div class="card" style="padding:14px 16px">
-        <div class="lb-head season">
-          <div class="lb-h">#</div>
-          <div class="lb-h left">Player</div>
-          <div class="lb-h">Pld</div>
-          <div class="lb-h">Cnt</div>
-          <div class="lb-h right">Pts</div>
+        <div class="st-head season">
+          <div class="st-h">#</div>
+          <div class="st-h left">Player</div>
+          <div class="st-h">Pld</div>
+          <div class="st-h">Cnt</div>
+          <div class="st-h right">Pts</div>
         </div>
-        ${rows.map(p=>{
+        ${rows.map((p,idx)=>{
           const played=roundsPlayed[p.n]||0;
           const counts=Math.min(played,5);
           const r8blocked=played===8;
           const podiumCls=p.rank<=3?` podium-${p.rank}`:'';
-          const playerRow = `<div class="lb-row season" onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
-            <div class="ho-pos${podiumCls}">${p.rank}</div>
+          const playerRow = `<div class="st-row season" onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
+            <div class="ho-pos${podiumCls}">${p.rankLabel}</div>
             <div class="ho-name-wrap">
               <div class="ho-name">${p.n}</div>
               <div class="ho-meta">${r8blocked?'Rd 8 Blocked':played?played+' Played · '+counts+' Counts':'Awaiting Play'}</div>
             </div>
-            <div class="lb-cell ${played?'':'mute'}">${played||'—'}</div>
-            <div class="lb-cell ${played?'':'mute'}">${played?counts:'—'}</div>
+            <div class="st-cell ${played?'':'mute'}">${played||'—'}</div>
+            <div class="st-cell ${played?'':'mute'}">${played?counts:'—'}</div>
             <div>
               <div class="ho-val">${p.p>0?Math.round(p.p):'<span style="color:var(--sub);font-weight:400">—</span>'}</div>
               <div class="ho-val-sub">Pts</div>
             </div>
           </div>`;
-          if(p.rank===12 && rows.length>12){
+          // Cut line after the last player whose rank <= 12 (ties keep everyone in)
+          const isLastInTop12 = p.rank<=12 && (idx===rows.length-1 || rows[idx+1].rank>12);
+          if(isLastInTop12 && rows.length>12 && rows[idx+1] && rows[idx+1].p>0){
             return playerRow + `<div class="cut-divider">
               <div class="cut-line"></div>
               <div class="cut-label">Playoff Cut · Top 12</div>
@@ -5021,13 +5038,13 @@ function renderStandings(){
     }
 
     el.innerHTML+=`<div class="card" style="padding:14px 16px">
-      <div class="lb-head playoff">
-        <div class="lb-h">#</div>
-        <div class="lb-h left">Player</div>
-        <div class="lb-h">R1</div>
-        <div class="lb-h">R2</div>
-        <div class="lb-h">Tot</div>
-        <div class="lb-h">$ · Pts</div>
+      <div class="st-head playoff">
+        <div class="st-h">#</div>
+        <div class="st-h left">Player</div>
+        <div class="st-h">R1</div>
+        <div class="st-h">R2</div>
+        <div class="st-h">Tot</div>
+        <div class="st-h">$ · Pts</div>
       </div>
       ${sorted.map(p=>{
         const posNum=parseInt((posLabels[p.name]||'').replace('T',''));
@@ -5040,12 +5057,12 @@ function renderStandings(){
         const r1Cls=p.r1===null?'mute':p.r1<0?'under':p.r1>0?'over':'';
         const r2Cls=p.r2===null?'mute':p.r2<0?'under':p.r2>0?'over':'';
         const totCls=p.combinedNet<0?'under':p.combinedNet>0?'over':'';
-        return `<div class="lb-row playoff">
+        return `<div class="st-row playoff">
           <div class="ho-pos${podiumCls}">${posLabels[p.name]||'—'}</div>
           <div class="ho-name-wrap"><div class="ho-name">${p.name}</div></div>
-          <div class="lb-cell ${r1Cls}">${r1}</div>
-          <div class="lb-cell ${r2Cls}">${r2}</div>
-          <div class="lb-cell ${totCls}">${tot}</div>
+          <div class="st-cell ${r1Cls}">${r1}</div>
+          <div class="st-cell ${r2Cls}">${r2}</div>
+          <div class="st-cell ${totCls}">${tot}</div>
           <div style="text-align:right">
             <div class="ho-val gold" style="font-size:16px;color:${money>0?'var(--gold-deep)':'var(--sub)'}">${money>0?'$'+Math.round(money):'—'}</div>
             <div class="ho-val-sub">${pts>0?Math.round(pts)+' Pts':'—'}</div>
@@ -5056,23 +5073,34 @@ function renderStandings(){
   } else if(activeTab==='world'){
     // World rankings = starting points + points earned this season
     const {totals}=calcSeasonStandings();
-    const ranked=PLAYERS
+    const sortedW=PLAYERS
       .map(n=>({n, p:Math.round(((WR_BASE[n]||0)+(totals[n]||0))*10)/10}))
-      .sort((a,b)=>b.p-a.p)
-      .map((x,i)=>({...x,r:i+1}));
+      .sort((a,b)=>b.p-a.p);
+    // Tie-aware ranks
+    const ranked=[];
+    let iw=0;
+    while(iw<sortedW.length){
+      let jw=iw;
+      while(jw<sortedW.length && sortedW[jw].p===sortedW[iw].p) jw++;
+      const validTie=jw-iw>1 && sortedW[iw].p>0;
+      for(let kw=iw;kw<jw;kw++){
+        ranked.push({...sortedW[kw], r:iw+1, rLabel:validTie?'T'+(iw+1):String(iw+1)});
+      }
+      iw=jw;
+    }
     el.innerHTML=`<div class="info-b">
       Starting points + 2026 season points earned so far.
     </div>
     <div class="card" style="padding:14px 16px">
-      <div class="lb-head world">
-        <div class="lb-h">#</div>
-        <div class="lb-h left">Player</div>
-        <div class="lb-h right">Pts</div>
+      <div class="st-head world">
+        <div class="st-h">#</div>
+        <div class="st-h left">Player</div>
+        <div class="st-h right">Pts</div>
       </div>
       ${ranked.map(p=>{
         const podiumCls=p.r<=3?` podium-${p.r}`:'';
-        return `<div class="lb-row world">
-          <div class="ho-pos${podiumCls}">${p.r}</div>
+        return `<div class="st-row world">
+          <div class="ho-pos${podiumCls}">${p.rLabel}</div>
           <div class="ho-name-wrap"><div class="ho-name">${p.n}</div></div>
           <div>
             <div class="ho-val">${p.p.toLocaleString()}</div>
@@ -5142,7 +5170,7 @@ function renderStandings(){
       const playerCount=sc.reduce((a,s)=>a+s.players.length,0);
       const pool=calcPrizePool(r);
       const payouts=calcRoundPayouts(r);
-      return `<div class="lb-row earn">
+      return `<div class="st-row earn">
         <div class="ho-name-wrap">
           <div class="ho-name">${roundTitle(r)}</div>
           <div class="ho-meta">${playerCount} Players · ${payouts.map((a,i)=>['1st','2nd','3rd','4th'][i]+' $'+Math.round(a)).join(' · ')}</div>
@@ -5154,7 +5182,7 @@ function renderStandings(){
       </div>`;
     }).filter(Boolean).join('');
 
-    const seasonWinnerSummary=seasonWinnerPrize>0?`<div class="lb-row earn">
+    const seasonWinnerSummary=seasonWinnerPrize>0?`<div class="st-row earn">
       <div class="ho-name-wrap">
         <div class="ho-name">Season Winner</div>
         <div class="ho-meta">${seasonWinnerName?seasonWinnerName.toUpperCase()+' · ':''}After Round 8 · Before Playoffs</div>
@@ -5165,7 +5193,7 @@ function renderStandings(){
       </div>
     </div>`:'';
 
-    const playoffSummary=p1Players.length>0?`<div class="lb-row earn">
+    const playoffSummary=p1Players.length>0?`<div class="st-row earn">
       <div class="ho-name-wrap">
         <div class="ho-name">Playoffs (Combined)</div>
         <div class="ho-meta">${PLAYERS.length} × $${settings.playoffEntryFee} · ${playoffPayouts.map((a,i)=>['1st','2nd','3rd','4th'][i]+' $'+a).join(' · ')}</div>
@@ -5180,7 +5208,7 @@ function renderStandings(){
       (roundSummaries||seasonWinnerSummary||playoffSummary?`<div class="card" style="padding:14px 16px"><div class="ctitle">Prize Pool</div>${roundSummaries}${seasonWinnerSummary}${playoffSummary}</div>`:'')+
       `<div class="card" style="padding:14px 16px">
         <div class="ctitle">Season Earnings</div>
-        ${rows.map(p=>`<div class="lb-row earn">
+        ${rows.map(p=>`<div class="st-row earn">
           <div class="ho-name-wrap"><div class="ho-name">${p.n}</div></div>
           <div>
             <div class="ho-val gold" style="color:${p.t>0?'var(--gold-deep)':'var(--sub)'}">${p.t>0?'$'+Math.round(p.t).toLocaleString():'—'}</div>
@@ -5376,35 +5404,39 @@ function renderSchedule(){
     const hasG=activeGroups[c.round]?.length>0;
     const submittedGroups=Object.values(roundScores).filter(sc=>sc.round===c.round&&sc.submitted);
     const hasResults=submittedGroups.length>0;
+    const isTBD=c.date==='TBD';
     return `<div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:12px;display:flex;gap:12px;align-items:flex-start">
-        <div class="cal-date" style="${c.date==='TBD'?'background:var(--muted)':''}">
+      <div style="padding:14px 16px;display:flex;gap:14px;align-items:flex-start">
+        <div class="cal-date${isTBD?' tbd':''}">
           <div class="day">${pts[1]?pts[1].replace(',',''):'—'}</div>
           <div class="mon">${pts[0]?pts[0].slice(0,3):'—'}</div>
         </div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
             ${sponsorLogoImg(c.round)}
-            <div style="font-size:15px;font-weight:800">${roundTitle(c.round)}</div>
+            <div class="display" style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--green);line-height:1.05">${roundTitle(c.round)}</div>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.date}${c.course?' · '+c.course:''}${c.teeTime?'<span style="margin-left:6px;background:var(--surf-tint);color:var(--gd);font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px">⛳ '+c.teeTime+'</span>':''}</div>
-          <div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap">
+          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;line-height:1.6">
+            ${c.date}${c.course?' · '+c.course:''}
+            ${c.teeTime?'<span style="margin-left:6px;background:var(--surf-tint);color:var(--green);font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.16em">Tee '+c.teeTime+'</span>':''}
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
             <span class="cal-tag ${c.type}">${c.type==='playoff'?'Playoff':'Regular'}</span>
-            ${hasResults?`<span class="cal-tag regular">Results in</span>`:hasG?`<span class="cal-tag regular">Groups ready</span>`:''}
+            ${hasResults?`<span class="cal-tag results">Results In</span>`:hasG?`<span class="cal-tag groups">Groups Ready</span>`:''}
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          ${hasG?`<button onclick="jumpToRound('${c.round}')" style="padding:7px 11px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Scorecards</button>`:''}
-          ${hasResults?`<button onclick="toggleScheduleResults('${c.round.replace(/\s/g,'_')}')" style="padding:7px 11px;background:var(--surf-tint);color:var(--gd);border:1px solid var(--bdr);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Results ↓</button>`:''}
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+          ${hasG?`<button onclick="jumpToRound('${c.round}')" style="font-family:var(--ff-mono);padding:7px 12px;background:var(--green);color:#fff;border:none;border-radius:20px;font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Cards</button>`:''}
+          ${hasResults?`<button onclick="toggleScheduleResults('${c.round.replace(/\s/g,'_')}')" style="font-family:var(--ff-mono);padding:7px 12px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:20px;font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Results</button>`:''}
         </div>
       </div>
-      ${hasResults?`<div id="sr-${c.round.replace(/\s/g,'_')}" style="display:none;border-top:1px solid var(--bdr)">
-        <div style="display:flex;border-bottom:1px solid var(--bdr)">
-          <button onclick="switchScheduleTab('${c.round.replace(/\s/g,'_')}','results',this)" class="sr-tab sr-tab-act" style="flex:1;padding:10px;border:none;background:none;font-size:12px;font-weight:800;color:var(--green);border-bottom:2px solid var(--green);cursor:pointer;text-transform:uppercase;letter-spacing:.5px">Results</button>
-          <button onclick="switchScheduleTab('${c.round.replace(/\s/g,'_')}','cards',this)" class="sr-tab" style="flex:1;padding:10px;border:none;background:none;font-size:12px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;text-transform:uppercase;letter-spacing:.5px">Scorecards</button>
+      ${hasResults?`<div id="sr-${c.round.replace(/\s/g,'_')}" style="display:none;border-top:1px solid var(--hair)">
+        <div style="display:flex;border-bottom:1px solid var(--hair);background:var(--surf-tint)">
+          <button onclick="switchScheduleTab('${c.round.replace(/\s/g,'_')}','results',this)" class="sr-tab sr-tab-act" style="flex:1;padding:11px;border:none;background:none;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--green);border-bottom:2px solid var(--green);cursor:pointer;text-transform:uppercase;letter-spacing:.16em">Results</button>
+          <button onclick="switchScheduleTab('${c.round.replace(/\s/g,'_')}','cards',this)" class="sr-tab" style="flex:1;padding:11px;border:none;background:none;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);border-bottom:2px solid transparent;cursor:pointer;text-transform:uppercase;letter-spacing:.16em">Scorecards</button>
         </div>
-        <div id="sr-pane-results-${c.round.replace(/\s/g,'_')}" style="padding:12px">${buildScheduleResults(c.round,submittedGroups)}</div>
-        <div id="sr-pane-cards-${c.round.replace(/\s/g,'_')}" style="padding:12px;display:none">${buildScheduleScorecards(c.round,submittedGroups)}</div>
+        <div id="sr-pane-results-${c.round.replace(/\s/g,'_')}" style="padding:14px 16px">${buildScheduleResults(c.round,submittedGroups)}</div>
+        <div id="sr-pane-cards-${c.round.replace(/\s/g,'_')}" style="padding:14px 16px;display:none">${buildScheduleScorecards(c.round,submittedGroups)}</div>
       </div>`:''}
     </div>`;
   }).join('');
