@@ -2974,7 +2974,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v50</strong></div>
+          <div>SW cache: <strong>v51</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
@@ -3151,6 +3151,13 @@ function buildSummaryTable(round,gi,grp,sc){
   html+=`<td class="tot">${parOut}</td>`;
   for(let h=9;h<18;h++){html+=`<td style="color:var(--muted);font-size:11px">${pars[h]}</td>`;parIn+=pars[h];}
   html+=`<td class="tot">${parIn}</td><td class="tot">${parOut+parIn}</td><td class="nv">—</td></tr>`;
+  // Stroke index row — lets players see at a glance which holes are the
+  // hardest (SI 1 = hardest), which is where they'll receive handicap strokes.
+  html+=`<tr><td class="pl" style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)">S.I.</td>`;
+  for(let h=0;h<9;h++) html+=`<td style="font-family:var(--ff-mono);font-size:10px;color:var(--sub);font-weight:600">${si[h]}</td>`;
+  html+=`<td class="tot">—</td>`;
+  for(let h=9;h<18;h++) html+=`<td style="font-family:var(--ff-mono);font-size:10px;color:var(--sub);font-weight:600">${si[h]}</td>`;
+  html+=`<td class="tot">—</td><td class="tot">—</td><td class="nv">—</td></tr>`;
   // Player rows
   // Helper: stacked dual-line gross/net cell for the OUT/IN/TOT columns. When
   // strokes are received in this segment, shows gross on top and a small gold
