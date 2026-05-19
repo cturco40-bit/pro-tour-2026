@@ -4,8 +4,8 @@
   "description": "Pro Tour 2026 Golf League",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1a5c2a",
-  "theme_color": "#1a5c2a",
+  "background_color": "#fafaf4",
+  "theme_color": "#fafaf4",
   "orientation": "portrait",
   "icons": [
     {
