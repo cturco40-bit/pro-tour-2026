@@ -92,6 +92,12 @@ body.dark .cal-date{background:#4a7c59;color:#09090b}
 body.dark .dark-toggle{color:var(--green);border-color:var(--hair)}
 html,body{height:100%;overflow:hidden}
 body{font-family:var(--ff-body);font-weight:500;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* PWA standalone: env(safe-area-inset-top) is not always honored on iOS (cached
+   PWA install / iOS quirks). Force a minimum 44px top clearance so the iPhone
+   status bar never overlaps the brand block. */
+@media (display-mode: standalone){
+  body{padding-top:max(env(safe-area-inset-top,0px),44px);padding-bottom:max(env(safe-area-inset-bottom,0px),0px)}
+}
 input,textarea,select{font-family:var(--ff-body)}
 
 /* ─── Design system utilities (new mockup) ─────────────────────── */
@@ -131,9 +137,11 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
    the iPhone clock. Bottom margin gives breathing room above the nav. */
 #pg-home{margin:-14px -14px 0;padding-bottom:14px}
 .brand-block{padding:14px 16px 6px;display:flex;align-items:center;gap:14px}
-.hero-sponsor{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--hair-2)}
-.hero-sponsor-lbl{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600}
-.hero-sponsor img{height:34px;width:auto;border-radius:5px;flex-shrink:0}
+/* Sponsor logo sits inline to the right of the round title */
+.hero-title-row{display:flex;align-items:flex-end;gap:14px;justify-content:space-between}
+.hero-title-row .hero-title{flex:1;min-width:0;margin-bottom:0}
+.hero-title-row .hero-sponsor-mark{flex-shrink:0;display:flex;align-items:center;justify-content:center;padding-bottom:6px}
+.hero-title-row .hero-sponsor-mark img{height:54px;width:auto;max-width:90px;border-radius:6px;display:block}
 .home-cards-wrap{padding:4px 16px 20px}
 .home-cards-wrap .card{margin-bottom:14px}
 
@@ -270,7 +278,8 @@ body.dark .bnav{background:rgba(22,30,24,.92)}
 .rsel::-webkit-scrollbar{display:none}
 .rsbtn{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--bdr);background:var(--surf);color:var(--muted);flex-shrink:0;transition:all .12s;text-transform:uppercase;letter-spacing:.5px}
 .rsbtn.act{background:var(--green);color:#fff;border-color:var(--green)}
-.grp-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;border:1px solid var(--bdr);overflow:hidden}
+.grp-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;border:1px solid var(--bdr);overflow:hidden;transition:box-shadow .25s,border-color .25s}
+.grp-card.grp-focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(244,217,64,.35),var(--sh)}
 .grp-hdr{background:var(--green);color:#fff;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 .grp-hdr h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.8px}
 .grp-tee{font-size:11px;opacity:.75;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
@@ -1985,17 +1994,19 @@ function renderHome(){
   const courseIcon=`<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
   const clockIcon=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
 
-  const sponsorImg = sponsorLogoImg(display.round, '34px');
-  const sponsorBand = sponsorImg
-    ? `<div class="hero-sponsor"><span class="hero-sponsor-lbl">Presented by</span>${sponsorImg}</div>`
-    : '';
+  const sponsorImg = sponsorLogoImg(display.round, '54px');
+  const titleBlock = sponsorImg
+    ? `<div class="hero-title-row">
+        <h1 class="hero-title">${titleHTML}</h1>
+        <div class="hero-sponsor-mark">${sponsorImg}</div>
+      </div>`
+    : `<h1 class="hero-title">${titleHTML}</h1>`;
   hero.innerHTML=`
-    ${sponsorBand}
     <div class="hero-meta">
       <span class="hero-meta-tag">${tag}</span>
       ${dateStr?`<span class="hero-meta-sep"></span><span class="hero-meta-date">${dateStr}</span>`:''}
     </div>
-    <h1 class="hero-title">${titleHTML}</h1>
+    ${titleBlock}
     <div class="hero-round">— ${roundLabelWords(display.round)}</div>
     ${(display.course||display.teeTime)?`<div class="hero-info">
       ${display.course?`<div class="hero-info-item">${courseIcon}<span class="val">${display.course}</span></div>`:''}
@@ -2093,6 +2104,10 @@ function buildHomeTeeRow(round,gi,group){
   const players=(group.players||[]).map(p=>`<div class="tee-player${done?' done':''}">${p.name}</div>`).join('');
   const meta=done?'Done':inProg?'Live':`Group ${gi+1}`;
   const groupLbl=done||inProg?`Group ${gi+1} · ${meta}`:meta;
+  // Tapping a tee-row takes the user to the Foursomes page for this round so
+  // they can review their group and tap "Start Scorecard" themselves. It does
+  // NOT open the scorecard / start the round clock here — that would start
+  // the pace timer before they're ready to tee off.
   return `<div class="tee-row${done?' is-done':''}" onclick="jumpToRoundGroup('${round}',${gi})">
     <div class="tee-time-wrap">
       <div class="tee-time">${group.teeTime||'—'}</div>
@@ -2105,13 +2120,21 @@ function buildHomeTeeRow(round,gi,group){
   </div>`;
 }
 
-// Opens the scorecard for a specific group directly from the home tee-time list.
+// Navigates to the Foursomes page for the given round and tries to scroll the
+// chosen group card into view, but does NOT auto-open the scorecard — the
+// scorecard's pace timer starts on first open, so the user explicitly taps
+// "Start Scorecard" on their group when they're ready.
 function jumpToRoundGroup(round, gi){
-  if(typeof openScorecard==='function' && activeGroups[round]?.[gi]){
-    openScorecard(round, gi);
-  } else {
-    jumpToRound(round);
-  }
+  jumpToRound(round);
+  setTimeout(()=>{
+    const cards=document.querySelectorAll('#grp-display .grp-card');
+    const target=cards[gi];
+    if(target && target.scrollIntoView){
+      target.scrollIntoView({behavior:'smooth', block:'center'});
+      target.classList.add('grp-focus');
+      setTimeout(()=>target.classList.remove('grp-focus'), 2000);
+    }
+  }, 350);
 }
 
 // Returns live world rankings array sorted by total points
@@ -2924,7 +2947,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v31</strong></div>
+          <div>SW cache: <strong>v32</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
