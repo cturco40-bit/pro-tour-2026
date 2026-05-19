@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;600;700;800;900&family=Inter+Tight:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <meta name="description" content="The Pro Tour 2026 Golf League — schedules, scoring, and leaderboards.">
 <title>The Pro Tour 2026</title>
 
@@ -22,26 +22,40 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 input{-webkit-user-select:text;user-select:text}
 :root{
-  --green:#1a5c2a;--gl:#2d8a45;--gd:#0f3a1a;
-  --gold:#c9a227;--goldbright:#FFE033;--bg:#eef1e8;--card:#fff;--bdr:#cdd6c3;
-  --txt:#1a2414;--muted:#5a6b52;--sub:#96a88e;
-  --r:14px;--sh:0 2px 12px rgba(0,0,0,0.09);
+  /* Brand */
+  --green:#1a4d2e;--gl:#2c6045;--gd:#0d2e1a;--green-mid:#2c6045;
+  --gold:#f4d940;--goldbright:#ffe860;--gold-deep:#c9a826;
+  --red:#d94545;
+
+  /* Surfaces / ink */
+  --bg:#fafaf4;--card:#fff;--surf:#fff;--bdr:rgba(26,77,46,0.10);--hair:rgba(26,77,46,0.10);--hair-2:rgba(26,77,46,0.06);
+  --txt:#1a2620;--muted:#4a554e;--sub:#8a948e;--ink-4:#c0c8c2;
+
+  /* Legacy aliases kept so untouched pages still render */
+  --gold-legacy:#c9a227;
+  --r:14px;--sh:0 4px 18px rgba(26,77,46,0.06);
   --eagle:#1a56a0;--birdie:#2d8a45;--par:#444;--bogey:#c0392b;--dbl:#8b0000;
-  --surf:#fff;--surf-tint:#f0f4ea;--surf-tint2:#e4ead8;
-  --surf-red:#fff0f0;--surf-amber:#fff3e0;--surf-blue:#cce0ff;
-  --green-deep:#1a4020;--red-deep:#c0392b;--amber-deep:#5a2800;
+  --surf-tint:rgba(26,77,46,0.04);--surf-tint2:rgba(26,77,46,0.08);
+  --surf-red:#fff0f0;--surf-amber:#fff7d6;--surf-blue:#cce0ff;
+  --green-deep:#0d2e1a;--red-deep:#a83838;--amber-deep:#7a5c00;
+
+  /* Type families */
+  --ff-display:'Big Shoulders Display','Inter Tight',-apple-system,sans-serif;
+  --ff-body:'Inter Tight',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --ff-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
 }
 /* ─── DARK MODE — charcoal + muted forest green ───────────────── */
 body.dark{
-  --green:#4a7c59;--gl:#6b9d7a;--gd:#355e3b;
-  --gold:#b8901f;--goldbright:#d4a82b;
-  --bg:#09090b;--card:#18181b;--bdr:#27272a;
-  --txt:#e4e4e7;--muted:#a1a1aa;--sub:#71717a;
-  --sh:0 2px 12px rgba(0,0,0,0.5);
-  --eagle:#7a9cc6;--birdie:#6b9d7a;--par:#a1a1aa;--bogey:#c97070;--dbl:#a85050;
-  --surf:#18181b;--surf-tint:#1f2a22;--surf-tint2:#27332a;
-  --surf-red:#2a1414;--surf-amber:#2a2014;--surf-blue:#141a2a;
-  --green-deep:#8fb89c;--red-deep:#d68a8a;--amber-deep:#d4b56b;
+  --green:#6ba87f;--gl:#8bc298;--gd:#3d6e4f;--green-mid:#5a9670;
+  --gold:#d4b53a;--goldbright:#e8c84a;--gold-deep:#b89525;
+  --red:#e16868;
+  --bg:#0d1410;--card:#161e18;--surf:#161e18;--bdr:rgba(107,168,127,0.16);--hair:rgba(107,168,127,0.16);--hair-2:rgba(107,168,127,0.08);
+  --txt:#e4eae5;--muted:#9aa89e;--sub:#6b7a70;--ink-4:#3a4640;
+  --sh:0 4px 18px rgba(0,0,0,0.5);
+  --eagle:#7a9cc6;--birdie:#6ba87f;--par:#a1a1aa;--bogey:#c97070;--dbl:#a85050;
+  --surf-tint:rgba(107,168,127,0.08);--surf-tint2:rgba(107,168,127,0.14);
+  --surf-red:#2a1414;--surf-amber:#2a2414;--surf-blue:#141a2a;
+  --green-deep:#a8c9b3;--red-deep:#d68a8a;--amber-deep:#d4b56b;
 }
 body.dark .hdr{background:#0f0f10;box-shadow:0 1px 0 #27272a}
 body.dark .bnav{background:#18181b;border-top-color:#27272a}
@@ -74,38 +88,122 @@ body.dark .as-row-lbl{color:#e4e4e7}
 body.dark .pin-screen h2{color:#e4e4e7}
 body.dark .cal-date{background:#4a7c59;color:#09090b}
 /* Dark mode toggle button */
-.dark-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:1.5px solid rgba(255,255,255,.35);border-radius:20px;color:#fff;font-size:15px;padding:4px 10px;cursor:pointer;line-height:1;display:flex;align-items:center;gap:5px}
-body.dark .dark-toggle{border-color:rgba(255,255,255,.5)}
+.dark-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:1px solid var(--hair);border-radius:50%;color:var(--green);font-size:14px;width:36px;height:36px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+body.dark .dark-toggle{color:var(--green);border-color:var(--hair)}
 html,body{height:100%;overflow:hidden}
-body{font-family:'Nunito Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:700;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;text-transform:uppercase}
-input,textarea,select{text-transform:none}
+body{font-family:var(--ff-body);font-weight:500;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+input,textarea,select{font-family:var(--ff-body)}
+
+/* ─── Design system utilities (new mockup) ─────────────────────── */
+.mono{font-family:var(--ff-mono);letter-spacing:.14em;text-transform:uppercase}
+.display{font-family:var(--ff-display);font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:1}
+.label-mono{font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.label-mono::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.hair{border:0;border-top:1px solid var(--hair);margin:0}
 
 /* ─── HEADER ─────────────────────────────── */
-.hdr{background:#1a5c2a;color:#fff;padding:10px 16px 10px;flex-shrink:0;box-shadow:0 3px 12px rgba(0,0,0,.5);position:relative;z-index:200}
-.hdr-main{display:flex;align-items:center;gap:10px}
-.hdr-back{display:none;align-items:center;gap:6px;cursor:pointer;color:#fff;border:none;background:none;padding:0}
-.hdr-back svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.hdr-back span{font-size:14px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.5px}
-#hdr-title{font-size:16px;font-weight:900;letter-spacing:1.5px;color:#FFE033;text-transform:uppercase}
-#hdr-sub{font-size:10px;opacity:.55;margin-top:1px;color:#fff;text-transform:uppercase;letter-spacing:.8px}
+.hdr{background:var(--bg);color:var(--green);padding:14px 16px 12px;flex-shrink:0;border-bottom:1px solid var(--hair);position:relative;z-index:200}
+.hdr-main{display:flex;align-items:center;gap:12px}
+.hdr-back{display:none;align-items:center;gap:6px;cursor:pointer;color:var(--green);border:none;background:none;padding:0}
+.hdr-back svg{width:22px;height:22px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hdr-back span{font-family:var(--ff-mono);font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.14em}
+#hdr-title{font-family:var(--ff-display);font-size:22px;font-weight:800;letter-spacing:.01em;color:var(--green);text-transform:uppercase;line-height:1}
+#hdr-sub{font-family:var(--ff-mono);font-size:9px;margin-top:5px;color:var(--sub);text-transform:uppercase;letter-spacing:.16em}
+body.dark .hdr{background:var(--bg);border-bottom-color:var(--hair)}
 
 /* ─── SCROLL AREA ────────────────────────── */
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 0}
 
 /* ─── BOTTOM NAV ─────────────────────────── */
-.bnav{flex-shrink:0;background:var(--surf);border-top:1px solid var(--bdr);display:flex;box-shadow:0 -2px 6px rgba(0,0,0,.07);padding-bottom:env(safe-area-inset-bottom,0px)}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px 8px;cursor:pointer;border:none;background:none;color:var(--muted);font-size:9px;font-weight:700;gap:3px;transition:color .12s;text-transform:uppercase;letter-spacing:.5px}
+.bnav{flex-shrink:0;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--hair);display:flex;padding:14px 0 8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+body.dark .bnav{background:rgba(22,30,24,.92)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 4px;cursor:pointer;border:none;background:none;color:var(--sub);font-family:var(--ff-mono);font-size:8px;font-weight:600;gap:6px;transition:color .15s;text-transform:uppercase;letter-spacing:.16em;position:relative}
 .nb.act{color:var(--green)}
 .nb.act svg{stroke:var(--green)}
-.nb svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nb.act::before{content:'';position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:24px;height:3px;background:var(--gold);border-radius:0 0 3px 3px}
+.nb svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* ─── PAGES ──────────────────────────────── */
 .pg{display:none}.pg.act{display:block}
 
+/* ─── HOME — brand block, live strip, hero, stats, tee times, CTA ─── */
+/* On home, neutralize scroll-area's side padding so cards can sit flush with mockup-style 16px margins */
+#pg-home{margin:-14px -14px 0}
+.brand-block{padding:18px 16px 4px;display:flex;align-items:center;gap:14px}
+.brand-logo{width:40px;height:48px;background:linear-gradient(135deg,var(--goldbright),var(--gold),var(--gold-deep));border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px var(--green),0 2px 8px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.4);flex-shrink:0}
+.brand-logo svg{width:22px;height:28px}
+.brand-info{flex:1;min-width:0}
+.brand-name{font-family:var(--ff-display);font-weight:800;font-size:24px;letter-spacing:.01em;text-transform:uppercase;line-height:1;color:var(--green);white-space:nowrap}
+.brand-name em{font-style:italic;color:var(--green);position:relative}
+.brand-name em::after{content:'';position:absolute;bottom:2px;left:0;right:0;height:3px;background:var(--gold);z-index:-1;opacity:.7}
+.brand-meta{font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;color:var(--sub);margin-top:5px;text-transform:uppercase}
+.brand-meta .sep{color:var(--gold-deep);margin:0 6px}
+.brand-action{width:36px;height:36px;border:1px solid var(--hair);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--green);cursor:pointer;background:none;flex-shrink:0}
+.brand-action svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+.live-strip{margin:16px 16px 0;background:var(--card);border:1px solid var(--hair);border-radius:100px;padding:8px 14px;display:flex;align-items:center;gap:10px;font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(217,69,69,.18);animation:livepulse 1.6s infinite ease-in-out;flex-shrink:0}
+.live-dot.idle{background:var(--ink-4);box-shadow:none;animation:none}
+@keyframes livepulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.2);opacity:.7}}
+.live-label{color:var(--red);font-weight:600}
+.live-label.idle{color:var(--sub)}
+.live-status{color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-time{color:var(--green);font-weight:600;flex-shrink:0}
+
+.hero{padding:18px 16px 22px}
+.hero-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.hero-meta-tag{font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:600;display:flex;align-items:center;gap:6px}
+.hero-meta-tag::before{content:'';width:6px;height:6px;background:var(--gold);border-radius:50%;box-shadow:0 0 0 1.5px var(--green)}
+.hero-meta-sep{width:24px;height:1px;background:var(--hair)}
+.hero-meta-date{font-family:var(--ff-mono);font-size:10px;color:var(--sub);letter-spacing:.08em}
+.hero-title{font-family:var(--ff-display);font-weight:800;font-size:42px;line-height:.92;letter-spacing:-.01em;text-transform:uppercase;color:var(--green);margin-bottom:2px}
+.hero-title em{font-style:italic;font-weight:700;color:var(--green);position:relative;display:inline-block}
+.hero-title em::after{content:'';position:absolute;bottom:4px;left:-2px;right:-2px;height:8px;background:var(--gold);z-index:-1;opacity:.55;transform:skewX(-4deg)}
+.hero-round{font-family:var(--ff-display);font-weight:600;font-size:17px;color:var(--sub);letter-spacing:.02em;text-transform:uppercase;margin-top:8px}
+.hero-info{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:18px;padding-top:16px;border-top:1px solid var(--hair);font-size:12px;color:var(--muted)}
+.hero-info-item{display:flex;align-items:center;gap:7px}
+.hero-info-item svg{width:14px;height:14px;color:var(--green);stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.hero-info-item .val{color:var(--txt);font-weight:500}
+
+.stats-card{margin:0 16px 14px;background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--hair);position:relative}
+.stats-card::before{content:'';position:absolute;top:0;left:26%;right:26%;height:2px;background:var(--gold);border-radius:0 0 4px 4px}
+.stats-head{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--hair)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr}
+.stat-cell{padding:20px 8px;text-align:center;position:relative}
+.stat-cell+.stat-cell::before{content:'';position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--hair)}
+.stat-num{font-family:var(--ff-display);font-weight:800;font-size:32px;line-height:1;color:var(--green);letter-spacing:-.02em;font-feature-settings:"tnum"}
+.stat-num .dollar{color:var(--gold-deep);font-size:18px;vertical-align:top;margin-right:1px;font-weight:800}
+.stat-label{font-family:var(--ff-mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--sub);margin-top:8px;font-weight:500}
+
+.tee-card{margin:0 16px 16px;background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--hair)}
+.tee-head{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--hair)}
+.tee-head-count{font-family:var(--ff-mono);font-size:10px;color:var(--sub);letter-spacing:.04em}
+.tee-row{display:grid;grid-template-columns:64px 1fr auto;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid var(--hair-2);cursor:pointer}
+.tee-row:last-child{border-bottom:none}
+.tee-row:active{background:var(--surf-tint)}
+.tee-time-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.tee-time{font-family:var(--ff-display);font-weight:800;font-size:22px;color:var(--green);letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+.tee-meta{font-family:var(--ff-mono);font-size:9px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase}
+.tee-players{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tee-player{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--green);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tee-player::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;box-shadow:0 0 0 1px rgba(26,77,46,.2)}
+.tee-player.done{color:var(--sub);text-decoration:line-through;text-decoration-color:var(--ink-4)}
+.tee-arrow{color:var(--sub);width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--surf-tint);border-radius:50%;flex-shrink:0}
+.tee-arrow svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round}
+.tee-row.is-done .tee-arrow{background:var(--green);color:#fff}
+
+.cta-wrap{padding:0 16px 22px}
+.cta-primary{width:100%;padding:18px;background:var(--green);color:#fff;border:none;border-radius:14px;font-family:var(--ff-display);font-size:17px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden;box-shadow:0 6px 0 var(--gd),0 8px 20px rgba(26,77,46,.25)}
+.cta-primary::before{content:'';position:absolute;inset:3px;border:1px solid var(--gold);border-radius:11px;pointer-events:none;opacity:.5}
+.cta-primary svg{width:12px;height:12px;color:var(--gold);fill:var(--gold)}
+.cta-primary:active{transform:translateY(2px);box-shadow:0 4px 0 var(--gd),0 6px 14px rgba(26,77,46,.25)}
+.cta-secondary{width:100%;padding:14px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:12px;font-family:var(--ff-mono);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+
 /* ─── CARDS ──────────────────────────────── */
-.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;border:1px solid var(--bdr)}
-.ctitle{font-size:10px;color:var(--green);font-weight:800;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e6f0e8;font-family:'Nunito Sans',sans-serif}
-.stitle{font-size:18px;font-weight:900;margin-bottom:14px;color:var(--gd);text-transform:uppercase;letter-spacing:1.5px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--sh);padding:16px 18px;margin-bottom:14px;border:1px solid var(--hair)}
+.ctitle{font-family:var(--ff-mono);font-size:10px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:.16em;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:8px}
+.ctitle::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.stitle{font-family:var(--ff-display);font-size:28px;font-weight:800;margin-bottom:14px;color:var(--green);text-transform:uppercase;letter-spacing:.01em;line-height:1}
 .info-b{background:var(--surf-tint);border-left:4px solid var(--green);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--green-deep);margin-bottom:13px;line-height:1.5}
 .ptbl{width:100%;font-size:13px;border-collapse:collapse}
 .ptbl td{padding:7px 0;border-bottom:1px solid #eef1e8}
@@ -406,7 +504,7 @@ input,textarea,select{text-transform:none}
 <div id="app" style="display:none;flex-direction:column;position:fixed;inset:0">
 
 <!-- APP HEADER -->
-<div class="hdr">
+<div class="hdr" style="display:none">
   <div class="hdr-main">
     <button class="hdr-back" id="hdr-back" onclick="closeScorecard()">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
@@ -425,36 +523,58 @@ input,textarea,select{text-transform:none}
 <div class="scroll-area" id="scroll-area">
 
 <div id="pg-home" class="pg act">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div class="stitle" style="margin-bottom:0">The Pro Tour 2026</div>
-    <span style="background:#FFE033;color:#1a5c2a;font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;border:1.5px solid #c9a227">2026 Season</span>
-  </div>
-
-  <!-- 1. Current Round -->
-  <div class="card" id="home-current-round">
-    <div class="ctitle">📍 Current Round</div>
-    <div id="home-round-info"></div>
-  </div>
-
-  <!-- 2. Season Standings Top 5 -->
-  <div class="card">
-    <div class="ctitle">🏆 Season Standings</div>
-    <div id="home-standings"></div>
-    <div style="text-align:center;margin-top:10px">
-      <span style="color:var(--green);font-size:13px;font-weight:700;cursor:pointer" onclick="showPage('standings',document.getElementById('nb-standings'))">Full standings →</span>
+  <!-- Brand block -->
+  <div class="brand-block">
+    <div class="brand-logo">
+      <svg viewBox="0 0 22 28" fill="none">
+        <path d="M16 2v24" stroke="#1a4d2e" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 3c0 0-4.5 .5-7.5 2.5C7 6.5 7 8 8.5 9.5C10 11 13 11 16 9.5V3z" fill="#d94545"/>
+      </svg>
     </div>
+    <div class="brand-info">
+      <div class="brand-name">The Pro <em>Tour</em></div>
+      <div class="brand-meta" id="home-brand-meta">Season 26 <span class="sep">/</span> 2026</div>
+    </div>
+    <button class="brand-action" onclick="toggleDarkMode()" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1m17.7-7.7l-4.2 4.2m-7 7l-4.2 4.2m15.4 0l-4.2-4.2m-7-7L4.3 4.3"/></svg>
+    </button>
   </div>
 
-  <!-- 3. Recent Results -->
-  <div class="card">
-    <div class="ctitle">🎯 Recent Results</div>
-    <div id="home-recent"></div>
+  <!-- Live strip -->
+  <div class="live-strip" id="home-live-strip" style="display:none">
+    <span class="live-dot" id="home-live-dot"></span>
+    <span class="live-label" id="home-live-label">Live</span>
+    <span class="live-status" id="home-live-status"></span>
+    <span class="live-time" id="home-live-time"></span>
   </div>
 
-  <!-- 4. Prize Pool -->
-  <div class="card">
-    <div class="ctitle">💰 Prize Pool</div>
-    <div id="home-prize"></div>
+  <!-- Hero -->
+  <div class="hero" id="home-hero"></div>
+
+  <!-- Round Stats -->
+  <div class="stats-card" id="home-stats-card" style="display:none">
+    <div class="stats-head">
+      <span class="label-mono">Round Stats</span>
+      <span class="tee-head-count" id="home-stats-sub"></span>
+    </div>
+    <div class="stats-grid" id="home-stats-grid"></div>
+  </div>
+
+  <!-- Tee Times -->
+  <div class="tee-card" id="home-tee-card" style="display:none">
+    <div class="tee-head">
+      <span class="label-mono">Tee Times</span>
+      <span class="tee-head-count" id="home-tee-count"></span>
+    </div>
+    <div id="home-tee-rows"></div>
+  </div>
+
+  <!-- Primary CTA -->
+  <div class="cta-wrap" id="home-cta-wrap" style="display:none">
+    <button class="cta-primary" id="home-cta-btn">
+      <span id="home-cta-label">Enter Scores</span>
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
   </div>
 </div>
 
@@ -1368,6 +1488,9 @@ function showPage(id,btn){
   pg.classList.add('act');
   if(btn) btn.classList.add('act');
   document.getElementById('scroll-area').scrollTop=0;
+  // Hide global top header on home (home has its own brand-block).
+  const hdr=document.querySelector('.hdr');
+  if(hdr) hdr.style.display = (id==='home') ? 'none' : '';
   if(id==='home') renderHome();
   if(id==='standings') renderStandings();
   if(id==='schedule') renderSchedule();
@@ -1702,11 +1825,229 @@ function doInlineChangePW(){
 function inits(n){return n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();}
 
 // ═══════════════ HOME ═══════════════
+// ─── HOME (redesigned 2026) ────────────────────────────────────────
+// Picks the round to spotlight on the home page: prefers today's, then the next
+// upcoming, then the most recently completed (so the page still has content
+// during off-weeks).
+function pickHomeRound(){
+  const today0=new Date(); today0.setHours(0,0,0,0);
+  let current=null,next=null,last=null;
+  CALENDAR.forEach(c=>{
+    if(!c.date||c.date==='TBD') return;
+    const d=new Date(c.date); if(isNaN(d)) return;
+    const d0=new Date(d); d0.setHours(0,0,0,0);
+    const submitted=Object.values(roundScores).some(sc=>sc.round===c.round&&sc.submitted);
+    const dayDiff=Math.round((d0-today0)/86400000);
+    if(submitted){ last=c; return; }
+    if(dayDiff===0||dayDiff===-1) current=c;
+    else if(dayDiff>0&&!next) next=c;
+  });
+  return { display: current||next||last, isToday: !!current, isFuture: !current && !!next, lastDone: last && !current && !next };
+}
+
+const NUM_WORDS=['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'];
+function roundLabelWords(round){
+  const i=REGULAR_ROUNDS.indexOf(round);
+  if(i>=0) return `Round ${NUM_WORDS[i+1]} of Eight`;
+  if(round==='Playoff 1') return 'Playoff — Round One';
+  if(round==='Championship') return 'The Championship';
+  return round;
+}
+
+function fmtHomeDate(s){
+  if(!s||s==='TBD') return '';
+  const d=new Date(s); if(isNaN(d)) return '';
+  const dd=String(d.getDate()).padStart(2,'0');
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const yy=String(d.getFullYear()).slice(-2);
+  return `${dd}.${mm}.${yy}`;
+}
+
+// Combine a calendar date string and a "12:00 PM" tee time into a Date
+function calendarTeeDate(c){
+  if(!c?.date||c.date==='TBD') return null;
+  const d=new Date(c.date); if(isNaN(d)) return null;
+  if(c.teeTime){
+    const m=String(c.teeTime).trim().match(/^(\d{1,2}):?(\d{2})?\s*(AM|PM)?$/i);
+    if(m){
+      let h=parseInt(m[1])||0; const mi=parseInt(m[2]||'0'); const ap=(m[3]||'').toUpperCase();
+      if(ap==='PM'&&h<12) h+=12;
+      if(ap==='AM'&&h===12) h=0;
+      d.setHours(h,mi,0,0);
+    }
+  }
+  return d;
+}
+
+function fmtCountdown(ms){
+  if(ms<=0) return 'now';
+  const totalMin=Math.floor(ms/60000);
+  const h=Math.floor(totalMin/60), m=totalMin%60;
+  if(h>0) return `${h}H ${m}M`;
+  return `${m}M`;
+}
+
 function renderHome(){
-  renderHomeCurrentRound();
-  renderHomeStandings();
-  renderHomeRecentResults();
-  renderHomePrizePool();
+  const sub=document.getElementById('home-brand-meta');
+  const liveStrip=document.getElementById('home-live-strip');
+  const hero=document.getElementById('home-hero');
+  const statsCard=document.getElementById('home-stats-card');
+  const teeCard=document.getElementById('home-tee-card');
+  const ctaWrap=document.getElementById('home-cta-wrap');
+  if(!hero) return;
+
+  const {display,isToday,isFuture,lastDone}=pickHomeRound();
+
+  // Brand sub line
+  const totalSubmitted=Object.values(roundScores).filter(sc=>sc.submitted).length;
+  if(sub){
+    const status=isToday?'Live':isFuture?'Upcoming':lastDone?'Off-Week':'Pre-Season';
+    const roundLbl=display?display.round.replace(/^Round /,'R').replace(/^Playoff /,'P').replace(/^Championship/,'CH'):'—';
+    sub.innerHTML=`Season 26 <span class="sep">/</span> ${roundLbl} <span class="sep">/</span> ${status}`;
+  }
+
+  if(!display){
+    hero.innerHTML=`<div class="hero-meta"><span class="hero-meta-tag">Season</span></div>
+      <h1 class="hero-title">2026<br>Season</h1>
+      <div class="hero-round">Schedule the calendar in Admin to see the next round</div>`;
+    if(liveStrip) liveStrip.style.display='none';
+    if(statsCard) statsCard.style.display='none';
+    if(teeCard) teeCard.style.display='none';
+    if(ctaWrap) ctaWrap.style.display='none';
+    return;
+  }
+
+  // Hero
+  const tag=isToday?"Today's Round":isFuture?"Up Next":lastDone?"Last Round":"Round";
+  const dateStr=fmtHomeDate(display.date);
+  const titleRaw=display.eventName?.trim()||roundTitle(display.round);
+  // Italicize/underline last word for visual rhythm (matches mockup)
+  const titleParts=titleRaw.split(' ');
+  const last=titleParts.pop();
+  const titleHTML=titleParts.length
+    ? `${titleParts.join(' ')}<br><em>${last}</em>`
+    : `<em>${last}</em>`;
+
+  const courseIcon=`<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+  const clockIcon=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+
+  hero.innerHTML=`
+    <div class="hero-meta">
+      <span class="hero-meta-tag">${tag}</span>
+      ${dateStr?`<span class="hero-meta-sep"></span><span class="hero-meta-date">${dateStr}</span>`:''}
+    </div>
+    <h1 class="hero-title">${titleHTML}</h1>
+    <div class="hero-round">— ${roundLabelWords(display.round)}</div>
+    ${(display.course||display.teeTime)?`<div class="hero-info">
+      ${display.course?`<div class="hero-info-item">${courseIcon}<span class="val">${display.course}</span></div>`:''}
+      ${display.teeTime?`<div class="hero-info-item">${clockIcon}<span class="val">${display.teeTime}</span></div>`:''}
+    </div>`:''}
+  `;
+
+  // Live strip
+  const groups=activeGroups[display.round]||[];
+  const submittedCount=groups.filter((_,gi)=>roundScores[`${display.round}__${gi}`]?.submitted).length;
+  const inProgress=groups.length>0 && submittedCount<groups.length && Object.values(roundScores).some(sc=>sc.round===display.round && !sc.submitted && sc.players?.some(p=>p.holes?.some(h=>h!=null)));
+  const allDone=groups.length>=2 && submittedCount===groups.length;
+  if(liveStrip){
+    let show=true,label='Live',status='',time='',idle=false;
+    if(allDone){
+      show=true; idle=true; label='Final'; status=`Round ${display.round.replace(/^Round /,'')} — Complete`; time='✓';
+    } else if(inProgress){
+      label='Live'; status=`Round ${display.round.replace(/^Round /,'')} in progress`; time=`${submittedCount}/${groups.length}`;
+    } else if(isToday){
+      const teeDate=calendarTeeDate(display);
+      if(teeDate){
+        const ms=teeDate-new Date();
+        if(ms>0){ label='Live'; status=`Round ${display.round.replace(/^Round /,'')} starting in`; time=fmtCountdown(ms); }
+        else { label='Live'; status=`Round ${display.round.replace(/^Round /,'')} — Tee off`; time='Now'; }
+      } else { label='Live'; status='Round on deck'; time=''; }
+    } else if(isFuture){
+      const teeDate=calendarTeeDate(display)||new Date(display.date);
+      if(teeDate){
+        const days=Math.ceil((teeDate-new Date())/86400000);
+        idle=true; label='Soon'; status=`Round ${display.round.replace(/^Round /,'')} in`; time=days===1?'1 day':`${days} days`;
+      } else show=false;
+    } else if(lastDone){
+      idle=true; label='Recap'; status=`Round ${display.round.replace(/^Round /,'')} — Final`; time='✓';
+    } else show=false;
+    liveStrip.style.display=show?'flex':'none';
+    if(show){
+      document.getElementById('home-live-dot').className='live-dot'+(idle?' idle':'');
+      document.getElementById('home-live-label').className='live-label'+(idle?' idle':'');
+      document.getElementById('home-live-label').textContent=label;
+      document.getElementById('home-live-status').textContent=status;
+      document.getElementById('home-live-time').textContent=time;
+    }
+  }
+
+  // Stats card
+  if(statsCard){
+    if(groups.length>0){
+      const players=groups.reduce((a,g)=>a+(g.players?.length||0),0);
+      const purse=calcPrizePool(display.round)||0;
+      const roundShort=display.round.replace(/^Round /,'R').replace(/^Playoff /,'P').replace(/^Championship/,'CH');
+      statsCard.style.display='block';
+      document.getElementById('home-stats-sub').textContent=`${groups.length} group${groups.length===1?'':'s'} · ${players} player${players===1?'':'s'}`;
+      document.getElementById('home-stats-grid').innerHTML=`
+        <div class="stat-cell"><div class="stat-num">${players}</div><div class="stat-label">Players</div></div>
+        <div class="stat-cell"><div class="stat-num"><span class="dollar">$</span>${purse.toLocaleString()}</div><div class="stat-label">Purse</div></div>
+        <div class="stat-cell"><div class="stat-num">${roundShort}</div><div class="stat-label">Round</div></div>`;
+    } else statsCard.style.display='none';
+  }
+
+  // Tee Times card
+  if(teeCard){
+    if(groups.length>0){
+      teeCard.style.display='block';
+      const totalPlayers=groups.reduce((a,g)=>a+(g.players?.length||0),0);
+      document.getElementById('home-tee-count').textContent=`${groups.length} group${groups.length===1?'':'s'} · ${totalPlayers} player${totalPlayers===1?'':'s'}`;
+      document.getElementById('home-tee-rows').innerHTML=groups.map((g,gi)=>buildHomeTeeRow(display.round,gi,g)).join('');
+    } else teeCard.style.display='none';
+  }
+
+  // CTA
+  if(ctaWrap){
+    const btn=document.getElementById('home-cta-btn');
+    const label=document.getElementById('home-cta-label');
+    if(groups.length>0 && !allDone){
+      ctaWrap.style.display='block';
+      if(label) label.textContent=inProgress?'Resume Scoring':'Enter Scores';
+      btn.onclick=()=>jumpToRound(display.round);
+    } else if(allDone){
+      ctaWrap.style.display='block';
+      if(label) label.textContent='View Final Leaderboard';
+      btn.onclick=()=>{ showPage('standings',document.getElementById('nb-standings')); };
+    } else ctaWrap.style.display='none';
+  }
+}
+
+function buildHomeTeeRow(round,gi,group){
+  const sc=roundScores[`${round}__${gi}`];
+  const done=sc?.submitted;
+  const inProg=sc && !done && sc.players?.some(p=>p.holes?.some(h=>h!=null));
+  const players=(group.players||[]).map(p=>`<div class="tee-player${done?' done':''}">${p.name}</div>`).join('');
+  const meta=done?'Done':inProg?'Live':`Group ${gi+1}`;
+  const groupLbl=done||inProg?`Group ${gi+1} · ${meta}`:meta;
+  return `<div class="tee-row${done?' is-done':''}" onclick="jumpToRoundGroup('${round}',${gi})">
+    <div class="tee-time-wrap">
+      <div class="tee-time">${group.teeTime||'—'}</div>
+      <div class="tee-meta">${groupLbl}</div>
+    </div>
+    <div class="tee-players">${players}</div>
+    <div class="tee-arrow">
+      <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  </div>`;
+}
+
+// Opens the scorecard for a specific group directly from the home tee-time list.
+function jumpToRoundGroup(round, gi){
+  if(typeof openScorecard==='function' && activeGroups[round]?.[gi]){
+    openScorecard(round, gi);
+  } else {
+    jumpToRound(round);
+  }
 }
 
 // Returns live world rankings array sorted by total points
@@ -2520,7 +2861,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v27</strong></div>
+          <div>SW cache: <strong>v28</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
