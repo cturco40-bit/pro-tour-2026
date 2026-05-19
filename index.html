@@ -2534,46 +2534,39 @@ function syncCourseNameToCalendar(){
 //   * after number if player receives a stroke on that hole
 function scorecardCell(gross, par, hcp, siVal, tdStyle){
   if(gross===null||gross===undefined){
-    return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid #d0d8c6;font-size:12px;color:#bbb">—</td>`;
+    return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);font-size:12px;color:var(--sub);position:relative">—</td>`;
   }
   const strokes  = strokesOnHole(hcp, siVal);
-  const netScore = gross - strokes;
   const grossRel = gross - par;
-  const netRel   = netScore - par;
 
-  // Shape based on GROSS result
-  let shape = '';
-  if(grossRel <= -2)      shape = 'double-circle';
-  else if(grossRel === -1) shape = 'circle';
-  else if(grossRel === 1)  shape = 'square';
-  else if(grossRel >= 2)   shape = 'double-square';
+  // Shape + colour based on gross-vs-par (par = no shape, plain number)
+  let shape='', col='var(--txt)', fw='600';
+  if(grossRel <= -2)      { shape='double-circle'; col='var(--eagle)';  fw='800'; }
+  else if(grossRel === -1){ shape='circle';        col='var(--birdie)'; fw='800'; }
+  else if(grossRel === 1) { shape='square';        col='var(--bogey)';  fw='700'; }
+  else if(grossRel >= 2)  { shape='double-square'; col='var(--dbl)';    fw='700'; }
 
-  // Colour based on GROSS result
-  let col = '#444', fw = '600';
-  if(grossRel <= -2)     { col='var(--eagle)'; fw='900'; }
-  else if(grossRel === -1){ col='#0f4a20';     fw='800'; }
-  else if(grossRel === 1) { col='var(--bogey)'; fw='700'; }
-  else if(grossRel >= 2)  { col='var(--dbl)';  fw='700'; }
-
-  // Net score shown below gross, small gold text, no overlap, no circle
-  const netLabel = strokes > 0
-    ? `<div style="font-size:9px;font-weight:800;color:var(--amber-deep);line-height:1;margin-top:2px">${netScore}</div>`
+  // One asterisk per stroke received on this hole (top-right corner)
+  // Single-stroke gets one star; high-handicap players getting two strokes get two.
+  const stars = strokes > 0 ? '★'.repeat(strokes) : '';
+  const starsEl = stars
+    ? `<span style="position:absolute;top:1px;right:3px;font-size:8px;font-weight:800;color:var(--gold-deep);line-height:1;letter-spacing:-1px">${stars}</span>`
     : '';
 
-  let shapeEl = '';
+  let shapeEl='';
   if(shape === 'double-circle'){
-    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid ${col};box-shadow:0 0 0 2.5px ${col};font-size:12px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
+    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid ${col};box-shadow:0 0 0 2px ${col};font-family:var(--ff-display);font-size:13px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
   } else if(shape === 'circle'){
-    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1px solid ${col};font-size:12px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
+    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1.5px solid ${col};font-family:var(--ff-display);font-size:13px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
   } else if(shape === 'double-square'){
-    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1.5px solid ${col};box-shadow:0 0 0 2.5px ${col};font-size:12px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
+    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1.5px solid ${col};box-shadow:0 0 0 2px ${col};font-family:var(--ff-display);font-size:13px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
   } else if(shape === 'square'){
-    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid ${col};font-size:12px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
+    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1.5px solid ${col};font-family:var(--ff-display);font-size:13px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
   } else {
-    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:12px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
+    shapeEl = `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-family:var(--ff-display);font-size:13px;font-weight:${fw};color:${col};line-height:1">${gross}</span>`;
   }
 
-  return `<td style="${tdStyle||''}text-align:center;padding:3px 2px;border:1px solid #d0d8c6;vertical-align:middle"><div style="display:flex;flex-direction:column;align-items:center;gap:0">${shapeEl}${netLabel}</div></td>`;
+  return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);vertical-align:middle;position:relative">${starsEl}${shapeEl}</td>`;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2973,7 +2966,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v45</strong></div>
+          <div>SW cache: <strong>v46</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
