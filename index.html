@@ -90,7 +90,8 @@ body.dark .cal-date{background:#4a7c59;color:#09090b}
 /* Dark mode toggle button */
 .dark-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:1px solid var(--hair);border-radius:50%;color:var(--green);font-size:14px;width:36px;height:36px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 body.dark .dark-toggle{color:var(--green);border-color:var(--hair)}
-html,body{height:100%;overflow:hidden}
+html,body{height:100vh;height:100dvh;overflow:hidden}
+html{background:var(--bg)}
 /* Top padding: force at least 44px so the iPhone clock/earpiece can never
    overlap the brand block, even when env(safe-area-inset-top) reports 0 (iOS
    PWA caching quirks, non-cover viewport contexts, etc.). Body has no bottom
@@ -2954,7 +2955,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v38</strong></div>
+          <div>SW cache: <strong>v39</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
