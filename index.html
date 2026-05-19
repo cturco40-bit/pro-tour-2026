@@ -2533,10 +2533,17 @@ function syncCourseNameToCalendar(){
 //   eagle/double-eagle = double circle, birdie = circle, bogey = square, double+ = double square
 //   * after number if player receives a stroke on that hole
 function scorecardCell(gross, par, hcp, siVal, tdStyle){
-  if(gross===null||gross===undefined){
-    return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);font-size:12px;color:var(--sub);position:relative">—</td>`;
-  }
+  // Strokes received on this hole — computed up front so we can mark the
+  // top-right corner with an asterisk per stroke EVEN if the hole hasn't
+  // been played yet. One * = one stroke; ** = two strokes (very high hcp).
   const strokes  = strokesOnHole(hcp, siVal);
+  const starsEl  = strokes > 0
+    ? `<span style="position:absolute;top:2px;right:4px;font-size:11px;font-weight:800;color:var(--gold-deep);line-height:1;letter-spacing:-1px;pointer-events:none">${'*'.repeat(strokes)}</span>`
+    : '';
+
+  if(gross===null||gross===undefined){
+    return `<td style="${tdStyle||''}text-align:center;padding:4px 2px;border:1px solid var(--hair);font-size:12px;color:var(--sub);position:relative">${starsEl}—</td>`;
+  }
   const grossRel = gross - par;
 
   // Shape + colour based on gross-vs-par (par = no shape, plain number)
@@ -2545,13 +2552,6 @@ function scorecardCell(gross, par, hcp, siVal, tdStyle){
   else if(grossRel === -1){ shape='circle';        col='var(--birdie)'; fw='800'; }
   else if(grossRel === 1) { shape='square';        col='var(--bogey)';  fw='700'; }
   else if(grossRel >= 2)  { shape='double-square'; col='var(--dbl)';    fw='700'; }
-
-  // One asterisk per stroke received on this hole (top-right corner)
-  // Single-stroke gets one star; high-handicap players getting two strokes get two.
-  const stars = strokes > 0 ? '★'.repeat(strokes) : '';
-  const starsEl = stars
-    ? `<span style="position:absolute;top:1px;right:3px;font-size:8px;font-weight:800;color:var(--gold-deep);line-height:1;letter-spacing:-1px">${stars}</span>`
-    : '';
 
   let shapeEl='';
   if(shape === 'double-circle'){
@@ -2966,7 +2966,7 @@ function renderFoursomePage(){
           <div>Local backup: <strong>${localKeys.length}</strong> round(s) — ${localKeys.join(', ')||'—'}</div>
           <div>Local backup group count: <strong>${localCount}</strong></div>
           <div>Signed in as: <strong>${(currentUser?.email||'').replace('@protour2026.com','')||'(none)'}</strong></div>
-          <div>SW cache: <strong>v46</strong></div>
+          <div>SW cache: <strong>v47</strong></div>
         </div>
         ${localKeys.length ? `<button onclick="recoverGroupsFromLocal()" style="margin-top:10px;width:100%;padding:11px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">↺ Restore groups from local backup</button>` : ''}`;
     } catch(e){ diag = `<div style="margin-top:14px;color:var(--bogey);font-size:12px">Diagnostic failed: ${e.message}</div>`; }
