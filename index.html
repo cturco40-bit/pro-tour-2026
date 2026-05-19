@@ -5411,38 +5411,40 @@ function renderSchedule(){
     const submittedGroups=Object.values(roundScores).filter(sc=>sc.round===c.round&&sc.submitted);
     const hasResults=submittedGroups.length>0;
     const isTBD=c.date==='TBD';
+    const rid=c.round.replace(/\s/g,'_');
+    const hasActions = hasG || hasResults;
     return `<div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:14px 16px;display:flex;gap:14px;align-items:flex-start">
+      <div style="padding:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start">
         <div class="cal-date${isTBD?' tbd':''}">
           <div class="day">${pts[1]?pts[1].replace(',',''):'—'}</div>
           <div class="mon">${pts[0]?pts[0].slice(0,3):'—'}</div>
         </div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
             ${sponsorLogoImg(c.round)}
-            <div class="display" style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--green);line-height:1.05">${roundTitle(c.round)}</div>
+            <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600">${c.type==='playoff'?'Playoff':'Regular'} · ${c.date}</div>
           </div>
-          <div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--sub);font-weight:600;line-height:1.6">
-            ${c.date}${c.course?' · '+c.course:''}
-            ${c.teeTime?'<span style="margin-left:6px;background:var(--surf-tint);color:var(--green);font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.16em">Tee '+c.teeTime+'</span>':''}
-          </div>
-          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-            <span class="cal-tag ${c.type}">${c.type==='playoff'?'Playoff':'Regular'}</span>
+          <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1.05;word-break:keep-all;overflow-wrap:normal">${roundTitle(c.round)}</div>
+          ${c.course||c.teeTime?`<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            ${c.course?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600">${c.course}</span>`:''}
+            ${c.teeTime?`<span style="font-family:var(--ff-mono);background:var(--surf-tint);color:var(--green);font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.16em;text-transform:uppercase">Tee · ${c.teeTime}</span>`:''}
+          </div>`:''}
+          ${hasResults||hasG?`<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
             ${hasResults?`<span class="cal-tag results">Results In</span>`:hasG?`<span class="cal-tag groups">Groups Ready</span>`:''}
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
-          ${hasG?`<button onclick="jumpToRound('${c.round}')" style="font-family:var(--ff-mono);padding:7px 12px;background:var(--green);color:#fff;border:none;border-radius:20px;font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Cards</button>`:''}
-          ${hasResults?`<button onclick="toggleScheduleResults('${c.round.replace(/\s/g,'_')}')" style="font-family:var(--ff-mono);padding:7px 12px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:20px;font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Results</button>`:''}
+          </div>`:''}
         </div>
       </div>
-      ${hasResults?`<div id="sr-${c.round.replace(/\s/g,'_')}" style="display:none;border-top:1px solid var(--hair)">
+      ${hasActions?`<div style="display:flex;gap:8px;padding:0 16px 14px">
+        ${hasG?`<button onclick="jumpToRound('${c.round}')" style="flex:1;font-family:var(--ff-mono);padding:10px 14px;background:var(--green);color:#fff;border:none;border-radius:24px;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Cards</button>`:''}
+        ${hasResults?`<button onclick="toggleScheduleResults('${rid}')" style="flex:1;font-family:var(--ff-mono);padding:10px 14px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:24px;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Results</button>`:''}
+      </div>`:''}
+      ${hasResults?`<div id="sr-${rid}" style="display:none;border-top:1px solid var(--hair)">
         <div style="display:flex;border-bottom:1px solid var(--hair);background:var(--surf-tint)">
-          <button onclick="switchScheduleTab('${c.round.replace(/\s/g,'_')}','results',this)" class="sr-tab sr-tab-act" style="flex:1;padding:11px;border:none;background:none;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--green);border-bottom:2px solid var(--green);cursor:pointer;text-transform:uppercase;letter-spacing:.16em">Results</button>
-          <button onclick="switchScheduleTab('${c.round.replace(/\s/g,'_')}','cards',this)" class="sr-tab" style="flex:1;padding:11px;border:none;background:none;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);border-bottom:2px solid transparent;cursor:pointer;text-transform:uppercase;letter-spacing:.16em">Scorecards</button>
+          <button onclick="switchScheduleTab('${rid}','results',this)" class="sr-tab sr-tab-act" style="flex:1;padding:11px;border:none;background:none;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--green);border-bottom:2px solid var(--green);cursor:pointer;text-transform:uppercase;letter-spacing:.16em">Results</button>
+          <button onclick="switchScheduleTab('${rid}','cards',this)" class="sr-tab" style="flex:1;padding:11px;border:none;background:none;font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--sub);border-bottom:2px solid transparent;cursor:pointer;text-transform:uppercase;letter-spacing:.16em">Scorecards</button>
         </div>
-        <div id="sr-pane-results-${c.round.replace(/\s/g,'_')}" style="padding:14px 16px">${buildScheduleResults(c.round,submittedGroups)}</div>
-        <div id="sr-pane-cards-${c.round.replace(/\s/g,'_')}" style="padding:14px 16px;display:none">${buildScheduleScorecards(c.round,submittedGroups)}</div>
+        <div id="sr-pane-results-${rid}" style="padding:14px 16px">${buildScheduleResults(c.round,submittedGroups)}</div>
+        <div id="sr-pane-cards-${rid}" style="padding:14px 16px;display:none">${buildScheduleScorecards(c.round,submittedGroups)}</div>
       </div>`:''}
     </div>`;
   }).join('');
