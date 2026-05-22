@@ -1497,6 +1497,17 @@ body.dark .icon-sun{display:none}
 
 <div class="toast" id="toast"></div>
 
+<!-- START ROUND MODAL — gates scoring until the group actually tees off -->
+<div id="start-round-modal" style="display:none;position:fixed;inset:0;background:rgba(13,46,26,.6);z-index:850;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border-radius:18px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 40px rgba(13,46,26,.35);text-align:center;border:1px solid var(--hair)">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 14px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    <div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.01em;line-height:1.05" id="start-round-title">Start Round?</div>
+    <div style="font-size:13px;color:var(--muted);margin:10px 0 20px;line-height:1.5">Tap <strong>Start Round</strong> when your group tees off. The round and per-hole timers begin now — not when you opened the card.</div>
+    <button onclick="confirmStartRound()" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px">Start Round</button>
+    <button onclick="cancelStartRound()" style="width:100%;padding:12px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Not Yet — Close</button>
+  </div>
+</div>
+
 <!-- MID-ROUND LEADERBOARD MODAL -->
 <div id="mid-lb-modal" style="display:none;position:fixed;inset:0;background:rgba(13,46,26,.55);z-index:700;overflow-y:auto">
   <div style="background:var(--card);margin:20px auto;max-width:480px;border-radius:18px;overflow:hidden;box-shadow:0 8px 40px rgba(13,46,26,.25);border:1px solid var(--hair)">
@@ -3245,8 +3256,6 @@ let _paceInterval=null;
 const PACE_WARNING_MS=15*60*1000; // 15 minutes
 
 function startPaceTimer(){
-  _paceRoundStart=_paceRoundStart||Date.now();
-  _paceHoleStart=_paceHoleStart||Date.now(); // preserve restored hole start across reopens
   if(_paceInterval) clearInterval(_paceInterval);
   _paceInterval=setInterval(updatePaceDisplay,1000);
   updatePaceDisplay();
@@ -3257,14 +3266,34 @@ function stopPaceTimer(){
   _paceInterval=null;
 }
 
+// Derives both timers from the scorecard's stored timestamps rather than from
+// running globals, so back-navigation and reopens never corrupt the values.
+//   round time = (submittedAt || now) − roundStartedAt
+//   hole time  = (holeCompletedAt[h] || now) − (holeCompletedAt[h-1] || roundStartedAt)
+// A completed hole shows its frozen recorded duration; the active hole runs live.
 function updatePaceDisplay(){
-  const now=Date.now();
-  const holeMs=now-(_paceHoleStart||now);
-  const roundMs=now-(_paceRoundStart||now);
-  document.getElementById('pace-hole-time').textContent=fmtMs(holeMs);
-  document.getElementById('pace-round-time').textContent=fmtMs(roundMs);
+  const sc = roundScores[`${ov.round}__${ov.gi}`];
+  const holeEl=document.getElementById('pace-hole-time');
+  const roundEl=document.getElementById('pace-round-time');
   const warn=document.getElementById('pace-warning');
-  if(warn) warn.style.display=holeMs>PACE_WARNING_MS?'block':'none';
+  if(!sc || !sc.roundStartedAt){
+    if(holeEl) holeEl.textContent='0:00';
+    if(roundEl) roundEl.textContent='0:00';
+    if(warn) warn.style.display='none';
+    return;
+  }
+  const now=Date.now();
+  const hca=Array.isArray(sc.holeCompletedAt)?sc.holeCompletedAt:[];
+  const h=ov.hole;
+  const holeStart=(h>0 && hca[h-1])?hca[h-1]:sc.roundStartedAt;
+  const holeEnd=hca[h]?hca[h]:now;                       // frozen if completed, live otherwise
+  const holeMs=Math.max(0, holeEnd-holeStart);
+  const roundEnd=(sc.submitted&&sc.submittedAt)?sc.submittedAt:now;
+  const roundMs=Math.max(0, roundEnd-sc.roundStartedAt);
+  if(holeEl) holeEl.textContent=fmtMs(holeMs);
+  if(roundEl) roundEl.textContent=fmtMs(roundMs);
+  // Only warn on the live (incomplete) hole, not when reviewing a finished one
+  if(warn) warn.style.display=(!hca[h] && holeMs>PACE_WARNING_MS)?'block':'none';
 }
 
 function fmtMs(ms){
@@ -3272,6 +3301,31 @@ function fmtMs(ms){
   const m=Math.floor(s/60);
   const sec=s%60;
   return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+// Records when hole `h` (0-based) was finalized. Immutable: only stamps if not
+// already set, so going back to edit a hole and re-advancing keeps the original
+// time. No-op if the round hasn't been started yet.
+function stampHoleComplete(sc, h){
+  if(!sc || h<0 || h>17 || !sc.roundStartedAt) return;
+  if(!Array.isArray(sc.holeCompletedAt)) sc.holeCompletedAt = Array(18).fill(null);
+  if(sc.holeCompletedAt[h] == null) sc.holeCompletedAt[h] = Date.now();
+}
+
+// Average per-hole duration across scorecards. Uses the real captured per-hole
+// completion stamps where present; falls back to (round total / 18) for older
+// cards recorded before per-hole timing existed.
+function avgHoleMsFromScorecards(scs, fallbackRoundMs){
+  const durations=[];
+  scs.forEach(sc=>{
+    const hca=Array.isArray(sc.holeCompletedAt)?sc.holeCompletedAt:null;
+    if(hca && sc.roundStartedAt){
+      let prev=sc.roundStartedAt;
+      hca.forEach(t=>{ if(t!=null){ const d=t-prev; if(d>0) durations.push(d); prev=t; } });
+    }
+  });
+  if(durations.length) return durations.reduce((a,v)=>a+v,0)/durations.length;
+  return fallbackRoundMs?fallbackRoundMs/18:0;
 }
 
 // ═══════════════ SCORECARD PHOTOS ═══════════════
@@ -3467,7 +3521,7 @@ function showDetailedStats(name){
   );
   const roundTimes=timedScs.map(sc=>sc.submittedAt-sc.roundStartedAt).filter(ms=>ms>0);
   const avgRoundMs=roundTimes.length?roundTimes.reduce((a,v)=>a+v,0)/roundTimes.length:0;
-  const avgHoleMs=avgRoundMs?avgRoundMs/18:0;
+  const avgHoleMs=avgHoleMsFromScorecards(timedScs, avgRoundMs);
 
   // Earnings for this player
   let totalEarnings = 0;
@@ -3790,8 +3844,10 @@ function openScorecard(round,gi){
   }
   const sc = roundScores[key];
 
-  // Round start time — set once on first open, persist across closes/reopens
-  if(!sc.roundStartedAt) sc.roundStartedAt = Date.now();
+  // Per-hole completion timestamps — immutable once captured. Hole h's duration =
+  // holeCompletedAt[h] − (holeCompletedAt[h-1] || roundStartedAt). Editing a past
+  // hole or re-advancing never overwrites an existing stamp.
+  if(!Array.isArray(sc.holeCompletedAt)) sc.holeCompletedAt = Array(18).fill(null);
 
   // Resume on the hole the user was last viewing; otherwise jump to first unfilled.
   let resumeHole;
@@ -3802,31 +3858,55 @@ function openScorecard(round,gi){
     resumeHole = firstEmpty >= 0 ? firstEmpty : 0;
   }
 
-  // Hole start time — keep the existing one if we have it (so closing & reopening
-  // doesn't reset the hole timer); otherwise stamp now.
-  if(!sc.holeStartedAt) sc.holeStartedAt = Date.now();
-
   ov={round,gi,hole:resumeHole};
   _skipRemaining.clear();
-  _paceRoundStart = sc.roundStartedAt;
-  _paceHoleStart = sc.holeStartedAt;
-  startPaceTimer();
   startGPSWatch();
   startLBRefresh();
   // Don't pop the notification permission prompt inside a scorecard — distracts the scorer.
-  // It can be enabled any time from the Account page.
-
-  // Persist sc.roundStartedAt / lastHole / holeStartedAt back to Firebase + local backup
-  saveOneScorecard(key);
 
   document.getElementById('ov-title').textContent=`Group ${gi+1}`;
   document.getElementById('ov-sub').textContent=roundTitle(round);
   document.getElementById('ov-round-lbl').textContent=roundTitle(round).toUpperCase()+' — LIVE LEADERBOARD';
-  // Show sponsor logo in overlay sub-header if present
   const ovLogoEl=document.getElementById('ov-sponsor-logo');
   if(ovLogoEl) ovLogoEl.innerHTML=sponsorLogoImg(round,'28px');
   document.getElementById('sc-overlay').classList.add('open');
   renderHole();
+
+  // Gate scoring behind an explicit "Start Round" tap. The round clock must begin
+  // when the group tees off, not when the card is opened (which could be in the
+  // parking lot). If the round was already started (resuming), skip the modal.
+  if(!sc.roundStartedAt){
+    showStartRoundModal();
+  } else {
+    _paceRoundStart = sc.roundStartedAt;
+    startPaceTimer();
+  }
+  saveOneScorecard(key);
+}
+
+// ── Start Round gate ──────────────────────────────────────────────────────
+function showStartRoundModal(){
+  const t=document.getElementById('start-round-title');
+  if(t) t.textContent = `Start ${roundTitle(ov.round)}?`;
+  const m=document.getElementById('start-round-modal');
+  if(m) m.style.display='flex';
+}
+function confirmStartRound(){
+  const key=`${ov.round}__${ov.gi}`;
+  const sc=roundScores[key];
+  if(sc){
+    sc.roundStartedAt = Date.now();   // round clock starts at tee-off, not card open
+    _paceRoundStart = sc.roundStartedAt;
+    saveOneScorecard(key);
+  }
+  const m=document.getElementById('start-round-modal');
+  if(m) m.style.display='none';
+  startPaceTimer();
+}
+function cancelStartRound(){
+  const m=document.getElementById('start-round-modal');
+  if(m) m.style.display='none';
+  closeScorecard();   // backed out before teeing off — nothing recorded
 }
 
 function closeScorecard(){
@@ -4182,10 +4262,12 @@ function showHalfwayReview(onConfirm){
   window._halfwayConfirmFn = function(){
     document.getElementById('halfway-review-modal').remove();
     _halfwayConfirmed=true;
-    ov.hole++;
-    _paceHoleStart=Date.now();
     const _scH = roundScores[`${ov.round}__${ov.gi}`];
-    if(_scH){ _scH.lastHole = ov.hole; _scH.holeStartedAt = _paceHoleStart; }
+    if(_scH){
+      stampHoleComplete(_scH, ov.hole);   // finalize hole 9 (index 8)
+      ov.hole++;
+      _scH.lastHole = ov.hole;
+    } else { ov.hole++; }
     saveOneScorecard(`${ov.round}__${ov.gi}`);
     renderHole();
     renderLiveStandings();
@@ -4308,6 +4390,7 @@ function nextHole(){
       sc.submitted=true;
       sc.submittedAt=Date.now();
       sc.roundStartedAt=sc.roundStartedAt||_paceRoundStart||Date.now();
+      stampHoleComplete(sc, 17);   // finalize the 18th hole
       sc.players.forEach(pl=>{
         const missingCount = pl.holes.filter(h=>h===null||h===undefined).length;
         pl.dnf = missingCount > 0;
@@ -4326,10 +4409,9 @@ function nextHole(){
     return;
   }
 
+  stampHoleComplete(sc, ov.hole);   // finalize hole being left (immutable)
   ov.hole++;
-  _paceHoleStart=Date.now();
   sc.lastHole = ov.hole;
-  sc.holeStartedAt = _paceHoleStart;
   saveOneScorecard(`${round}__${gi}`);
   renderHole();
   renderLiveStandings();
@@ -4404,6 +4486,7 @@ function skipHole(){
       sc.submitted=true;
       sc.submittedAt=Date.now();
       sc.roundStartedAt=sc.roundStartedAt||_paceRoundStart||Date.now();
+      stampHoleComplete(sc, 17);   // finalize the 18th hole
       sc.players.forEach(pl=>{
         pl.gross=pl.holes.reduce((a,v)=>a+(v||0),0);
         pl.net=pl.gross-pl.hcp;
@@ -4418,10 +4501,9 @@ function skipHole(){
     showConfirmSubmit(round,gi,doSubmit,onCancel);
     return;
   }
+  stampHoleComplete(sc, ov.hole);   // finalize hole being left (immutable)
   ov.hole++;
-  _paceHoleStart = Date.now();
   sc.lastHole = ov.hole;
-  sc.holeStartedAt = _paceHoleStart;
   saveOneScorecard(`${round}__${gi}`);
   renderHole();
   renderLiveStandings();
@@ -5348,7 +5430,7 @@ function showPlayerBreakdown(name){
   );
   const roundTimes = timedScs.map(sc=>sc.submittedAt - sc.roundStartedAt).filter(ms=>ms>0);
   const avgRoundMs = roundTimes.length ? roundTimes.reduce((a,v)=>a+v,0)/roundTimes.length : 0;
-  const avgHoleMs  = avgRoundMs ? avgRoundMs/18 : 0;
+  const avgHoleMs  = avgHoleMsFromScorecards(timedScs, avgRoundMs);
   const timingHTML = avgRoundMs ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div style="text-align:center;background:var(--surf-tint);border-radius:10px;padding:10px 4px">
@@ -6177,6 +6259,11 @@ function initFirebase(){
     const normalizeScorecard = v => {
       if(!v || typeof v !== 'object') return v;
       const out = {...v};
+      // Firebase returns sparse arrays as numeric-keyed objects — coerce back, pad to 18
+      if(out.holeCompletedAt !== undefined){
+        out.holeCompletedAt = toArr(out.holeCompletedAt);
+        while(out.holeCompletedAt.length < 18) out.holeCompletedAt.push(null);
+      }
       if(out.players !== undefined) out.players = toArr(out.players);
       if(Array.isArray(out.players)){
         out.players = out.players.map(p => {
@@ -6226,8 +6313,14 @@ function initFirebase(){
         });
         // Preserve fields we treat as local-only state on the active card
         if(activeSnapshot.lastHole !== undefined) cloud.lastHole = activeSnapshot.lastHole;
-        if(activeSnapshot.holeStartedAt !== undefined) cloud.holeStartedAt = activeSnapshot.holeStartedAt;
         if(activeSnapshot.roundStartedAt !== undefined) cloud.roundStartedAt = activeSnapshot.roundStartedAt;
+        // Per-hole completion stamps: keep whichever side has each stamp set, so a
+        // remote echo can't wipe a hole time the local scorer just captured.
+        if(Array.isArray(activeSnapshot.holeCompletedAt)){
+          const merged = Array.isArray(cloud.holeCompletedAt) ? cloud.holeCompletedAt.slice() : Array(18).fill(null);
+          activeSnapshot.holeCompletedAt.forEach((t,i)=>{ if(t!=null && merged[i]==null) merged[i]=t; });
+          cloud.holeCompletedAt = merged;
+        }
       }
     }
 
