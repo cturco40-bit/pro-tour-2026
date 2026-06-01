@@ -799,7 +799,7 @@ body.dark .icon-sun{display:none}
           <select class="fsel" id="setup-round" onchange="renderSetup()" style="margin-bottom:0" id="setup-round"></select>
         </div>
         <div id="setup-container"></div>
-        <button class="as-save-btn" onclick="saveGroups()">Save Groups</button>
+        <button class="as-save-btn" id="save-groups-btn" onclick="saveGroups()">Save Groups</button>
       </div>
     </div>
 
@@ -2546,6 +2546,15 @@ function populateRoundSelectors(){
 
   // Restore previous selections if still valid
   if(prevSetup  && [...selSetup.options] .some(o=>o.value===prevSetup))  selSetup.value  = prevSetup;
+  else {
+    // No prior selection (first open) — default to the first round that isn't
+    // fully complete yet, so admin lands on the round they're actually setting up.
+    try {
+      const done = fullySubmittedRounds();
+      const firstOpen = CALENDAR.find(c=>!done.has(c.round));
+      if(firstOpen) selSetup.value = firstOpen.round;
+    } catch(e){}
+  }
   if(prevCourse && [...selCourse.options].some(o=>o.value===prevCourse)) selCourse.value = prevCourse;
 }
 
@@ -2720,6 +2729,9 @@ function autoAssignPlayoffGroups(){
   return groups;
 }
 
+// Rounds the admin has explicitly unlocked for editing after completion (per round).
+let _setupUnlock={};
+
 function renderSetup(){
   const roundEl=document.getElementById('setup-round');
   if(!roundEl) return;
@@ -2728,11 +2740,31 @@ function renderSetup(){
   const existing=activeGroups[round]||[];
   const numGroups=isPlayoff1?3:7;
 
+  // A round is "complete" once every group has submitted. Lock its groups so they
+  // can't be changed by accident — admin can explicitly unlock to fix a mistake.
+  const isComplete = fullySubmittedRounds().has(round);
+  const locked = isComplete && !_setupUnlock[round];
+  const dis = locked ? ' disabled' : '';
+
+  let html='';
+  if(isComplete){
+    html += `<div style="background:${locked?'var(--surf-tint)':'var(--surf-amber)'};border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:800;color:var(--gd);margin-bottom:4px">${roundTitle(round)} is complete${locked?' — locked':''}</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:8px">
+        ${locked
+          ? 'Every group has submitted, so these groups are locked. Unlock only if you need to correct a mistake.'
+          : 'Editing is unlocked. Changes here affect a round that has already been played.'}
+      </div>
+      <button onclick="${locked?`unlockSetup('${round}')`:`lockSetup('${round}')`}" style="width:100%;padding:9px;background:${locked?'var(--green)':'var(--bogey)'};color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">
+        ${locked?'Unlock to Edit':'Re-lock Groups'}
+      </button>
+    </div>`;
+  }
+
   // For regular rounds 2-8 with the previous round complete: offer auto-assign
   // by previous-round finishing position (with season-pts and world-rank tiebreakers).
-  let html='';
   const regIdx = REGULAR_ROUNDS.indexOf(round);
-  if(regIdx > 0){
+  if(regIdx > 0 && !isComplete){
     const prevRound = REGULAR_ROUNDS[regIdx - 1];
     if(fullySubmittedRounds().has(prevRound)){
       html += `<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
@@ -2746,7 +2778,7 @@ function renderSetup(){
       </div>`;
     }
   }
-  if(isPlayoff1){
+  if(isPlayoff1 && !isComplete){
     const {totals}=calcSeasonStandings();
     const qualifiers=PLAYERS.filter(n=>totals[n]>0).sort((a,b)=>(totals[b]||0)-(totals[a]||0)).slice(0,12);
     html+=`<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
@@ -2770,23 +2802,30 @@ function renderSetup(){
     html+=`<div class="grp-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-size:13px;font-weight:800;color:var(--gd)">Group ${g+1}${bonusLabel}</span>
-        <input class="finp" type="text" id="tee-${g}" placeholder="Tee time" value="${grp.teeTime||''}" style="width:120px;font-size:12px;padding:6px 8px">
+        <input class="finp" type="text" id="tee-${g}" placeholder="Tee time" value="${grp.teeTime||''}" style="width:120px;font-size:12px;padding:6px 8px"${dis}>
       </div>`;
     const maxPlayers=isPlayoff1?4:4;
     for(let p=0;p<maxPlayers;p++){
       const pl=grp.players[p]||{name:'',hcp:0};
       html+=`<div class="prow">
-        <select class="fsel" id="gp-${g}-${p}" style="margin-bottom:0;font-size:13px;padding:8px">
+        <select class="fsel" id="gp-${g}-${p}" style="margin-bottom:0;font-size:13px;padding:8px"${dis}>
           <option value="">— Player ${p+1} (optional) —</option>
           ${PLAYERS.map(nm=>`<option value="${nm}"${pl.name===nm?' selected':''}>${nm}</option>`).join('')}
         </select>
-        <input class="finp" type="number" id="gh-${g}-${p}" placeholder="HCP" value="${pl.hcp||''}" min="0" max="54" style="text-align:center;width:100%">
+        <input class="finp" type="number" id="gh-${g}-${p}" placeholder="HCP" value="${pl.hcp||''}" min="0" max="54" style="text-align:center;width:100%"${dis}>
       </div>`;
     }
     html+=`</div>`;
   }
   document.getElementById('setup-container').innerHTML=html;
+
+  // Reflect lock state on the Save button.
+  const sb=document.getElementById('save-groups-btn');
+  if(sb){ sb.disabled=locked; sb.style.opacity=locked?'.45':''; sb.style.pointerEvents=locked?'none':''; sb.textContent=locked?'Locked — Unlock to Edit':'Save Groups'; }
 }
+
+function unlockSetup(round){ _setupUnlock[round]=true; renderSetup(); showToast(`Editing unlocked for ${round}`); }
+function lockSetup(round){ delete _setupUnlock[round]; renderSetup(); showToast(`${round} re-locked`); }
 
 function doAutoAssign(){
   const groups=autoAssignPlayoffGroups();
@@ -2895,6 +2934,10 @@ function saveCalendar(){
 
 function saveGroups(){
   const round=document.getElementById('setup-round').value;
+  if(fullySubmittedRounds().has(round) && !_setupUnlock[round]){
+    showToast('This round is complete and locked. Unlock to edit.');
+    return;
+  }
   const isPlayoff1=round==='Playoff 1';
   const numGroups=isPlayoff1?3:7;
   const groups=[];
@@ -6390,6 +6433,9 @@ function initFirebase(){
     if(Object.keys(coerced).length) backupActiveGroupsLocal();
     if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
     if(document.getElementById('pg-home').classList.contains('act')) renderHome();
+    // Alert my player if this group change moved/added/removed them.
+    const liveGroups = _groupsListenerInit; _groupsListenerInit = true;
+    try { syncMyAwareness(liveGroups); } catch(e){}
   });
 
   // Live listener: penalties
@@ -6419,6 +6465,9 @@ function initFirebase(){
       if(document.getElementById('pg-schedule').classList.contains('act')) renderSchedule();
       if(document.getElementById('pg-home').classList.contains('act')) renderHome();
       if(adminUnlocked) { renderAdminCalendar(); populateRoundSelectors(); }
+      // Alert my player if the venue/date/tee time changed for a round they're in.
+      const liveCal = _calListenerInit; _calListenerInit = true;
+      try { syncMyAwareness(liveCal); } catch(e){}
     }
   });
 
@@ -6484,6 +6533,9 @@ function initFirebase(){
       if(active === 'pg-foursomes') try { renderFoursomePage(); } catch(e){}
       if(active === 'pg-schedule')  try { renderSchedule(); } catch(e){}
       if(active === 'pg-account')   try { renderAccountPage(); } catch(e){}
+      // Establish/refresh the per-user schedule baseline and surface any changes
+      // that happened while they were away (in-app banner only — not a live OS alert).
+      try { syncMyAwareness(false); } catch(e){}
     }
   };
   db.ref('roundScores').once('value',      ()=>_checkSyncLoaded());
@@ -7358,6 +7410,133 @@ function fireSubmitNotification(round, playerNames){
   }catch(e){}
 }
 
+// ─── Self-targeted schedule-change alerts ──────────────────────────────────
+// Each device only ever alerts ITS OWN signed-in player. That makes the routing
+// the user asked for fall out automatically: a player moved between groups is the
+// only one whose group index changes (so only they get told), while a venue/time
+// change for a round touches every player in that round (so each of their devices
+// independently surfaces it). No cross-player push is needed.
+//
+// NOTE: the OS Notification only fires on a device that has the app open when the
+// change arrives (iOS PWAs don't run in the background). The in-app banner — shown
+// on the next open by comparing against a per-user localStorage snapshot — is the
+// reliable channel; the OS notification is a best-effort bonus on top.
+
+const ALL_ROUNDS_ORDER = ['Round 1','Round 2','Round 3','Round 4','Round 5','Round 6','Round 7','Round 8','Playoff 1','Championship'];
+
+// Flip true after each listener's FIRST delivery so the initial data sync (which
+// looks like a flood of "changes" vs. last session) doesn't fire OS notifications.
+let _groupsListenerInit = false;
+let _calListenerInit = false;
+
+// Snapshot of what my player's schedule looks like right now: which group I'm in
+// per round, and the venue/time fields for the rounds I'm in.
+function computeMyState(){
+  const me = myPlayerName();
+  if(!me) return null;
+  const groups = {};
+  const venue = {};
+  ALL_ROUNDS_ORDER.forEach(round=>{
+    const gs = activeGroups[round]||[];
+    let myGi = -1;
+    gs.forEach((g,gi)=>{ if(g && (g.players||[]).some(p=>p && p.name===me)) myGi = gi; });
+    if(myGi>=0){
+      groups[round] = myGi;
+      const cal = CALENDAR.find(c=>c.round===round) || {};
+      venue[round] = JSON.stringify({
+        course:  cal.course   || '',
+        teeTime: cal.teeTime  || '',
+        date:    cal.date     || '',
+        gtee:   (gs[myGi].teeTime) || ''   // my group's tee time
+      });
+    }
+  });
+  return {groups, venue};
+}
+
+// Compare two of the snapshots above and produce human-readable change lines.
+function diffMyState(prev, cur){
+  const msgs = [];
+  ALL_ROUNDS_ORDER.forEach(round=>{
+    const pg = prev.groups[round], cg = cur.groups[round];
+    const title = roundTitle(round);
+    if(cg!==undefined && pg!==undefined && cg!==pg){
+      msgs.push(`${title}: you've been moved to Group ${cg+1}.`);
+    } else if(cg!==undefined && pg===undefined){
+      msgs.push(`${title}: you've been added to Group ${cg+1}.`);
+    } else if(cg===undefined && pg!==undefined){
+      msgs.push(`${title}: you've been removed from the groups.`);
+    }
+    // Venue / time changes only when I'm in the round both before and after.
+    if(cg!==undefined && pg!==undefined && prev.venue[round] && cur.venue[round] && prev.venue[round]!==cur.venue[round]){
+      let a, b;
+      try { a = JSON.parse(prev.venue[round]); b = JSON.parse(cur.venue[round]); } catch(e){ return; }
+      const parts = [];
+      // Truthy guards on the new value avoid false "changed to blank" alerts while
+      // data is still streaming in on first load.
+      if(a.course  !== b.course  && b.course)  parts.push(`venue is now ${b.course}`);
+      if(a.teeTime !== b.teeTime && b.teeTime) parts.push(`first tee at ${b.teeTime}`);
+      if(a.date    !== b.date    && b.date)    parts.push(`date is ${b.date}`);
+      if(a.gtee    !== b.gtee    && b.gtee)    parts.push(`your tee time is ${b.gtee}`);
+      if(parts.length) msgs.push(`${title}: ${parts.join(', ')}.`);
+    }
+  });
+  return msgs;
+}
+
+function showChangesBanner(msgs){
+  if(!msgs || !msgs.length || !document.body) return;
+  document.getElementById('changes-banner')?.remove();
+  const banner = document.createElement('div');
+  banner.id = 'changes-banner';
+  banner.style.cssText = 'position:fixed;top:12px;left:12px;right:12px;z-index:99997;background:var(--card);border:1.5px solid var(--green);border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;gap:12px;align-items:flex-start;max-width:560px;margin:0 auto';
+  banner.innerHTML = `
+    <div style="flex:1;min-width:0">
+      <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px">Schedule Update</div>
+      ${msgs.map(m=>`<div style="font-size:13px;color:var(--txt);line-height:1.5;margin-bottom:3px">${m}</div>`).join('')}
+    </div>
+    <button onclick="document.getElementById('changes-banner')?.remove()" style="background:none;border:none;color:var(--sub);font-size:22px;cursor:pointer;flex-shrink:0;padding:0 2px;line-height:1">&times;</button>`;
+  document.body.appendChild(banner);
+  setTimeout(()=>{ document.getElementById('changes-banner')?.remove(); }, 20000);
+}
+
+function fireInfoNotification(body){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  try{
+    const n = new Notification('Pro Tour — Schedule Update', {
+      body, icon:'./icon-192.png', badge:'./icon-192.png',
+      tag:'protour-schedule-change', renotify:true,
+    });
+    n.onclick = ()=>{ window.focus(); n.close(); };
+    setTimeout(()=>n.close(), 9000);
+  }catch(e){}
+}
+
+// Reconcile my current schedule against the last state this device acknowledged.
+// liveTrigger=true means a live Firebase update drove this (not initial load) and
+// the OS notification is allowed to fire.
+function syncMyAwareness(liveTrigger){
+  let cur;
+  try {
+    if(!myPlayerName()) return;
+    cur = computeMyState();
+  } catch(e){ return; }
+  if(!cur) return;
+  const key = 'protour_awareness_' + (window._currentUsername || 'anon');
+  let prev = null;
+  try { prev = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e){}
+  const save = ()=>{ try { localStorage.setItem(key, JSON.stringify(cur)); } catch(e){} };
+  if(!prev){ save(); return; } // no baseline yet — establish it silently
+  let msgs = [];
+  try { msgs = diffMyState(prev, cur); } catch(e){ save(); return; }
+  if(msgs.length){
+    showChangesBanner(msgs);
+    if(liveTrigger) fireInfoNotification(msgs.join('  '));
+  }
+  save(); // acknowledge — these changes won't re-alert on next open
+}
+
 function renderNotifToggle(){
   const el = document.getElementById('notif-toggle-row');
   if(!el) return;
@@ -7689,7 +7868,20 @@ const DOMAIN = '@protour2026.com';
 let auth = null;
 let currentUser = null;
 
-function usernameToEmail(u){ return u.trim().toLowerCase().replace(/\s+/g,'') + DOMAIN; }
+// Normalize a name/username to the canonical account key (lowercase, no spaces).
+// This is the SINGLE source of truth — usernameToEmail and the per-player
+// notification targeting both rely on it, so they can't drift apart.
+function normalizeUsername(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,''); }
+function usernameToEmail(u){ return normalizeUsername(u) + DOMAIN; }
+
+// Map the signed-in account back to its roster name (or null for admins /
+// accounts not on the roster). _currentUsername is the email local-part, which
+// equals normalizeUsername(playerName) for every roster-derived account.
+function myPlayerName(){
+  const u = window._currentUsername || '';
+  if(!u) return null;
+  return PLAYERS.find(n => normalizeUsername(n) === u) || null;
+}
 
 function toggleLoginPW(btn){
   const input = btn.parentElement.querySelector('input');
