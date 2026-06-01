@@ -1336,7 +1336,7 @@ body.dark .icon-sun{display:none}
       </div>
 
       <!-- Notifications -->
-      <div style="padding:14px 0;border-bottom:1px solid var(--hair)" id="notif-toggle-row">
+      <div style="padding:14px 0;border-bottom:1px solid var(--hair)" id="notif-toggle-account">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
           <div style="min-width:0;flex:1">
             <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Score Notifications</div>
@@ -7578,24 +7578,52 @@ async function registerFcmToken(){
 }
 
 function renderNotifToggle(){
-  const el = document.getElementById('notif-toggle-row');
-  if(!el) return;
-  const granted = Notification.permission === 'granted';
-  el.innerHTML = granted
-    ? `<div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div class="as-row-lbl">Score Notifications</div>
-          <div class="as-row-sub" style="color:var(--green)">✓ Enabled — you'll be notified when groups submit</div>
-        </div>
-        <span style="background:var(--surf-tint);color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">ON</span>
-      </div>`
-    : `<div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div class="as-row-lbl">Score Notifications</div>
-          <div class="as-row-sub">Get notified when a group submits their scorecard</div>
-        </div>
-        <button onclick="requestNotifPermission()" style="padding:7px 14px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">Enable</button>
+  const supported = ('Notification' in window);
+  const state = supported ? Notification.permission : 'unsupported'; // granted | denied | default | unsupported
+
+  // Admin section toggle (uses .as-row-* classes)
+  const admin = document.getElementById('notif-toggle-row');
+  if(admin){
+    admin.innerHTML =
+      state === 'granted'
+      ? `<div style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="as-row-lbl">Notifications</div>
+          <div class="as-row-sub" style="color:var(--green)">On — you'll be notified of scores &amp; schedule changes</div></div>
+          <span style="background:var(--surf-tint);color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">ON</span>
+        </div>`
+      : state === 'denied'
+      ? `<div style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="as-row-lbl">Notifications</div>
+          <div class="as-row-sub" style="color:var(--bogey)">Blocked — turn on in your browser/app settings</div></div>
+          <span style="background:var(--surf-red);color:var(--bogey);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">OFF</span>
+        </div>`
+      : `<div style="display:flex;align-items:center;justify-content:space-between">
+          <div><div class="as-row-lbl">Notifications</div>
+          <div class="as-row-sub">Get notified of scores &amp; schedule changes</div></div>
+          <button onclick="requestNotifPermission()" style="padding:7px 14px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">Enable</button>
+        </div>`;
+  }
+
+  // Account page toggle (mono label + pill styling)
+  const acct = document.getElementById('notif-toggle-account');
+  if(acct){
+    const label = `<div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Notifications</div>`;
+    const pill = (bg,color,txt)=>`<span style="background:${bg};color:${color};font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;font-family:var(--ff-mono);letter-spacing:.14em;flex-shrink:0">${txt}</span>`;
+    let right, sub;
+    if(state === 'granted'){
+      sub = `<div style="font-size:11px;color:var(--green);margin-top:4px">On — scores &amp; schedule changes</div>`;
+      right = pill('var(--surf-tint)','var(--green)','ON');
+    } else if(state === 'denied'){
+      sub = `<div style="font-size:11px;color:var(--bogey);margin-top:4px">Blocked — turn on in Settings</div>`;
+      right = pill('var(--surf-red)','var(--bogey)','OFF');
+    } else {
+      sub = `<div style="font-size:11px;color:var(--muted);margin-top:4px">Get notified of scores &amp; schedule changes</div>`;
+      right = `<button onclick="requestNotifPermission()" style="padding:7px 16px;background:var(--green);color:#fff;border:none;border-radius:20px;font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;flex-shrink:0">Enable</button>`;
+    }
+    acct.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="min-width:0;flex:1">${label}${sub}</div>${right}
       </div>`;
+  }
 }
 
 // Auto-prompt after first scorecard open (non-intrusive timing)
