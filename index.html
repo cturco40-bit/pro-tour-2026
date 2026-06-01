@@ -5115,7 +5115,7 @@ function renderStandings(){
             <div class="ho-pos${podiumCls}">${p.rankLabel}</div>
             <div class="ho-name-wrap">
               <div class="ho-name">${p.n}</div>
-              <div class="ho-meta">${r8blocked?'Rd 8 Blocked':played?played+' Played · '+counts+' Counts':'Awaiting Play'}</div>
+              ${r8blocked?`<div class="ho-meta">Rd 8 Blocked</div>`:played?'':`<div class="ho-meta">Awaiting Play</div>`}
             </div>
             <div class="st-cell ${played?'':'mute'}">${played||'—'}</div>
             <div class="st-cell ${played?'':'mute'}">${played?counts:'—'}</div>
