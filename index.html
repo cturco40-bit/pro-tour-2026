@@ -7712,7 +7712,8 @@ if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('./service-worker.js')
       .then(reg => {
-        try { reg.update(); } catch(e){}
+        const checkForUpdate = ()=>{ try { reg.update(); } catch(e){} };
+        checkForUpdate();
         if(reg.waiting) showUpdatePrompt(reg.waiting);
         reg.addEventListener('updatefound',()=>{
           const nw=reg.installing;
@@ -7723,6 +7724,11 @@ if('serviceWorker' in navigator){
             }
           });
         });
+        // Keep checking while the app stays open so a freshly deployed version
+        // surfaces the "refresh" prompt without the user closing & reopening:
+        // on every return to the foreground, plus a light periodic poll.
+        document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') checkForUpdate(); });
+        setInterval(()=>{ if(document.visibilityState==='visible') checkForUpdate(); }, 60000);
       })
       .catch(()=>{});
   });
