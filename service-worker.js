@@ -1,4 +1,4 @@
-const CACHE_NAME = 'protour2026-v69';
+const CACHE_NAME = 'protour2026-v70';
 
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
@@ -22,10 +22,10 @@ try {
   messaging.onBackgroundMessage(payload => {
     const d = (payload && payload.data) || {};
     self.registration.showNotification(d.title || 'Pro Tour', {
-      body: d.body || 'Schedule updated',
+      body: d.body || 'Update',
       icon: './icon-192.png',
       badge: './icon-192.png',
-      tag: 'protour-schedule-change',
+      tag: d.tag || 'protour',   // distinct tags so scoring & schedule don't replace each other
       renotify: true
     });
   });

@@ -6392,7 +6392,11 @@ function initFirebase(){
     Object.entries(roundScores).forEach(([k,v])=>{
       if(v.submitted && !notifiedSubmits.has(k)){
         const playerNames = (v.players||[]).map(p=>(p?.name||'?').split(' ')[0]).join(', ');
-        fireSubmitNotification(roundTitle(v.round), playerNames);
+        // Local submit alert only when scoring is on AND this device isn't a push
+        // target (push devices get the Cloud Function's scoring push instead — no
+        // double). _fcmRegistered means the token is live; the scoring push flag is
+        // what actually gates delivery server-side.
+        if(!scoringMuted() && !_fcmRegistered) fireSubmitNotification(roundTitle(v.round), playerNames);
         notifiedSubmits.add(k);
         notifiedChanged = true;
       } else if(!v.submitted && notifiedSubmits.has(k)){
@@ -7397,7 +7401,7 @@ function requestNotifPermission(){
   Notification.requestPermission().then(result=>{
     _notifPermission = result;
     localStorage.setItem('notif-permission', result);
-    if(result === 'granted'){ showToast('Notifications enabled ✓'); try{ localStorage.setItem(_notifMuteKey(),'0'); }catch(e){} try{ registerFcmToken(); }catch(e){} }
+    if(result === 'granted'){ showToast('Notifications enabled ✓'); try{ localStorage.setItem(_muteKey('scoring'),'0'); localStorage.setItem(_muteKey('schedule'),'0'); }catch(e){} try{ registerFcmToken(); }catch(e){} }
     else showToast('Notifications blocked — check browser settings');
     renderNotifToggle();
   });
@@ -7543,7 +7547,7 @@ function syncMyAwareness(liveTrigger){
   if(!prev){ save(); return; } // no baseline yet — establish it silently
   let msgs = [];
   try { msgs = diffMyState(prev, cur); } catch(e){ save(); return; }
-  if(msgs.length && !notifMuted()){
+  if(msgs.length && !scheduleMuted()){
     showChangesBanner(msgs);
     // If this device is registered for true push, the Cloud Function handles the
     // OS-level alert — firing a local one too would double up. Only fall back to a
@@ -7559,36 +7563,24 @@ function syncMyAwareness(liveTrigger){
 // PWA on iOS 16.4+ / Android / desktop). Stored at fcmTokens/{username}/{token}.
 // Self-guards every prerequisite, so it's a harmless no-op until the VAPID key is
 // set and the Cloud Function is deployed.
-// Per-device, per-user mute. Browsers won't let JS revoke the OS notification
-// permission, so "off" instead means: drop this device's push token and suppress
-// the in-app banner. Re-enabling re-registers the token.
-function _notifMuteKey(){ return 'notif-muted-' + (window._currentUsername || 'anon'); }
-function notifMuted(){ try{ return localStorage.getItem(_notifMuteKey()) === '1'; }catch(e){ return false; } }
+// Two independent notification categories, each muteable per device/user:
+//   scoring  — a group submitted a scorecard (push to everyone opted-in)
+//   schedule — you were moved groups, or a venue/date/tee time changed
+// Browsers won't let JS revoke the OS permission, so "off" means: flag this
+// category off on this device's token (the Cloud Function then skips it) and
+// suppress the matching in-app surface. The token itself stays registered as
+// long as the OS permission is granted; the per-category flags do the gating.
+function _muteKey(cat){ return 'notif-muted-' + cat + '-' + (window._currentUsername || 'anon'); }
+function notifMuted(cat){ try{ return localStorage.getItem(_muteKey(cat)) === '1'; }catch(e){ return false; } }
+function scoringMuted(){ return notifMuted('scoring'); }
+function scheduleMuted(){ return notifMuted('schedule'); }
 
-function setNotifMuted(muted){
-  try{ localStorage.setItem(_notifMuteKey(), muted ? '1' : '0'); }catch(e){}
+function setNotifMuted(cat, muted){
+  try{ localStorage.setItem(_muteKey(cat), muted ? '1' : '0'); }catch(e){}
   renderNotifToggle();
-  if(muted){ showToast('Notifications turned off'); try{ unregisterFcmToken(); }catch(e){} }
-  else     { showToast('Notifications turned on ✓'); try{ registerFcmToken(); }catch(e){} }
-}
-
-// Remove this device's token so the Cloud Function stops sending it push.
-async function unregisterFcmToken(){
-  try{
-    if(typeof firebase==='undefined' || !firebase.messaging) return;
-    if(firebase.messaging.isSupported && !firebase.messaging.isSupported()) return;
-    const messaging = firebase.messaging();
-    let token = null;
-    try{
-      const reg = await navigator.serviceWorker.ready;
-      token = await messaging.getToken({ vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: reg });
-    }catch(e){}
-    if(token && db && window._currentUsername){
-      try{ await db.ref('fcmTokens/'+window._currentUsername+'/'+token).remove(); }catch(e){}
-    }
-    try{ await messaging.deleteToken(); }catch(e){}
-    _fcmRegistered = false;
-  }catch(e){ console.warn('FCM unregister skipped:', e && e.message); }
+  const label = cat === 'scoring' ? 'Scoring' : 'Schedule';
+  showToast(`${label} notifications ${muted ? 'off' : 'on'}${muted ? '' : ' ✓'}`);
+  try{ registerFcmToken(); }catch(e){} // re-write this token's category flags
 }
 
 let _fcmRegistered = false;
@@ -7596,7 +7588,6 @@ async function registerFcmToken(){
   try{
     if(typeof DEV_MODE!=='undefined' && DEV_MODE) return;          // local preview: skip
     if(!('Notification' in window) || Notification.permission!=='granted') return;
-    if(notifMuted()) return;                                       // user turned it off here
     if(!window._currentUsername || !db) return;
     if(!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith('REPLACE')) return; // not configured yet
     if(typeof firebase==='undefined' || !firebase.messaging) return;
@@ -7605,7 +7596,13 @@ async function registerFcmToken(){
     const reg = await navigator.serviceWorker.ready;                // reuse the existing SW
     const token = await messaging.getToken({ vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: reg });
     if(!token) return;
-    await db.ref('fcmTokens/'+window._currentUsername+'/'+token).set(Date.now());
+    // Store per-category preferences alongside the token so the backend can
+    // honour each toggle independently.
+    await db.ref('fcmTokens/'+window._currentUsername+'/'+token).set({
+      scoring:  !scoringMuted(),
+      schedule: !scheduleMuted(),
+      ts: Date.now()
+    });
     _fcmRegistered = true;
   }catch(e){ console.warn('FCM registration skipped:', e && e.message); }
 }
@@ -7613,50 +7610,53 @@ async function registerFcmToken(){
 function renderNotifToggle(){
   const supported = ('Notification' in window);
   const state = supported ? Notification.permission : 'unsupported'; // granted | denied | default | unsupported
-  const muted = notifMuted();
 
-  // Shared iOS-style on/off switch — green/right = on, grey/left = off.
-  const sw = `<button onclick="setNotifMuted(${!muted})" aria-label="Toggle notifications"
+  // iOS-style on/off switch for a category — green/right = on, grey/left = off.
+  const sw = (cat, muted)=>`<button onclick="setNotifMuted('${cat}',${!muted})" aria-label="Toggle ${cat} notifications"
       style="width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;flex-shrink:0;padding:0;background:${muted?'var(--ink-4)':'var(--green)'}">
       <span style="position:absolute;top:3px;left:${muted?'3px':'23px'};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span>
     </button>`;
   const enableBtn = (radius)=>`<button onclick="requestNotifPermission()" style="padding:7px 16px;background:var(--green);color:#fff;border:none;border-radius:${radius}px;font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;flex-shrink:0">Enable</button>`;
 
-  // sub text + right-hand control by state
-  let subText, subColor, right;
-  if(state === 'granted'){
-    subText = muted ? 'Off on this device — tap to turn on' : 'On — scores & schedule changes';
-    subColor = muted ? 'var(--muted)' : 'var(--green)';
-    right = sw;
-  } else if(state === 'denied'){
-    subText = 'Blocked — turn on in your browser/app settings';
-    subColor = 'var(--bogey)';
-    right = `<span style="background:var(--surf-red);color:var(--bogey);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;font-family:var(--ff-mono);letter-spacing:.14em;flex-shrink:0">OFF</span>`;
-  } else { // default / unsupported
-    subText = supported ? 'Get notified of scores & schedule changes' : 'Not supported on this device';
-    subColor = 'var(--muted)';
-    right = supported ? enableBtn(20) : '';
-  }
-
-  // Admin section toggle (.as-row-* classes)
-  const admin = document.getElementById('notif-toggle-row');
-  if(admin){
-    admin.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="min-width:0;flex:1"><div class="as-row-lbl">Notifications</div>
-        <div class="as-row-sub" style="color:${subColor}">${subText}</div></div>${right}
-      </div>`;
-  }
-
-  // Account page toggle (mono label styling)
-  const acct = document.getElementById('notif-toggle-account');
-  if(acct){
-    acct.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+  // Builds the inner HTML for a container, styling rows for either the admin
+  // (.as-row-*) or account (mono) look.
+  function build(forAdmin){
+    const titleCls = forAdmin
+      ? 'class="as-row-lbl"'
+      : 'style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase"';
+    const subCls = forAdmin ? 'class="as-row-sub"' : '';
+    const subStyle = (color)=> forAdmin ? `style="color:${color}"` : `style="font-size:11px;color:${color};margin-top:4px"`;
+    const row = (title, sub, color, right, first)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;${first?'':'margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)'}">
         <div style="min-width:0;flex:1">
-          <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Notifications</div>
-          <div style="font-size:11px;color:${subColor};margin-top:4px">${subText}</div>
+          <div ${titleCls}>${title}</div>
+          <div ${subCls} ${subStyle(color)}>${sub}</div>
         </div>${right}
       </div>`;
+
+    if(state === 'granted'){
+      const sm = scoringMuted(), schm = scheduleMuted();
+      return row('Scoring',
+                 sm ? 'Off — tap to turn on' : 'On — when a group submits',
+                 sm ? 'var(--muted)' : 'var(--green)', sw('scoring', sm), true)
+           + row('Schedule',
+                 schm ? 'Off — tap to turn on' : 'On — group, venue &amp; tee time changes',
+                 schm ? 'var(--muted)' : 'var(--green)', sw('schedule', schm), false);
+    }
+    if(state === 'denied'){
+      const off = `<span style="background:var(--surf-red);color:var(--bogey);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;font-family:var(--ff-mono);letter-spacing:.14em;flex-shrink:0">OFF</span>`;
+      return row('Notifications', 'Blocked — turn on in your browser/app settings', 'var(--bogey)', off, true);
+    }
+    // default / unsupported
+    return row('Notifications',
+               supported ? 'Get notified of scores &amp; schedule changes' : 'Not supported on this device',
+               'var(--muted)', supported ? enableBtn(20) : '', true);
   }
+
+  const admin = document.getElementById('notif-toggle-row');
+  if(admin) admin.innerHTML = build(true);
+  const acct = document.getElementById('notif-toggle-account');
+  if(acct) acct.innerHTML = build(false);
 }
 
 // Auto-prompt after first scorecard open (non-intrusive timing)

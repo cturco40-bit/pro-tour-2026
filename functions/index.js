@@ -1,16 +1,22 @@
 // ════════════════════════════════════════════════════════════════════════════
 // Pro Tour 2026 — true push notifications
 //
-// Two Realtime Database triggers turn a data change into a Cloud Messaging push:
-//   • activeGroups/{round}  → tell a player when THEY are moved/added/removed, or
-//                             when their group's tee time changes.
-//   • calendar              → tell EVERYONE in a round when its venue / date /
-//                             first tee time changes.
+// Three Realtime Database triggers turn a data change into a Cloud Messaging push:
+//   • activeGroups/{round}        → SCHEDULE: tell a player when THEY are
+//                                   moved/added/removed, or their tee time changes.
+//   • calendar                    → SCHEDULE: tell EVERYONE in a round when its
+//                                   venue / date / first tee time changes.
+//   • roundScores/{key}/submitted → SCORING: tell EVERYONE opted-in when a group
+//                                   submits a scorecard.
 //
-// Push content is derived entirely from the before/after data here on the server,
-// so a client can never inject arbitrary notification text. The only thing that
-// must stay byte-for-byte identical to the client is normalizeUsername(), because
-// it's the key tokens are stored under: fcmTokens/{normalizedUsername}/{token}.
+// Each device's token carries per-category preferences:
+//   fcmTokens/{normalizedUsername}/{token} = { scoring: bool, schedule: bool, ts }
+// so the two in-app toggles are honoured independently here. Older tokens stored
+// as a bare timestamp number are treated as opted-in to both categories.
+//
+// Push content is derived entirely from the before/after data on the server, so a
+// client can never inject arbitrary text. normalizeUsername() must stay identical
+// to the client — it's the key tokens are stored under.
 // ════════════════════════════════════════════════════════════════════════════
 
 const { onValueWritten } = require('firebase-functions/v2/database');
@@ -19,8 +25,7 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
-// Cap concurrency so a runaway can never balloon cost — far more than this league
-// will ever need, but a hard ceiling all the same.
+// Cap concurrency so a runaway can never balloon cost.
 setGlobalOptions({ maxInstances: 5 });
 
 // MUST match index.html's normalizeUsername exactly (token storage key).
@@ -35,6 +40,35 @@ function coerceArray(v){
   return [];
 }
 
+// A token opts into a category unless its stored prefs explicitly say false.
+// Bare-number (legacy) tokens opt into everything.
+function tokenAllows(meta, category){
+  if (meta && typeof meta === 'object') return meta[category] !== false;
+  return true;
+}
+
+const DEAD_TOKEN_CODES = new Set([
+  'messaging/registration-token-not-registered',
+  'messaging/invalid-registration-token',
+  'messaging/invalid-argument',
+]);
+
+// Send to an explicit list of {uname, token}, pruning the ones FCM reports dead.
+async function sendToTargets(targets, title, body, tag){
+  if (!targets.length) return;
+  const resp = await admin.messaging().sendEachForMulticast({
+    tokens: targets.map(t => t.token),
+    data: { title, body, tag },
+  });
+  const removals = [];
+  resp.responses.forEach((r, i) => {
+    if (!r.success && r.error && DEAD_TOKEN_CODES.has(r.error.code)) {
+      removals.push(admin.database().ref('fcmTokens/' + targets[i].uname + '/' + targets[i].token).remove());
+    }
+  });
+  await Promise.all(removals);
+}
+
 // name -> { gi, teeTime } for one round's activeGroups value
 function playerGroupMap(groupsVal){
   const map = {};
@@ -47,8 +81,8 @@ function playerGroupMap(groupsVal){
   return map;
 }
 
-// Collect { name, body } messages, group them per player, and send + prune.
-async function deliver(messages){
+// SCHEDULE delivery: { name, body } messages → that player's schedule-enabled tokens.
+async function deliverSchedule(messages){
   if (!messages.length) return;
   const byName = {};
   messages.forEach(m => { (byName[m.name] = byName[m.name] || []).push(m.body); });
@@ -58,32 +92,27 @@ async function deliver(messages){
     const snap = await admin.database().ref('fcmTokens/' + uname).once('value');
     const tokVal = snap.val();
     if (!tokVal) return;
-    const tokens = Object.keys(tokVal);
-    if (!tokens.length) return;
-
-    const body = bodies.join('  ');
-    const resp = await admin.messaging().sendEachForMulticast({
-      tokens,
-      data: { title: 'Pro Tour — Schedule Update', body },
-    });
-
-    // Prune tokens FCM reports as dead so they don't rot forever.
-    const removals = [];
-    resp.responses.forEach((r, i) => {
-      if (!r.success) {
-        const code = r.error && r.error.code;
-        if (code === 'messaging/registration-token-not-registered' ||
-            code === 'messaging/invalid-registration-token' ||
-            code === 'messaging/invalid-argument') {
-          removals.push(admin.database().ref('fcmTokens/' + uname + '/' + tokens[i]).remove());
-        }
-      }
-    });
-    await Promise.all(removals);
+    const targets = Object.entries(tokVal)
+      .filter(([, meta]) => tokenAllows(meta, 'schedule'))
+      .map(([token]) => ({ uname, token }));
+    await sendToTargets(targets, 'Pro Tour — Schedule Update', bodies.join('  '), 'protour-schedule');
   }));
 }
 
-// ─── Trigger 1: group changes for one round ────────────────────────────────
+// SCORING delivery: broadcast one body to every scoring-enabled token (all users).
+async function broadcastScoring(body){
+  const snap = await admin.database().ref('fcmTokens').once('value');
+  const all = snap.val() || {};
+  const targets = [];
+  Object.entries(all).forEach(([uname, toks]) => {
+    Object.entries(toks || {}).forEach(([token, meta]) => {
+      if (tokenAllows(meta, 'scoring')) targets.push({ uname, token });
+    });
+  });
+  await sendToTargets(targets, 'Scorecard Submitted', body, 'protour-scoring');
+}
+
+// ─── Trigger 1: group changes for one round (SCHEDULE) ─────────────────────
 exports.notifyGroupChange = onValueWritten('/activeGroups/{round}', async (event) => {
   const round = event.params.round;
   const before = playerGroupMap(event.data.before.val());
@@ -106,15 +135,14 @@ exports.notifyGroupChange = onValueWritten('/activeGroups/{round}', async (event
     }
   });
 
-  await deliver(messages);
+  await deliverSchedule(messages);
 });
 
-// ─── Trigger 2: calendar (venue / date / first tee time) ───────────────────
+// ─── Trigger 2: calendar venue / date / first tee time (SCHEDULE) ──────────
 exports.notifyCalendarChange = onValueWritten('/calendar', async (event) => {
   const before = coerceArray(event.data.before.val());
   const after  = coerceArray(event.data.after.val());
 
-  // Need the current groups to know who's in each affected round.
   const agSnap = await admin.database().ref('activeGroups').once('value');
   const ag = agSnap.val() || {};
 
@@ -132,5 +160,26 @@ exports.notifyCalendarChange = onValueWritten('/calendar', async (event) => {
     Object.keys(playerGroupMap(ag[c.round])).forEach(name => messages.push({ name, body }));
   });
 
-  await deliver(messages);
+  await deliverSchedule(messages);
+});
+
+// ─── Trigger 3: a group submits its scorecard (SCORING) ────────────────────
+exports.notifyScorecardSubmit = onValueWritten('/roundScores/{key}/submitted', async (event) => {
+  const before = event.data.before.val();
+  const after  = event.data.after.val();
+  if (after !== true || before === true) return; // only on the false/undefined → true transition
+
+  let card = null;
+  try { const s = await event.data.after.ref.parent.once('value'); card = s.val(); } catch (e) {}
+  if (!card) return;
+
+  const round = card.round || 'Round';
+  const names = coerceArray(card.players)
+    .map(p => p && p.name)
+    .filter(Boolean)
+    .map(n => String(n).split(' ')[0]) // first names, matches the in-app notification
+    .join(', ');
+  const body = names ? `${round} — ${names} finished` : `${round} — a group finished`;
+
+  await broadcastScoring(body);
 });
