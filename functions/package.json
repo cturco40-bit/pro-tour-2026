@@ -1,0 +1,13 @@
+{
+  "name": "protour-functions",
+  "description": "Cloud Functions for Pro Tour 2026 — true push on group/calendar changes",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

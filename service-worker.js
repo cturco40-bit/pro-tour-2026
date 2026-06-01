@@ -1,7 +1,45 @@
-const CACHE_NAME = 'protour2026-v65';
+const CACHE_NAME = 'protour2026-v66';
 
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// ─── Firebase Cloud Messaging (true push, app-closed delivery) ──────────────
+// Wrapped in try/catch so a CDN/network hiccup loading the SDKs can never break
+// the core offline caching behaviour below. The Cloud Function sends DATA-only
+// messages so the browser never auto-shows a duplicate — we build the notification
+// here, giving us full control over title/body/icon.
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+  firebase.initializeApp({
+    apiKey: 'AIzaSyCSXRYTl3EZ2wGWaqpMKPtYmqPajVDQ9D0',
+    projectId: 'pro-tour-2026-58184',
+    messagingSenderId: '695221419712',
+    appId: '1:695221419712:web:773e5820397adbe8517725'
+  });
+  const messaging = firebase.messaging();
+  messaging.onBackgroundMessage(payload => {
+    const d = (payload && payload.data) || {};
+    self.registration.showNotification(d.title || 'Pro Tour', {
+      body: d.body || 'Schedule updated',
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      tag: 'protour-schedule-change',
+      renotify: true
+    });
+  });
+} catch (e) { /* push unavailable on this device — core SW still works */ }
+
+// Focus (or open) the app when a push notification is tapped
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
+    })
+  );
 });
 const ASSETS = [
   './',

@@ -6158,6 +6158,11 @@ const firebaseConfig = {
   messagingSenderId: "695221419712",
   appId: "1:695221419712:web:773e5820397adbe8517725"
 };
+// Web Push (VAPID) public key — generate at Firebase Console → Project Settings →
+// Cloud Messaging → "Web Push certificates" → Generate key pair, then paste the
+// public key string here. Until it's set, push registration is a silent no-op
+// (the in-app banner still works). This is a PUBLIC key — safe to commit.
+const VAPID_PUBLIC_KEY = "REPLACE_WITH_YOUR_WEB_PUSH_PUBLIC_KEY";
 let db = null;
 
 // ─── Firebase helpers ──────────────────────────────────────────────────────
@@ -6279,6 +6284,10 @@ function initFirebase(){
   _firebaseInited = true;
   try{ db = firebase.database(); } catch(e){ console.warn('Firebase db init error',e); }
   showSyncBanner('Connecting…');
+
+  // Register this device for true push if the player has already granted permission
+  // (re-runs each open so the FCM token stays fresh).
+  try{ registerFcmToken(); }catch(e){}
 
   // Live listener: round scores (most important — live scoring)
   fbOn('roundScores', data=>{
@@ -6433,9 +6442,9 @@ function initFirebase(){
     if(Object.keys(coerced).length) backupActiveGroupsLocal();
     if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
     if(document.getElementById('pg-home').classList.contains('act')) renderHome();
-    // Alert my player if this group change moved/added/removed them.
-    const liveGroups = _groupsListenerInit; _groupsListenerInit = true;
-    try { syncMyAwareness(liveGroups); } catch(e){}
+    // Alert my player if this group change moved/added/removed them — but only
+    // once the initial full load is done, so partial data can't fake a "change".
+    if(_awarenessReady){ try { syncMyAwareness(true); } catch(e){} }
   });
 
   // Live listener: penalties
@@ -6465,9 +6474,9 @@ function initFirebase(){
       if(document.getElementById('pg-schedule').classList.contains('act')) renderSchedule();
       if(document.getElementById('pg-home').classList.contains('act')) renderHome();
       if(adminUnlocked) { renderAdminCalendar(); populateRoundSelectors(); }
-      // Alert my player if the venue/date/tee time changed for a round they're in.
-      const liveCal = _calListenerInit; _calListenerInit = true;
-      try { syncMyAwareness(liveCal); } catch(e){}
+      // Alert my player if the venue/date/tee time changed for a round they're in
+      // (only after the initial full load — see _awarenessReady).
+      if(_awarenessReady){ try { syncMyAwareness(true); } catch(e){} }
     }
   });
 
@@ -6533,9 +6542,11 @@ function initFirebase(){
       if(active === 'pg-foursomes') try { renderFoursomePage(); } catch(e){}
       if(active === 'pg-schedule')  try { renderSchedule(); } catch(e){}
       if(active === 'pg-account')   try { renderAccountPage(); } catch(e){}
-      // Establish/refresh the per-user schedule baseline and surface any changes
-      // that happened while they were away (in-app banner only — not a live OS alert).
+      // All data is in. Establish the baseline from this COMPLETE snapshot (first
+      // ever run is silent — nothing to compare against), surface any genuine
+      // changes since last open once, then arm the live listeners.
       try { syncMyAwareness(false); } catch(e){}
+      _awarenessReady = true;
     }
   };
   db.ref('roundScores').once('value',      ()=>_checkSyncLoaded());
@@ -7386,7 +7397,7 @@ function requestNotifPermission(){
   Notification.requestPermission().then(result=>{
     _notifPermission = result;
     localStorage.setItem('notif-permission', result);
-    if(result === 'granted') showToast('Notifications enabled ✓');
+    if(result === 'granted'){ showToast('Notifications enabled ✓'); try{ registerFcmToken(); }catch(e){} }
     else showToast('Notifications blocked — check browser settings');
     renderNotifToggle();
   });
@@ -7424,10 +7435,11 @@ function fireSubmitNotification(round, playerNames){
 
 const ALL_ROUNDS_ORDER = ['Round 1','Round 2','Round 3','Round 4','Round 5','Round 6','Round 7','Round 8','Playoff 1','Championship'];
 
-// Flip true after each listener's FIRST delivery so the initial data sync (which
-// looks like a flood of "changes" vs. last session) doesn't fire OS notifications.
-let _groupsListenerInit = false;
-let _calListenerInit = false;
+// Stays false until the FIRST full data load completes. While false, syncMyAwareness
+// is never run from a listener — otherwise it would compare against a half-loaded
+// snapshot and report every already-assigned round as a brand-new "change" on each
+// open. The baseline is established once, from complete data, in _checkSyncLoaded.
+let _awarenessReady = false;
 
 // Snapshot of what my player's schedule looks like right now: which group I'm in
 // per round, and the venue/time fields for the rounds I'm in.
@@ -7523,7 +7535,8 @@ function syncMyAwareness(liveTrigger){
     cur = computeMyState();
   } catch(e){ return; }
   if(!cur) return;
-  const key = 'protour_awareness_' + (window._currentUsername || 'anon');
+  // v2 key: discards the older baselines that could be saved from half-loaded data.
+  const key = 'protour_awareness_v2_' + (window._currentUsername || 'anon');
   let prev = null;
   try { prev = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e){}
   const save = ()=>{ try { localStorage.setItem(key, JSON.stringify(cur)); } catch(e){} };
@@ -7532,9 +7545,36 @@ function syncMyAwareness(liveTrigger){
   try { msgs = diffMyState(prev, cur); } catch(e){ save(); return; }
   if(msgs.length){
     showChangesBanner(msgs);
-    if(liveTrigger) fireInfoNotification(msgs.join('  '));
+    // If this device is registered for true push, the Cloud Function handles the
+    // OS-level alert — firing a local one too would double up. Only fall back to a
+    // local notification when push isn't active here.
+    if(liveTrigger && !_fcmRegistered) fireInfoNotification(msgs.join('  '));
   }
   save(); // acknowledge — these changes won't re-alert on next open
+}
+
+// ─── True push: register this device's FCM token ───────────────────────────
+// Registers the signed-in device with Firebase Cloud Messaging so the backend
+// Cloud Function can deliver a push even when the app is fully closed (installed
+// PWA on iOS 16.4+ / Android / desktop). Stored at fcmTokens/{username}/{token}.
+// Self-guards every prerequisite, so it's a harmless no-op until the VAPID key is
+// set and the Cloud Function is deployed.
+let _fcmRegistered = false;
+async function registerFcmToken(){
+  try{
+    if(typeof DEV_MODE!=='undefined' && DEV_MODE) return;          // local preview: skip
+    if(!('Notification' in window) || Notification.permission!=='granted') return;
+    if(!window._currentUsername || !db) return;
+    if(!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith('REPLACE')) return; // not configured yet
+    if(typeof firebase==='undefined' || !firebase.messaging) return;
+    if(firebase.messaging.isSupported && !firebase.messaging.isSupported()) return; // e.g. iOS Safari tab
+    const messaging = firebase.messaging();
+    const reg = await navigator.serviceWorker.ready;                // reuse the existing SW
+    const token = await messaging.getToken({ vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: reg });
+    if(!token) return;
+    await db.ref('fcmTokens/'+window._currentUsername+'/'+token).set(Date.now());
+    _fcmRegistered = true;
+  }catch(e){ console.warn('FCM registration skipped:', e && e.message); }
 }
 
 function renderNotifToggle(){
@@ -8147,6 +8187,7 @@ function initAuth(){
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <script>
 // ─── DEV MODE BYPASS (remove before production) ────────────────────────────
