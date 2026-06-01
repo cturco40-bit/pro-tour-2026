@@ -7397,7 +7397,7 @@ function requestNotifPermission(){
   Notification.requestPermission().then(result=>{
     _notifPermission = result;
     localStorage.setItem('notif-permission', result);
-    if(result === 'granted'){ showToast('Notifications enabled ✓'); try{ registerFcmToken(); }catch(e){} }
+    if(result === 'granted'){ showToast('Notifications enabled ✓'); try{ localStorage.setItem(_notifMuteKey(),'0'); }catch(e){} try{ registerFcmToken(); }catch(e){} }
     else showToast('Notifications blocked — check browser settings');
     renderNotifToggle();
   });
@@ -7543,14 +7543,14 @@ function syncMyAwareness(liveTrigger){
   if(!prev){ save(); return; } // no baseline yet — establish it silently
   let msgs = [];
   try { msgs = diffMyState(prev, cur); } catch(e){ save(); return; }
-  if(msgs.length){
+  if(msgs.length && !notifMuted()){
     showChangesBanner(msgs);
     // If this device is registered for true push, the Cloud Function handles the
     // OS-level alert — firing a local one too would double up. Only fall back to a
     // local notification when push isn't active here.
     if(liveTrigger && !_fcmRegistered) fireInfoNotification(msgs.join('  '));
   }
-  save(); // acknowledge — these changes won't re-alert on next open
+  save(); // acknowledge (even when muted) so re-enabling doesn't replay old changes
 }
 
 // ─── True push: register this device's FCM token ───────────────────────────
@@ -7559,11 +7559,44 @@ function syncMyAwareness(liveTrigger){
 // PWA on iOS 16.4+ / Android / desktop). Stored at fcmTokens/{username}/{token}.
 // Self-guards every prerequisite, so it's a harmless no-op until the VAPID key is
 // set and the Cloud Function is deployed.
+// Per-device, per-user mute. Browsers won't let JS revoke the OS notification
+// permission, so "off" instead means: drop this device's push token and suppress
+// the in-app banner. Re-enabling re-registers the token.
+function _notifMuteKey(){ return 'notif-muted-' + (window._currentUsername || 'anon'); }
+function notifMuted(){ try{ return localStorage.getItem(_notifMuteKey()) === '1'; }catch(e){ return false; } }
+
+function setNotifMuted(muted){
+  try{ localStorage.setItem(_notifMuteKey(), muted ? '1' : '0'); }catch(e){}
+  renderNotifToggle();
+  if(muted){ showToast('Notifications turned off'); try{ unregisterFcmToken(); }catch(e){} }
+  else     { showToast('Notifications turned on ✓'); try{ registerFcmToken(); }catch(e){} }
+}
+
+// Remove this device's token so the Cloud Function stops sending it push.
+async function unregisterFcmToken(){
+  try{
+    if(typeof firebase==='undefined' || !firebase.messaging) return;
+    if(firebase.messaging.isSupported && !firebase.messaging.isSupported()) return;
+    const messaging = firebase.messaging();
+    let token = null;
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      token = await messaging.getToken({ vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: reg });
+    }catch(e){}
+    if(token && db && window._currentUsername){
+      try{ await db.ref('fcmTokens/'+window._currentUsername+'/'+token).remove(); }catch(e){}
+    }
+    try{ await messaging.deleteToken(); }catch(e){}
+    _fcmRegistered = false;
+  }catch(e){ console.warn('FCM unregister skipped:', e && e.message); }
+}
+
 let _fcmRegistered = false;
 async function registerFcmToken(){
   try{
     if(typeof DEV_MODE!=='undefined' && DEV_MODE) return;          // local preview: skip
     if(!('Notification' in window) || Notification.permission!=='granted') return;
+    if(notifMuted()) return;                                       // user turned it off here
     if(!window._currentUsername || !db) return;
     if(!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith('REPLACE')) return; // not configured yet
     if(typeof firebase==='undefined' || !firebase.messaging) return;
@@ -7580,48 +7613,48 @@ async function registerFcmToken(){
 function renderNotifToggle(){
   const supported = ('Notification' in window);
   const state = supported ? Notification.permission : 'unsupported'; // granted | denied | default | unsupported
+  const muted = notifMuted();
 
-  // Admin section toggle (uses .as-row-* classes)
-  const admin = document.getElementById('notif-toggle-row');
-  if(admin){
-    admin.innerHTML =
-      state === 'granted'
-      ? `<div style="display:flex;align-items:center;justify-content:space-between">
-          <div><div class="as-row-lbl">Notifications</div>
-          <div class="as-row-sub" style="color:var(--green)">On — you'll be notified of scores &amp; schedule changes</div></div>
-          <span style="background:var(--surf-tint);color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">ON</span>
-        </div>`
-      : state === 'denied'
-      ? `<div style="display:flex;align-items:center;justify-content:space-between">
-          <div><div class="as-row-lbl">Notifications</div>
-          <div class="as-row-sub" style="color:var(--bogey)">Blocked — turn on in your browser/app settings</div></div>
-          <span style="background:var(--surf-red);color:var(--bogey);font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px">OFF</span>
-        </div>`
-      : `<div style="display:flex;align-items:center;justify-content:space-between">
-          <div><div class="as-row-lbl">Notifications</div>
-          <div class="as-row-sub">Get notified of scores &amp; schedule changes</div></div>
-          <button onclick="requestNotifPermission()" style="padding:7px 14px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">Enable</button>
-        </div>`;
+  // Shared iOS-style on/off switch — green/right = on, grey/left = off.
+  const sw = `<button onclick="setNotifMuted(${!muted})" aria-label="Toggle notifications"
+      style="width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;flex-shrink:0;padding:0;background:${muted?'var(--ink-4)':'var(--green)'}">
+      <span style="position:absolute;top:3px;left:${muted?'3px':'23px'};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span>
+    </button>`;
+  const enableBtn = (radius)=>`<button onclick="requestNotifPermission()" style="padding:7px 16px;background:var(--green);color:#fff;border:none;border-radius:${radius}px;font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;flex-shrink:0">Enable</button>`;
+
+  // sub text + right-hand control by state
+  let subText, subColor, right;
+  if(state === 'granted'){
+    subText = muted ? 'Off on this device — tap to turn on' : 'On — scores & schedule changes';
+    subColor = muted ? 'var(--muted)' : 'var(--green)';
+    right = sw;
+  } else if(state === 'denied'){
+    subText = 'Blocked — turn on in your browser/app settings';
+    subColor = 'var(--bogey)';
+    right = `<span style="background:var(--surf-red);color:var(--bogey);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;font-family:var(--ff-mono);letter-spacing:.14em;flex-shrink:0">OFF</span>`;
+  } else { // default / unsupported
+    subText = supported ? 'Get notified of scores & schedule changes' : 'Not supported on this device';
+    subColor = 'var(--muted)';
+    right = supported ? enableBtn(20) : '';
   }
 
-  // Account page toggle (mono label + pill styling)
+  // Admin section toggle (.as-row-* classes)
+  const admin = document.getElementById('notif-toggle-row');
+  if(admin){
+    admin.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="min-width:0;flex:1"><div class="as-row-lbl">Notifications</div>
+        <div class="as-row-sub" style="color:${subColor}">${subText}</div></div>${right}
+      </div>`;
+  }
+
+  // Account page toggle (mono label styling)
   const acct = document.getElementById('notif-toggle-account');
   if(acct){
-    const label = `<div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Notifications</div>`;
-    const pill = (bg,color,txt)=>`<span style="background:${bg};color:${color};font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;font-family:var(--ff-mono);letter-spacing:.14em;flex-shrink:0">${txt}</span>`;
-    let right, sub;
-    if(state === 'granted'){
-      sub = `<div style="font-size:11px;color:var(--green);margin-top:4px">On — scores &amp; schedule changes</div>`;
-      right = pill('var(--surf-tint)','var(--green)','ON');
-    } else if(state === 'denied'){
-      sub = `<div style="font-size:11px;color:var(--bogey);margin-top:4px">Blocked — turn on in Settings</div>`;
-      right = pill('var(--surf-red)','var(--bogey)','OFF');
-    } else {
-      sub = `<div style="font-size:11px;color:var(--muted);margin-top:4px">Get notified of scores &amp; schedule changes</div>`;
-      right = `<button onclick="requestNotifPermission()" style="padding:7px 16px;background:var(--green);color:#fff;border:none;border-radius:20px;font-family:var(--ff-mono);font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;flex-shrink:0">Enable</button>`;
-    }
     acct.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="min-width:0;flex:1">${label}${sub}</div>${right}
+        <div style="min-width:0;flex:1">
+          <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);letter-spacing:.16em;text-transform:uppercase">Notifications</div>
+          <div style="font-size:11px;color:${subColor};margin-top:4px">${subText}</div>
+        </div>${right}
       </div>`;
   }
 }
