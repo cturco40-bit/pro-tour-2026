@@ -3042,7 +3042,7 @@ function _renderFoursomesInlineLBInner(){
   }).join('');
 }
 
-function renderFoursomePage(){
+function renderFoursomePage(preferredRound){
   // Refresh LB pane if it's currently visible
   if(document.getElementById('fs-pane-lb')?.style.display!=='none') renderFoursomesInlineLB();
 
@@ -3085,13 +3085,15 @@ function renderFoursomePage(){
   });
   const firstActiveIdx = activeRounds.findIndex(r=>!done.has(r));
   const defaultRound = firstActiveIdx >= 0 ? activeRounds[firstActiveIdx] : activeRounds[activeRounds.length-1];
+  // Honour an explicitly requested round (e.g. tapped from the Schedule) if it's configured.
+  const targetRound = (preferredRound && activeRounds.includes(preferredRound)) ? preferredRound : defaultRound;
 
   let html=``;
   if(activeRounds.length>1){
     // Multiple configured rounds — show tab selector
     html=`<div class="rsel" id="grp-rtabs">`;
     activeRounds.forEach(r=>{
-      const isAct = r===defaultRound ? ' act' : '';
+      const isAct = r===targetRound ? ' act' : '';
       const checkMark = done.has(r) ? ' ✓' : '';
       html+=`<button class="rsbtn${isAct}" onclick="switchGRound('${r}',this)">${roundTitle(r)}${checkMark}</button>`;
     });
@@ -3099,7 +3101,7 @@ function renderFoursomePage(){
   }
   html+=`<div id="grp-display"></div>`;
   document.getElementById('foursome-list').innerHTML=html;
-  renderGroupCards(defaultRound);
+  renderGroupCards(targetRound);
 }
 
 function switchGRound(round,btn){
@@ -5562,8 +5564,8 @@ function renderSchedule(){
         </div>
       </div>
       ${hasActions?`<div style="display:flex;gap:8px;padding:0 16px 14px">
-        ${hasG?`<button onclick="jumpToRound('${c.round}')" style="flex:1;font-family:var(--ff-mono);padding:10px 14px;background:var(--green);color:#fff;border:none;border-radius:24px;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Cards</button>`:''}
-        ${hasResults?`<button onclick="toggleScheduleResults('${rid}')" style="flex:1;font-family:var(--ff-mono);padding:10px 14px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:24px;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Results</button>`:''}
+        ${hasG?`<button onclick="${hasResults?`openScheduleResults('${rid}','cards')`:`jumpToRound('${c.round}')`}" style="flex:1;font-family:var(--ff-mono);padding:10px 14px;background:var(--green);color:#fff;border:none;border-radius:24px;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">${hasResults?'Scorecards':'Cards'}</button>`:''}
+        ${hasResults?`<button onclick="openScheduleResults('${rid}','results')" style="flex:1;font-family:var(--ff-mono);padding:10px 14px;background:var(--card);color:var(--green);border:1px solid var(--hair);border-radius:24px;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.16em;text-transform:uppercase">Results</button>`:''}
       </div>`:''}
       ${hasResults?`<div id="sr-${rid}" style="display:none;border-top:1px solid var(--hair)">
         <div style="display:flex;border-bottom:1px solid var(--hair);background:var(--surf-tint)">
@@ -5665,6 +5667,23 @@ function buildScheduleScorecards(round, submittedGroups){
 function toggleScheduleResults(rid){
   const el=document.getElementById('sr-'+rid);
   if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+// Open a round's inline panel on a given sub-tab ('results' | 'cards'). Used by
+// both the card's "Scorecards" and "Results" buttons so they link to the data
+// that already lives here, instead of navigating away to the Foursomes page.
+// Clicking the button for the tab already showing collapses the panel.
+function openScheduleResults(rid, tab){
+  const el=document.getElementById('sr-'+rid);
+  if(!el) return;
+  const tabs=el.querySelectorAll('.sr-tab');           // [0]=Results, [1]=Scorecards
+  const target=tab==='cards' ? tabs[1] : tabs[0];
+  const isOpen=el.style.display!=='none';
+  const isActive=target && target.classList.contains('sr-tab-act');
+  if(isOpen && isActive){ el.style.display='none'; return; } // toggle closed
+  el.style.display='block';
+  if(target) switchScheduleTab(rid, tab, target);
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function buildScheduleResults(round, submittedGroups){
@@ -5800,17 +5819,8 @@ function buildScheduleResults(round, submittedGroups){
 }
 function jumpToRound(round){
   showPage('foursomes',document.getElementById('nb-foursomes'));
-  setTimeout(()=>{
-    renderFoursomePage();
-    setTimeout(()=>{
-      const btn=[...document.querySelectorAll('#grp-rtabs .rsbtn')].find(b=>b.textContent===round);
-      if(btn){
-        document.querySelectorAll('#grp-rtabs .rsbtn').forEach(b=>b.classList.remove('act'));
-        btn.classList.add('act');
-        renderGroupCards(round);
-      }
-    },60);
-  },80);
+  // Render the requested round directly — no fragile button-text matching.
+  renderFoursomePage(round);
 }
 
 // ═══════════════ COURSE INFO ═══════════════
@@ -6929,11 +6939,7 @@ function adminEditScorecard(round,gi){
   showToast(`Group ${gi+1} unlocked for editing`);
   renderAdminScorecardEditor();
   showPage('foursomes',document.getElementById('nb-foursomes'));
-  setTimeout(()=>{
-    renderFoursomePage();
-    const btn=[...document.querySelectorAll('#grp-rtabs .rsbtn')].find(b=>b.textContent===roundTitle(round)||b.textContent===round);
-    if(btn){document.querySelectorAll('#grp-rtabs .rsbtn').forEach(b=>b.classList.remove('act'));btn.classList.add('act');renderGroupCards(round);}
-  },80);
+  renderFoursomePage(round);
 }
 
 function updatePrizePreview(){
