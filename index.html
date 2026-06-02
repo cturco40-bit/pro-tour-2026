@@ -5935,8 +5935,9 @@ async function selectCourse(courseId){
 
     if(!allTees.length){
       applyCourseParsOnly(course);
+      setSINotice("9-hole courses aren't fully supported yet — pars applied where available; stroke index and yardage cleared. Enter the full 18-hole data manually.");
       document.getElementById('course-search-results').innerHTML =
-        `<div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--green-deep)">✓ Course selected. No full hole data — pars applied. Edit S.I. and yardages manually.</div>`;
+        `<div style="background:var(--surf-tint);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--green-deep)">✓ Course selected, but no full 18-hole tee was found (e.g. a 9-hole course). Pars applied where available — enter S.I. and yardages manually.</div>`;
       document.getElementById('tee-selector-row').style.display = 'none';
       return;
     }
@@ -5961,11 +5962,77 @@ async function selectCourse(courseId){
 function applyCourseParsOnly(course){
   const holes = course.tees?.male?.[0]?.holes || course.tees?.female?.[0]?.holes || [];
   for(let h=0;h<18;h++){
-    const hole=holes[h]; if(!hole) continue;
+    const hole=holes[h];
+    // Write every hole; clear when the source has no value so a blank never
+    // silently inherits the previously loaded course's value.
     const parEl=document.getElementById(`ci-par-${h}`);
-    if(parEl && hole.par) parEl.value = hole.par;
+    if(parEl) parEl.value = (hole && hole.par) ? String(hole.par) : '';
+    // No full 18-hole tee here → S.I. and yardage aren't reliable; clear them.
+    const siEl=document.getElementById(`ci-si-${h}`);     if(siEl)   siEl.value   = '';
+    const yardsEl=document.getElementById(`ci-yards-${h}`); if(yardsEl) yardsEl.value = '';
   }
   updateCourseParTotals();
+  updateYardageTotals();
+}
+
+// Stroke index is a 1..N permutation. Returns {valid, suspicious}.
+//  valid      = every hole present, no dups/gaps, all within 1..N.
+//  suspicious = valid but looks templated: sequential (== hole order), or the
+//               odd/even split across the two nines isn't one-nine-odd /
+//               other-nine-even (the normal allocation, e.g. DEFAULT_SI).
+function validateStrokeIndex(arr){
+  const n = arr.length;
+  const seen = new Set();
+  for(let i=0;i<n;i++){
+    const v = arr[i];
+    if(!Number.isInteger(v) || v<1 || v>n || seen.has(v)) return {valid:false, suspicious:false};
+    seen.add(v);
+  }
+  let sequential = true;
+  for(let i=0;i<n;i++){ if(arr[i]!==i+1){ sequential=false; break; } }
+  let badSplit = false;
+  if(n===18){
+    let frontOdds=0;
+    for(let i=0;i<9;i++){ if(arr[i]%2===1) frontOdds++; }
+    // proper allocation: one nine essentially all-odd, the other all-even (±1 hole)
+    badSplit = !(frontOdds<=1 || frontOdds>=8);
+  }
+  return {valid:true, suspicious: sequential || badSplit};
+}
+
+// A tee's 18 stroke-index values (0 / missing → null so they fail validation).
+function teeStrokeIndex(tee){
+  const arr=[];
+  for(let h=0;h<18;h++){ const v=tee && tee.holes && tee.holes[h] && tee.holes[h].handicap; arr.push((v && +v>0) ? parseInt(v,10) : null); }
+  return arr;
+}
+
+// When the selected tee's S.I. is invalid, borrow a valid one from another tee
+// (S.I. is a course-level property). Returns a valid array or null.
+function borrowValidTeeSI(allTees, skipIdx){
+  for(let i=0;i<allTees.length;i++){
+    if(i===skipIdx) continue;
+    const arr = teeStrokeIndex(allTees[i]);
+    if(validateStrokeIndex(arr).valid) return arr;
+  }
+  return null;
+}
+
+// Visible, non-blocking notice rendered just above the S.I. fields.
+function setSINotice(msg){
+  let el=document.getElementById('ci-si-notice');
+  if(!msg){ if(el) el.style.display='none'; return; }
+  if(!el){
+    el=document.createElement('div');
+    el.id='ci-si-notice';
+    el.style.cssText='margin:0 0 10px;padding:10px 12px;border-radius:8px;background:var(--surf-amber);border:1px solid var(--gold-deep);color:var(--amber-deep);font-size:12px;line-height:1.5;font-weight:600';
+    const rows=document.getElementById('course-hole-rows');
+    const tbl=rows?rows.parentNode:null;
+    if(tbl && tbl.parentNode) tbl.parentNode.insertBefore(el, tbl);
+    else (document.getElementById('course-search-results')||document.body).appendChild(el);
+  }
+  el.textContent=msg;
+  el.style.display='block';
 }
 
 function applySelectedTee(){
@@ -5977,31 +6044,58 @@ function applySelectedTee(){
   const round = document.getElementById('course-round')?.value;
   const gpsCoords = []; // collect per-hole GPS coords if available
 
+  // ── Stroke index (course-level): validate the selected tee, borrow another
+  // valid tee, or fall back to DEFAULT_SI if it's broken. ─────────────────────
+  const rawSI = teeStrokeIndex(tee);
+  const siCheck = validateStrokeIndex(rawSI);
+  let finalSI = rawSI;
+  if(siCheck.valid && siCheck.suspicious){
+    setSINotice("This course's stroke index looks unusual — verify against the scorecard.");
+    console.warn('Stroke index suspicious for selected tee:', rawSI);
+  } else if(!siCheck.valid){
+    const borrowed = borrowValidTeeSI(_selectedCourseData._allTees, idx);
+    if(borrowed){
+      finalSI = borrowed;
+      setSINotice("The selected tee's stroke index was invalid — using another tee's stroke index. Verify against the scorecard.");
+      console.warn('Stroke index invalid; borrowed a valid tee:', {rawSI, borrowed});
+    } else {
+      finalSI = DEFAULT_SI.slice();
+      setSINotice("This course's stroke index data was missing or invalid — default placeholders applied. Verify against the scorecard.");
+      console.warn('Stroke index invalid and no valid tee — using DEFAULT_SI:', rawSI);
+    }
+  } else {
+    setSINotice('');
+  }
+
   for(let h=0;h<18;h++){
-    const hole=tee.holes[h]; if(!hole) continue;
+    const hole=tee.holes[h];
+    // Par / yardage from the selected tee — write EVERY hole; clear when missing
+    // so a blank never silently inherits the previously loaded course's value.
     const parEl=document.getElementById(`ci-par-${h}`);
-    if(parEl && hole.par) parEl.value = String(hole.par);
+    if(parEl) parEl.value = (hole && hole.par) ? String(hole.par) : '';
     const siEl=document.getElementById(`ci-si-${h}`);
-    if(siEl && hole.handicap) siEl.value = String(hole.handicap);
+    if(siEl) siEl.value = String(finalSI[h]);
     const yardsEl=document.getElementById(`ci-yards-${h}`);
-    if(yardsEl && hole.yardage) yardsEl.value = String(hole.yardage);
+    if(yardsEl) yardsEl.value = (hole && hole.yardage) ? String(hole.yardage) : '';
 
-    // Capture GPS coordinates if the API returns them
-    // golfcourseapi.com may return: hole.lat/hole.lng or hole.location.lat/hole.location.lng
-    // or hole.green.lat/hole.green.lng etc — we check all possibilities
-    const centreLat = hole.lat ?? hole.location?.lat ?? hole.green?.lat ?? hole.center?.lat ?? null;
-    const centreLng = hole.lng ?? hole.location?.lng ?? hole.green?.lng ?? hole.center?.lng ?? null;
-    const frontLat  = hole.front?.lat  ?? hole.green_front?.lat  ?? null;
-    const frontLng  = hole.front?.lng  ?? hole.green_front?.lng  ?? null;
-    const backLat   = hole.back?.lat   ?? hole.green_back?.lat   ?? null;
-    const backLng   = hole.back?.lng   ?? hole.green_back?.lng   ?? null;
+    if(hole){
+      // Capture GPS coordinates if the API returns them
+      // golfcourseapi.com may return: hole.lat/hole.lng or hole.location.lat/hole.location.lng
+      // or hole.green.lat/hole.green.lng etc — we check all possibilities
+      const centreLat = hole.lat ?? hole.location?.lat ?? hole.green?.lat ?? hole.center?.lat ?? null;
+      const centreLng = hole.lng ?? hole.location?.lng ?? hole.green?.lng ?? hole.center?.lng ?? null;
+      const frontLat  = hole.front?.lat  ?? hole.green_front?.lat  ?? null;
+      const frontLng  = hole.front?.lng  ?? hole.green_front?.lng  ?? null;
+      const backLat   = hole.back?.lat   ?? hole.green_back?.lat   ?? null;
+      const backLng   = hole.back?.lng   ?? hole.green_back?.lng   ?? null;
 
-    if(centreLat && centreLng){
-      gpsCoords[h] = {
-        centre: {lat: parseFloat(centreLat), lng: parseFloat(centreLng)},
-        front:  frontLat  ? {lat: parseFloat(frontLat),  lng: parseFloat(frontLng)}  : null,
-        back:   backLat   ? {lat: parseFloat(backLat),   lng: parseFloat(backLng)}   : null,
-      };
+      if(centreLat && centreLng){
+        gpsCoords[h] = {
+          centre: {lat: parseFloat(centreLat), lng: parseFloat(centreLng)},
+          front:  frontLat  ? {lat: parseFloat(frontLat),  lng: parseFloat(frontLng)}  : null,
+          back:   backLat   ? {lat: parseFloat(backLat),   lng: parseFloat(backLng)}   : null,
+        };
+      }
     }
   }
 
@@ -6098,7 +6192,7 @@ function saveCourseInfo(){
   const pars=[], si=[], yards=[];
   for(let h=0;h<18;h++){
     pars.push(parseInt(document.getElementById(`ci-par-${h}`)?.value)||4);
-    si.push(parseInt(document.getElementById(`ci-si-${h}`)?.value)||(h+1));
+    si.push(parseInt(document.getElementById(`ci-si-${h}`)?.value)||DEFAULT_SI[h]);
     yards.push(parseInt(document.getElementById(`ci-yards-${h}`)?.value)||0);
   }
   const tee = document.getElementById('tee-selector')?.value || '';
