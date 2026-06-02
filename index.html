@@ -2747,6 +2747,13 @@ function renderSetup(){
   const dis = locked ? ' disabled' : '';
 
   let html='';
+  // Stroke index unverified for this round's course — flag, don't block.
+  if(courseInfo[round] && courseInfo[round].siUnverified){
+    html += `<div style="background:var(--surf-red);border:1.5px solid var(--bogey);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:800;color:var(--bogey);margin-bottom:3px">Stroke index unverified</div>
+      <div style="font-size:11px;color:var(--bogey);line-height:1.55">${roundTitle(round)} is using stroke-index data that looks like a placeholder. Confirm it against the real scorecard (Admin → Course Info) before the event.</div>
+    </div>`;
+  }
   if(isComplete){
     html += `<div style="background:${locked?'var(--surf-tint)':'var(--surf-amber)'};border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--gd);margin-bottom:4px">${roundTitle(round)} is complete${locked?' — locked':''}</div>
@@ -6018,19 +6025,42 @@ function borrowValidTeeSI(allTees, skipIdx){
   return null;
 }
 
-// Visible, non-blocking notice rendered just above the S.I. fields.
-function setSINotice(msg){
+// Detects GolfCourseAPI "canned" stroke index — a valid permutation that almost
+// certainly isn't the course's real allocation. True if the array is the
+// DEFAULT_SI template, its parity-swap, plain sequential, or — the general tell —
+// either nine is strictly monotonic in hole order (real allocations never are).
+function isPlaceholderSI(si){
+  const n=si.length;
+  const def=[1,3,5,7,9,11,13,15,17,2,4,6,8,10,12,14,16,18];
+  const swap=[2,4,6,8,10,12,14,16,18,1,3,5,7,9,11,13,15,17];
+  const eq=a=>a.length===n && a.every((x,i)=>x===si[i]);
+  if(eq(def) || eq(swap)) return true;
+  if(si.every((x,i)=>x===i+1)) return true;                 // plain 1..N
+  const monotonic=arr=>{
+    let inc=true, dec=true;
+    for(let i=1;i<arr.length;i++){ if(arr[i]<=arr[i-1]) inc=false; if(arr[i]>=arr[i-1]) dec=false; }
+    return inc||dec;
+  };
+  if(n===18 && (monotonic(si.slice(0,9)) || monotonic(si.slice(9,18)))) return true;
+  return false;
+}
+
+// Visible, non-blocking notice just above the S.I. fields. level: 'soft' (amber,
+// default) | 'prominent' (red — used for placeholder / unverified data).
+function setSINotice(msg, level){
   let el=document.getElementById('ci-si-notice');
   if(!msg){ if(el) el.style.display='none'; return; }
   if(!el){
     el=document.createElement('div');
     el.id='ci-si-notice';
-    el.style.cssText='margin:0 0 10px;padding:10px 12px;border-radius:8px;background:var(--surf-amber);border:1px solid var(--gold-deep);color:var(--amber-deep);font-size:12px;line-height:1.5;font-weight:600';
     const rows=document.getElementById('course-hole-rows');
     const tbl=rows?rows.parentNode:null;
     if(tbl && tbl.parentNode) tbl.parentNode.insertBefore(el, tbl);
     else (document.getElementById('course-search-results')||document.body).appendChild(el);
   }
+  el.style.cssText = level==='prominent'
+    ? 'margin:0 0 10px;padding:11px 13px;border-radius:8px;background:var(--surf-red);border:1.5px solid var(--bogey);color:var(--bogey);font-size:13px;line-height:1.5;font-weight:800'
+    : 'margin:0 0 10px;padding:10px 12px;border-radius:8px;background:var(--surf-amber);border:1px solid var(--gold-deep);color:var(--amber-deep);font-size:12px;line-height:1.5;font-weight:600';
   el.textContent=msg;
   el.style.display='block';
 }
@@ -6045,24 +6075,29 @@ function applySelectedTee(){
   const gpsCoords = []; // collect per-hole GPS coords if available
 
   // ── Stroke index (course-level): validate the selected tee, borrow another
-  // valid tee, or fall back to DEFAULT_SI if it's broken. ─────────────────────
+  // valid tee, or fall back to DEFAULT_SI; then flag values that look like
+  // GolfCourseAPI placeholder data even though they're a valid set. ───────────
   const rawSI = teeStrokeIndex(tee);
   const siCheck = validateStrokeIndex(rawSI);
-  let finalSI = rawSI;
-  if(siCheck.valid && siCheck.suspicious){
+  let finalSI;
+  if(siCheck.valid){
+    finalSI = rawSI;                                            // keep the tee's values
+  } else {
+    // Not a clean permutation — borrow a valid tee, else DEFAULT_SI as a
+    // last-resort display default (which is itself a placeholder → flagged below).
+    finalSI = borrowValidTeeSI(_selectedCourseData._allTees, idx) || DEFAULT_SI.slice();
+  }
+  // Notice priority: placeholder (prominent) > borrowed > suspicious split > none.
+  if(isPlaceholderSI(finalSI)){
+    // DEFAULT_SI IS the placeholder — never substitute it here; keep values, warn.
+    setSINotice('Stroke index looks like placeholder data; verify against the scorecard before scoring.', 'prominent');
+    console.warn('Stroke index looks like placeholder data (course S.I. unverified):', finalSI);
+  } else if(!siCheck.valid){
+    setSINotice("The selected tee's stroke index was invalid — using another tee's stroke index. Verify against the scorecard.");
+    console.warn('Stroke index invalid; borrowed a valid tee:', {rawSI, finalSI});
+  } else if(siCheck.suspicious){
     setSINotice("This course's stroke index looks unusual — verify against the scorecard.");
     console.warn('Stroke index suspicious for selected tee:', rawSI);
-  } else if(!siCheck.valid){
-    const borrowed = borrowValidTeeSI(_selectedCourseData._allTees, idx);
-    if(borrowed){
-      finalSI = borrowed;
-      setSINotice("The selected tee's stroke index was invalid — using another tee's stroke index. Verify against the scorecard.");
-      console.warn('Stroke index invalid; borrowed a valid tee:', {rawSI, borrowed});
-    } else {
-      finalSI = DEFAULT_SI.slice();
-      setSINotice("This course's stroke index data was missing or invalid — default placeholders applied. Verify against the scorecard.");
-      console.warn('Stroke index invalid and no valid tee — using DEFAULT_SI:', rawSI);
-    }
   } else {
     setSINotice('');
   }
@@ -6196,7 +6231,10 @@ function saveCourseInfo(){
     yards.push(parseInt(document.getElementById(`ci-yards-${h}`)?.value)||0);
   }
   const tee = document.getElementById('tee-selector')?.value || '';
-  courseInfo[round]={name, pars, si, yards, tee};
+  // Re-derive from the saved values so a manual fix clears the flag and a left-in
+  // placeholder keeps it. Surfaced wherever a round is set up from the course.
+  const siUnverified = isPlaceholderSI(si);
+  courseInfo[round]={name, pars, si, yards, tee, siUnverified};
   coursePars[round]=pars;
   courseStrokeIndex[round]=si;
   const idx=CALENDAR.findIndex(c=>c.round===round);
