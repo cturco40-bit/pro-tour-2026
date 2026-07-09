@@ -2198,11 +2198,15 @@ function jumpToRoundGroup(round, gi){
   }, 350);
 }
 
-// Returns live world rankings array sorted by total points
+// Returns live world rankings array sorted by total points.
+// Starting points + season points + playoff points. Playoff points are the only
+// place playoff results score — the season standings ignore them entirely.
 function calcWorldRankings(){
   const {totals}=calcSeasonStandings();
+  const po=calcPlayoffPoints();
   return PLAYERS
-    .map(n=>({n, p:Math.round(((WR_BASE[n]||0)+(totals[n]||0))*10)/10}))
+    .map(n=>({n, season:totals[n]||0, playoff:po[n]||0,
+      p:Math.round(((WR_BASE[n]||0)+(totals[n]||0)+(po[n]||0))*10)/10}))
     .sort((a,b)=>b.p-a.p)
     .map((x,i)=>({...x,r:i+1}));
 }
@@ -5281,7 +5285,6 @@ function renderStandings(){
     const pool=calcPlayoffPool();
     const swp=Math.max(0,settings.seasonWinnerPrize||0);
     const payouts=calcPlayoffPayouts();
-    const ptsTable=settings.playoffPts||DEFAULT_SETTINGS.playoffPts;
 
     const seeds=calcPlayoffSeeds();
     el.innerHTML=`<div class="info-b">
@@ -5298,7 +5301,9 @@ function renderStandings(){
 
     const sorted=combined.sort((a,b)=>a.combinedNet-b.combinedNet);
     const sortedForCalc=sorted.map(p=>({...p,effNet:p.combinedNet}));
-    const ptMap=assignPointsWithTies(sortedForCalc,ptsTable);
+    // Money rides on the combined 2-round total. Points do not — each playoff
+    // round pays its own table, and the Pts column shows the sum of both.
+    const ptMap=calcPlayoffPoints();
     const moneyMap=assignMoneyWithTies(sortedForCalc,payouts);
 
     // Position labels with T for ties
@@ -5353,11 +5358,9 @@ function renderStandings(){
       }).join('')}
     </div>`;
   } else if(activeTab==='world'){
-    // World rankings = starting points + points earned this season
-    const {totals}=calcSeasonStandings();
-    const sortedW=PLAYERS
-      .map(n=>({n, p:Math.round(((WR_BASE[n]||0)+(totals[n]||0))*10)/10}))
-      .sort((a,b)=>b.p-a.p);
+    // World rankings = starting points + season points + playoff points.
+    // Single source of truth — don't reinline the formula here.
+    const sortedW=calcWorldRankings();
     // Tie-aware ranks
     const ranked=[];
     let iw=0;
@@ -5371,7 +5374,9 @@ function renderStandings(){
       iw=jw;
     }
     el.innerHTML=`<div class="info-b">
-      Starting points + 2026 season points earned so far.
+      Starting points + 2026 season points + playoff points.<br>
+      Playoff 1 and the Championship each award playoff points on their own result.
+      They lift your world ranking only &mdash; season standings stay the best 5 of 8 regular rounds.
     </div>
     <div class="card" style="padding:14px 16px">
       <div class="st-head world">
@@ -5678,6 +5683,50 @@ function buildPlayoffCombined(){
     result.push({name,r1,r2,combinedNet:combined,bothRounds:r1!==null&&r2!==null});
   });
   return result;
+}
+
+// Playoff points are awarded PER ROUND: Playoff 1 and the Championship each pay
+// out the full playoffPts table on that round's own leaderboard, so a player can
+// score in both. They feed the WORLD RANKINGS ONLY — never the season standings,
+// which are the best 5 of the 8 regular rounds and nothing else. Money is settled
+// separately, on the combined 2-round total.
+//
+// Playoff 1 is ranked on its seeded net, so a seed head start earns points too.
+// Returns { playerName: totalPlayoffPoints }.
+function calcPlayoffPoints(){
+  const done=fullySubmittedRounds();
+  const table=settings.playoffPts||DEFAULT_SETTINGS.playoffPts;
+  const out={};
+  PLAYOFF_ROUNDS.forEach(round=>{
+    if(!done.has(round)) return;   // partial rounds pay nothing
+    // Dedupe and drop DNFs, same as calcSeasonStandings
+    const seen={};
+    Object.values(roundScores).forEach(sc=>{
+      if(!sc.submitted||sc.round!==round) return;
+      sc.players.forEach(p=>{
+        const miss=(p.holes||[]).filter(h=>h===null||h===undefined).length;
+        if(p.dnf||miss>0) return;
+        const effNet=getEffectiveNvp(p,round);
+        if(!seen[p.name]||effNet<seen[p.name].effNet) seen[p.name]={...p,effNet};
+      });
+    });
+    const sorted=Object.values(seen).sort((a,b)=>a.effNet-b.effNet);
+    if(!sorted.length) return;
+    let ptMap=assignPointsWithTies(sorted,table);
+    const overrideWinner=(window._roundWinnerOverrides||{})[round]||null;
+    if(overrideWinner){
+      const tied=sorted.filter(p=>p.effNet===sorted[0].effNet);
+      if(tied.length>1 && tied.some(p=>p.name===overrideWinner)){
+        const losers=tied.filter(p=>p.name!==overrideWinner);
+        ptMap={...ptMap};
+        ptMap[overrideWinner]=table[0]||0;
+        const loserPts=losers.reduce((a,_,i)=>(table[i+1]||0)+a,0)/losers.length;
+        losers.forEach(p=>{ ptMap[p.name]=loserPts; });
+      }
+    }
+    Object.entries(ptMap).forEach(([n,v])=>{ out[n]=(out[n]||0)+v; });
+  });
+  return out;
 }
 
 // ─── Schedule with scorecard history ─────────────────────────────────────
@@ -7593,11 +7642,12 @@ function exportSeasonData(){
     Rank: p.r,
     Player: p.n,
     'Starting Points': WR_BASE[p.n]||0,
-    '2026 Season Points': Math.round((totals[p.n]||0)),
+    '2026 Season Points': Math.round(p.season),
+    'Playoff Points': Math.round(p.playoff),
     'Total Points': p.p
   }));
   const ws4 = XLSX.utils.json_to_sheet(wrRows);
-  ws4['!cols']=[{wch:6},{wch:22},{wch:16},{wch:18},{wch:14}];
+  ws4['!cols']=[{wch:6},{wch:22},{wch:16},{wch:18},{wch:14},{wch:14}];
   XLSX.utils.book_append_sheet(wb, ws4, 'World Rankings');
 
   XLSX.writeFile(wb, 'ProTour2026_Season.xlsx');
