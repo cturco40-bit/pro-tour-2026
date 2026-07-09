@@ -5000,6 +5000,7 @@ function calcSeasonStandings(){
   const byRound={};
   Object.values(roundScores).forEach(sc=>{
     if(!sc.submitted) return;
+    if(!REGULAR_ROUNDS.includes(sc.round)) return; // playoffs never feed season points
     if(!done.has(sc.round)) return; // skip partial rounds
     if(!byRound[sc.round]) byRound[sc.round]=[];
     byRound[sc.round].push(...sc.players);
