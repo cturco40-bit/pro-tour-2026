@@ -4147,7 +4147,9 @@ function _renderLiveStandingsInner(){
       const thru=confirmed.length;
       // Use full holes array — calcNetVsPar skips nulls. Slicing by `thru` (a count, not an index)
       // was wrong when middle holes were skipped: it dropped the most-recent hole.
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
+      // Seed head start rides along in Playoff 1, so this board agrees with the
+      // foursomes board, the mid-round modal and the final combined table.
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getSeedBonus(pl.name, round);
       const grossTotal=confirmed.reduce((a,v)=>a+v,0);
       // Elapsed time for finished groups
       const elapsed = sc.submitted && sc.roundStartedAt
