@@ -5108,10 +5108,19 @@ const PLAYOFF_BONUS_ROUND='Playoff 1';
 let _seedCache=null, _seedCacheKey=null, _seedComputing=false;
 
 // Cheap fingerprint of everything the seeds depend on, so the cache
-// self-invalidates instead of needing listener plumbing.
+// self-invalidates instead of needing listener plumbing. This folds in the
+// scores themselves, not just the submitted flag: adminEditScorecard un-submits
+// before allowing edits, but a direct Firebase write can correct a card that is
+// still marked submitted, and stale seeds would silently misprice the head start.
+// Names are included because two players swapping nets changes the standings
+// while leaving any sum of those nets identical.
 function playoffSeedSignature(){
   const subs=REGULAR_ROUNDS.map(r=>
-    (activeGroups[r]||[]).map((_,gi)=>roundScores[`${r}__${gi}`]?.submitted?'1':'0').join('')
+    (activeGroups[r]||[]).map((_,gi)=>{
+      const sc=roundScores[`${r}__${gi}`];
+      if(!sc?.submitted) return '0';
+      return '1:'+(sc.players||[]).map(p=>`${p.name}=${p.net||0}${p.dnf?'!':''}`).join(',');
+    }).join(';')
   ).join('|');
   return subs+'#'+JSON.stringify(penalties)+'#'+JSON.stringify(window._roundWinnerOverrides||{});
 }
