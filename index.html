@@ -4171,7 +4171,7 @@ function _renderLiveStandingsInner(){
   // Calculate potential points and money based on current standings
   const payouts = REGULAR_ROUNDS.includes(round) ? calcRoundPayouts(round) : calcPlayoffPayouts();
   const potPts = assignPointsWithTies(
-    allPlayers.map(p=>({...p, effNet:p.nvp})), PTS
+    allPlayers.map(p=>({...p, effNet:p.nvp})), ptsTableFor(round)
   );
   const potMoney = assignMoneyWithTies(
     allPlayers.map(p=>({...p, effNet:p.nvp})), payouts,
@@ -4614,7 +4614,7 @@ function showRoundResultsModal(round){
 
   const payouts=REGULAR_ROUNDS.includes(round)?calcRoundPayouts(round):calcPlayoffPayouts();
   const moneyMap=assignMoneyWithTies(allPlayers,payouts,(window._roundWinnerOverrides||{})[round]||null);
-  const ptsTable=settings.pts||DEFAULT_SETTINGS.pts;
+  const ptsTable=ptsTableFor(round);
   const ptMap=assignPointsWithTies(allPlayers,ptsTable);
 
   // Position labels
@@ -4936,6 +4936,15 @@ function getEffectiveNvp(player, round){
   const si=courseStrokeIndex[round]||DEFAULT_SI;
   return calcNetVsPar(player.holes||[], player.hcp, pars, si)
     + getPenalty(player.name, round) + getSeedBonus(player.name, round);
+}
+// Which points table a round pays out. Regular rounds use `pts`; Playoff 1 and
+// the Championship each pay the richer `playoffPts` table on their own result.
+// Every view that shows points for a round must go through this, or the same
+// round shows one number on the leaderboard and another in the world rankings.
+function ptsTableFor(round){
+  return REGULAR_ROUNDS.includes(round)
+    ? (settings.pts||DEFAULT_SETTINGS.pts)
+    : (settings.playoffPts||DEFAULT_SETTINGS.playoffPts);
 }
 // ─── Tie splitting (PGA/FedEx style) ─────────────────────────────────────
 function assignPointsWithTies(sortedPlayers, ptsTable){
@@ -5922,15 +5931,16 @@ function buildScheduleResults(round, submittedGroups){
   const payouts=calcRoundPayouts(round);
 
   // Points — apply override same way as calcSeasonStandings
-  let ptMap=assignPointsWithTies(allPlayers.map(p=>({...p})),PTS);
+  const ptsTable=ptsTableFor(round);
+  let ptMap=assignPointsWithTies(allPlayers.map(p=>({...p})),ptsTable);
   if(overrideWinner){
     const tiedScore=allPlayers[0]?.effNet;
     const tiedPlayers=allPlayers.filter(p=>p.effNet===tiedScore);
     if(tiedPlayers.length>1 && tiedPlayers.some(p=>p.name===overrideWinner)){
       ptMap={...ptMap};
-      ptMap[overrideWinner]=PTS[0]||0;
+      ptMap[overrideWinner]=ptsTable[0]||0;
       const losers=tiedPlayers.filter(p=>p.name!==overrideWinner);
-      const loserPts=losers.reduce((a,_,i)=>(PTS[i+1]||0)+a,0)/losers.length;
+      const loserPts=losers.reduce((a,_,i)=>(ptsTable[i+1]||0)+a,0)/losers.length;
       losers.forEach(p=>{ ptMap[p.name]=loserPts; });
     }
   }
