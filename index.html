@@ -3007,7 +3007,7 @@ function _renderFoursomesInlineLBInner(){
       const played=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(played.length===0) return;
       const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getSeedBonus(pl.name, activeRound);
       const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
       allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
     });
@@ -4920,7 +4920,7 @@ function getPenalty(playerName, round){
 }
 function getEffectiveNet(player, round){
   // player.net = gross - hcp (hole-by-hole stroke allocation)
-  return (player.net||0) + getPenalty(player.name, round);
+  return (player.net||0) + getPenalty(player.name, round) + getSeedBonus(player.name, round);
 }
 // Same idea, but net-vs-par instead of absolute net. Use this whenever a score
 // is displayed, or when scores from two rounds are added together — absolute
@@ -4928,7 +4928,8 @@ function getEffectiveNet(player, round){
 function getEffectiveNvp(player, round){
   const pars=coursePars[round]||Array(18).fill(4);
   const si=courseStrokeIndex[round]||DEFAULT_SI;
-  return calcNetVsPar(player.holes||[], player.hcp, pars, si) + getPenalty(player.name, round);
+  return calcNetVsPar(player.holes||[], player.hcp, pars, si)
+    + getPenalty(player.name, round) + getSeedBonus(player.name, round);
 }
 // ─── Tie splitting (PGA/FedEx style) ─────────────────────────────────────
 function assignPointsWithTies(sortedPlayers, ptsTable){
@@ -5088,6 +5089,110 @@ function calcSeasonStandings(){
   return {totals,breakdown,byRound,playerRoundPts,netByRound};
 }
 
+// ─── Playoff seeding ──────────────────────────────────────────────────────
+// Once all 8 regular rounds are in, the season standings fix the playoff
+// seeds. Seeds 1-4 start Playoff 1 at -2, seeds 5-8 at -1, seeds 9-12 at even.
+// The bonus lands on Playoff 1 only and rides through to the combined total —
+// it is NOT re-applied in the Championship.
+//
+// Seed order: season points -> head-to-head -> most rounds played -> world rank.
+// Head-to-head is a mini-league inside each block of players tied on points:
+// count wins against the other tied players over every regular round both
+// finished (lower effective net wins; a drawn round counts for neither). A
+// head-to-head cycle just leaves players level on wins and falls through to the
+// next criterion, so the ordering always terminates. World rank is the backstop
+// and effectively never ties, since WR_BASE is a distinct float per player.
+const PLAYOFF_SEED_BONUS=[-2,-2,-2,-2,-1,-1,-1,-1,0,0,0,0]; // index = seed - 1
+const PLAYOFF_BONUS_ROUND='Playoff 1';
+
+let _seedCache=null, _seedCacheKey=null, _seedComputing=false;
+
+// Cheap fingerprint of everything the seeds depend on, so the cache
+// self-invalidates instead of needing listener plumbing.
+function playoffSeedSignature(){
+  const subs=REGULAR_ROUNDS.map(r=>
+    (activeGroups[r]||[]).map((_,gi)=>roundScores[`${r}__${gi}`]?.submitted?'1':'0').join('')
+  ).join('|');
+  return subs+'#'+JSON.stringify(penalties)+'#'+JSON.stringify(window._roundWinnerOverrides||{});
+}
+
+function calcPlayoffSeeds(){
+  const empty={order:[],seed:{},bonus:{}};
+  // calcSeasonStandings -> getEffectiveNet -> getSeedBonus can re-enter here.
+  // getSeedBonus already short-circuits on non-playoff rounds, but guard anyway:
+  // a hang is a far worse failure than a wrong number.
+  if(_seedComputing) return empty;
+  const key=playoffSeedSignature();
+  if(_seedCache && _seedCacheKey===key) return _seedCache;
+
+  _seedComputing=true;
+  try{
+    const done=fullySubmittedRounds();
+    if(!REGULAR_ROUNDS.every(r=>done.has(r))){
+      _seedCacheKey=key; _seedCache=empty; return empty;   // seeds not set until the season ends
+    }
+
+    const {totals,netByRound,playerRoundPts}=calcSeasonStandings();
+    const played={}, wr={};
+    PLAYERS.forEach(n=>{
+      played[n]=(playerRoundPts[n]||[]).length;
+      wr[n]=(WR_BASE[n]||0)+(totals[n]||0);
+    });
+
+    // Wins for `name` against the other members of `group`, across shared rounds.
+    const h2hWins=(name,group)=>{
+      let w=0;
+      REGULAR_ROUNDS.forEach(r=>{
+        const nets=netByRound[r]; if(!nets) return;
+        const mine=nets[name]; if(mine===undefined) return;   // DNF / did not play
+        group.forEach(o=>{
+          if(o===name) return;
+          const theirs=nets[o]; if(theirs===undefined) return;
+          if(mine<theirs) w++;                                 // lower net wins; a draw counts for neither
+        });
+      });
+      return w;
+    };
+
+    const order=[];
+    const byPts=[...PLAYERS].sort((a,b)=>(totals[b]||0)-(totals[a]||0));
+    let i=0;
+    while(i<byPts.length){
+      let j=i;
+      while(j<byPts.length && (totals[byPts[j]]||0)===(totals[byPts[i]]||0)) j++;
+      const block=byPts.slice(i,j);
+      if(block.length>1){
+        const wins={};
+        block.forEach(n=>{ wins[n]=h2hWins(n,block); });
+        block.sort((a,b)=>
+          (wins[b]-wins[a]) ||
+          (played[b]-played[a]) ||
+          (wr[b]-wr[a])
+        );
+      }
+      order.push(...block);
+      i=j;
+    }
+
+    const seed={}, bonus={};
+    order.forEach((n,idx)=>{
+      seed[n]=idx+1;
+      bonus[n]=PLAYOFF_SEED_BONUS[idx]||0;   // seeds 13+ get nothing
+    });
+    const result={order,seed,bonus};
+    _seedCacheKey=key; _seedCache=result;
+    return result;
+  } finally {
+    _seedComputing=false;
+  }
+}
+
+// Strokes a player carries into a round from their playoff seed. Playoff 1 only.
+function getSeedBonus(name, round){
+  if(round!==PLAYOFF_BONUS_ROUND) return 0;
+  return calcPlayoffSeeds().bonus[name]||0;
+}
+
 function renderStandings(){
   const el=document.getElementById('standings-content');
   if(activeTab==='season'){
@@ -5169,8 +5274,11 @@ function renderStandings(){
     const payouts=calcPlayoffPayouts();
     const ptsTable=settings.playoffPts||DEFAULT_SETTINGS.playoffPts;
 
+    const seeds=calcPlayoffSeeds();
     el.innerHTML=`<div class="info-b">
       Top 12 from season standings qualify. Combined net score over 2 rounds.<br>
+      <strong>Seed head start.</strong> Seeds 1&ndash;4 begin Playoff 1 at &minus;2, seeds 5&ndash;8 at &minus;1,
+      seeds 9&ndash;12 at even. It applies once and carries into your total &mdash; Round 2 picks up where Round 1 left off.<br>
       Prize pool: <strong>$${pool.toLocaleString()}</strong> (${PLAYERS.length} × $${settings.playoffEntryFee}${swp>0?' − $'+swp+' Season Winner':''})
     </div>`;
 
@@ -5210,15 +5318,21 @@ function renderStandings(){
         const podiumCls=posNum>=1&&posNum<=3?` podium-${posNum}`:'';
         const pts=ptMap[p.name]||0;
         const money=moneyMap[p.name]||0;
+        // R2 is a running total: you start round 2 on whatever you finished round 1 on.
+        const running=p.r2!==null?p.combinedNet:null;
         const r1=p.r1!==null?fmtNvp(p.r1):'—';
-        const r2=p.r2!==null?fmtNvp(p.r2):'—';
+        const r2=running!==null?fmtNvp(running):'—';
         const tot=fmtNvp(p.combinedNet);
         const r1Cls=p.r1===null?'mute':p.r1<0?'under':p.r1>0?'over':'';
-        const r2Cls=p.r2===null?'mute':p.r2<0?'under':p.r2>0?'over':'';
+        const r2Cls=running===null?'mute':running<0?'under':running>0?'over':'';
         const totCls=p.combinedNet<0?'under':p.combinedNet>0?'over':'';
+        const sd=seeds.seed[p.name], sb=seeds.bonus[p.name];
+        const seedMeta=sd&&sd<=12
+          ? `<div class="ho-meta">Seed ${sd}${sb?' · '+fmtNvp(sb)+' head start':''}</div>`
+          : '';
         return `<div class="st-row playoff">
           <div class="ho-pos${podiumCls}">${posLabels[p.name]||'—'}</div>
-          <div class="ho-name-wrap"><div class="ho-name">${p.name}</div></div>
+          <div class="ho-name-wrap"><div class="ho-name">${p.name}</div>${seedMeta}</div>
           <div class="st-cell ${r1Cls}">${r1}</div>
           <div class="st-cell ${r2Cls}">${r2}</div>
           <div class="st-cell ${totCls}">${tot}</div>
@@ -8024,7 +8138,7 @@ function _buildMidLBInner(){
       const played=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(played.length===0) return;
       const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si);
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getSeedBonus(pl.name, activeRound);
       const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
       allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
     });
