@@ -4922,6 +4922,14 @@ function getEffectiveNet(player, round){
   // player.net = gross - hcp (hole-by-hole stroke allocation)
   return (player.net||0) + getPenalty(player.name, round);
 }
+// Same idea, but net-vs-par instead of absolute net. Use this whenever a score
+// is displayed, or when scores from two rounds are added together — absolute
+// nets don't sum to anything meaningful (72 + 72 = 144, not "even par").
+function getEffectiveNvp(player, round){
+  const pars=coursePars[round]||Array(18).fill(4);
+  const si=courseStrokeIndex[round]||DEFAULT_SI;
+  return calcNetVsPar(player.holes||[], player.hcp, pars, si) + getPenalty(player.name, round);
+}
 // ─── Tie splitting (PGA/FedEx style) ─────────────────────────────────────
 function assignPointsWithTies(sortedPlayers, ptsTable){
   const result={};
@@ -5007,6 +5015,7 @@ function calcSeasonStandings(){
   });
 
   const playerRoundPts={};
+  const netByRound={};
   Object.entries(byRound).forEach(([round, players])=>{
     const isR8=round===ROUND_8_NAME;
     // Separate DNF players — recalculate from holes array (don't trust stored flag alone)
@@ -5040,6 +5049,9 @@ function calcSeasonStandings(){
         losers.forEach(p=>{ ptMap[p.name]=loserPts; });
       }
     }
+    // Per-round effective nets, for head-to-head seed tiebreaks (finishers only)
+    netByRound[round]={};
+    sorted.forEach(p=>{ netByRound[round][p.name]=p.effNet; });
     // Add finishing players to round pts
     sorted.forEach(p=>{
       if(!playerRoundPts[p.name]) playerRoundPts[p.name]=[];
@@ -5073,7 +5085,7 @@ function calcSeasonStandings(){
       breakdown[name]=entries;
     }
   });
-  return {totals,breakdown,byRound,playerRoundPts};
+  return {totals,breakdown,byRound,playerRoundPts,netByRound};
 }
 
 function renderStandings(){
@@ -5527,10 +5539,10 @@ function buildPlayoffCombined(){
   Object.values(roundScores).forEach(sc=>{
     if(!sc.submitted) return;
     if(sc.round==='Playoff 1'){
-      sc.players.forEach(p=>{ p1Scores[p.name]=getEffectiveNet(p,sc.round); });
+      sc.players.forEach(p=>{ p1Scores[p.name]=getEffectiveNvp(p,sc.round); });
     }
     if(sc.round==='Championship'){
-      sc.players.forEach(p=>{ p2Scores[p.name]=getEffectiveNet(p,sc.round); });
+      sc.players.forEach(p=>{ p2Scores[p.name]=getEffectiveNvp(p,sc.round); });
     }
   });
   const names=new Set([...Object.keys(p1Scores),...Object.keys(p2Scores)]);
