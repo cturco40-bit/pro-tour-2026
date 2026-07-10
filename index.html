@@ -1728,8 +1728,12 @@ function renderAccountPage(){
     });
     allRoundPlayers.sort((a,b)=>a.effNet-b.effNet);
     const pos=allRoundPlayers.findIndex(p=>p.name===playerName)+1;
-    const payouts=REGULAR_ROUNDS.includes(sc.round)?calcRoundPayouts(sc.round):calcPlayoffPayouts();
-    const moneyMap=assignMoneyWithTies(allRoundPlayers,payouts,(window._roundWinnerOverrides||{})[sc.round]||null);
+    // A playoff round pays nothing on its own; the combined prize is added once
+    // after this loop. Paying calcPlayoffPayouts() here counted the pool twice.
+    const payouts=payoutsFor(sc.round);
+    const moneyMap=payouts
+      ? assignMoneyWithTies(allRoundPlayers,payouts,(window._roundWinnerOverrides||{})[sc.round]||null)
+      : {};
     const earned=Math.round(moneyMap[playerName]||0);
     totalEarnings+=earned;
     const nvp=calcNetVsPar(pl.holes,pl.hcp,pars,si);
@@ -1737,6 +1741,9 @@ function renderAccountPage(){
     const roundMs = sc.submittedAt && sc.roundStartedAt ? sc.submittedAt - sc.roundStartedAt : 0;
     history.push({round:sc.round,gross:pl.gross||0,nvp,pos,earned,hcp:pl.hcp,players:allRoundPlayers.length,holes:pl.holes,pars,si,dnf:pl.dnf||false,roundMs});
   });
+
+  // The playoff prize is won once, over both rounds — add it outside the per-round loop
+  totalEarnings+=Math.round(calcPlayoffEarnings()[playerName]||0);
 
   // Update stats first (even if no history)
   document.getElementById('acct-rank').textContent=rank&&pts>0?'#'+rank:'—';
@@ -3599,6 +3606,8 @@ function showDetailedStats(name){
     const moneyMap = assignMoneyWithTies(sorted, payouts, (window._roundWinnerOverrides||{})[round]||null);
     totalEarnings += moneyMap[name] || 0;
   });
+  // The loop above is regular rounds only. Playoff money is won once, on the combined total.
+  totalEarnings += calcPlayoffEarnings()[name] || 0;
 
   // Best and worst holes
   const holeAvgs=Object.entries(playerData.holeScores)
@@ -4168,15 +4177,9 @@ function _renderLiveStandingsInner(){
   // Sort by net-vs-par ascending, tiebreak by holes played desc
   allPlayers.sort((a,b)=>a.nvp!==b.nvp?a.nvp-b.nvp:b.thru-a.thru);
 
-  // Calculate potential points and money based on current standings
-  const payouts = REGULAR_ROUNDS.includes(round) ? calcRoundPayouts(round) : calcPlayoffPayouts();
-  const potPts = assignPointsWithTies(
-    allPlayers.map(p=>({...p, effNet:p.nvp})), ptsTableFor(round)
-  );
-  const potMoney = assignMoneyWithTies(
-    allPlayers.map(p=>({...p, effNet:p.nvp})), payouts,
-    (window._roundWinnerOverrides||{})[round]||null
-  );
+  // This board shows position, net and holes-thru only. It used to also compute
+  // potential points and money that nothing rendered; the money in particular paid
+  // the full playoff pool on a single playoff round. Removed rather than fixed.
 
   // Assign positions with T for ties — every player in a tie group gets the T prefix
   const positioned=allPlayers.map((p,i,arr)=>{
@@ -4612,8 +4615,11 @@ function showRoundResultsModal(round){
 
   allPlayers.sort((a,b)=>a.effNet-b.effNet);
 
-  const payouts=REGULAR_ROUNDS.includes(round)?calcRoundPayouts(round):calcPlayoffPayouts();
-  const moneyMap=assignMoneyWithTies(allPlayers,payouts,(window._roundWinnerOverrides||{})[round]||null);
+  // Playoff rounds pay no money on their own — the pool settles on the combined total.
+  const payouts=payoutsFor(round);
+  const moneyMap=payouts
+    ? assignMoneyWithTies(allPlayers,payouts,(window._roundWinnerOverrides||{})[round]||null)
+    : {};
   const ptsTable=ptsTableFor(round);
   const ptMap=assignPointsWithTies(allPlayers,ptsTable);
 
@@ -4677,14 +4683,17 @@ function showRoundResultsModal(round){
     const tiedNames=allPlayers.filter(p=>p.effNet===allPlayers[0].effNet).map(p=>p.name);
     const losers=tiedNames.filter(n=>n!==overrideWinner);
     // Recalculate: winner gets payouts[0] and ptTable[0] solo; losers split from position 2
-    const payoutsArr=REGULAR_ROUNDS.includes(round)?calcRoundPayouts(round):calcPlayoffPayouts();
-    const ptsArr=settings.pts||DEFAULT_SETTINGS.pts;
+    // payoutsFor() is null on playoff rounds, so no money is reassigned there.
+    const payoutsArr=payoutsFor(round)||[];
+    const ptsArr=ptsTableFor(round);
     finalMoneyMap={...moneyMap};
     finalPtMap={...ptMap};
-    finalMoneyMap[overrideWinner]=payoutsArr[0]||0;
-    const loserPayout=losers.length>0
-      ? losers.reduce((a,_,i)=>(payoutsArr[i+1]||0)+a,0)/losers.length : 0;
-    losers.forEach(n=>{ finalMoneyMap[n]=loserPayout; });
+    if(payoutsArr.length){
+      finalMoneyMap[overrideWinner]=payoutsArr[0]||0;
+      const loserPayout=losers.length>0
+        ? losers.reduce((a,_,i)=>(payoutsArr[i+1]||0)+a,0)/losers.length : 0;
+      losers.forEach(n=>{ finalMoneyMap[n]=loserPayout; });
+    }
     finalPtMap[overrideWinner]=ptsArr[0]||0;
     const loserPts=losers.length>0
       ? losers.reduce((a,_,i)=>(ptsArr[i+1]||0)+a,0)/losers.length : 0;
@@ -4768,6 +4777,7 @@ function showRoundResultsModal(round){
             <tbody>${finalRows}</tbody>
           </table>
         </div>
+        ${!payouts?`<div style="text-align:center;padding:10px 8px;font-size:12px;color:var(--muted);line-height:1.5">Prize money is settled on the combined 2-round total.<br>See Standings &rsaquo; Playoffs.</div>`:''}
         ${allPlayers.length>10?`<div style="text-align:center;padding:8px;font-size:12px;color:var(--muted)">+ ${allPlayers.length-10} more — see full Standings</div>`:''}
       </div>
       <div style="padding:14px 16px 20px;display:flex;flex-direction:column;gap:8px">
@@ -5448,16 +5458,11 @@ function renderStandings(){
       }
     }
 
-    // Playoff combined (Playoff 1 + Championship carry-over)
+    // Playoff combined (Playoff 1 + Championship carry-over) — single source of truth
     const playoffPayouts=calcPlayoffPayouts();
     const playoffPool=calcPlayoffPool(); // entry pool minus season winner prize
     const p1Players=buildPlayoffCombined();
-    if(p1Players.length>0){
-      const sorted=p1Players.sort((a,b)=>a.combinedNet-b.combinedNet);
-      const sortedForMoney=sorted.map(p=>({...p,effNet:p.combinedNet}));
-      const moneyMap=assignMoneyWithTies(sortedForMoney,playoffPayouts);
-      Object.entries(moneyMap).forEach(([name,amt])=>{earn[name]=(earn[name]||0)+amt;});
-    }
+    Object.entries(calcPlayoffEarnings()).forEach(([name,amt])=>{earn[name]=(earn[name]||0)+amt;});
 
     const rows=PLAYERS.map(n=>({n,t:earn[n]||0})).sort((a,b)=>b.t-a.t);
 
@@ -5740,6 +5745,24 @@ function calcPlayoffPoints(){
   return out;
 }
 
+// Playoff prize money settles ONCE, on the combined 2-round total — it is never
+// owed for Playoff 1 or the Championship on their own. Returns { name: money }.
+function calcPlayoffEarnings(){
+  const combined=buildPlayoffCombined();
+  if(!combined.length) return {};
+  const sorted=[...combined]
+    .sort((a,b)=>a.combinedNet-b.combinedNet)
+    .map(p=>({...p,effNet:p.combinedNet}));
+  return assignMoneyWithTies(sorted, calcPlayoffPayouts());
+}
+
+// What a single round pays out on its own result. Playoff rounds pay nothing —
+// null, not an empty array, so a caller can't silently assignMoneyWithTies() it
+// and quietly hand out $0 rows. Use calcPlayoffEarnings() for the playoff total.
+function payoutsFor(round){
+  return REGULAR_ROUNDS.includes(round) ? calcRoundPayouts(round) : null;
+}
+
 // ─── Schedule with scorecard history ─────────────────────────────────────
 function renderSchedule(){
   document.getElementById('schedule-list').innerHTML=CALENDAR.map(c=>{
@@ -5928,7 +5951,8 @@ function buildScheduleResults(round, submittedGroups){
     ? allPlayers.filter(p=>p.effNet===allPlayers[0].effNet).map(p=>p.name)
     : [];
   const overrideWinner=(_rawOverride && _tiedNames.includes(_rawOverride)) ? _rawOverride : null;
-  const payouts=calcRoundPayouts(round);
+  // null on playoff rounds — their prize money lives on the combined total, not here
+  const payouts=payoutsFor(round);
 
   // Points — apply override same way as calcSeasonStandings
   const ptsTable=ptsTableFor(round);
@@ -5945,7 +5969,7 @@ function buildScheduleResults(round, submittedGroups){
     }
   }
 
-  const moneyMap=assignMoneyWithTies(allPlayers.map(p=>({...p})),payouts,overrideWinner);
+  const moneyMap=payouts?assignMoneyWithTies(allPlayers.map(p=>({...p})),payouts,overrideWinner):{};
 
   // Position labels — override winner gets sole 1st, losers get 2nd+
   let posLabels={};
