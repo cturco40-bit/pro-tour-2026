@@ -2411,7 +2411,6 @@ function renderHomeRecentResults(){
 
   const pars=coursePars[lastRoundName]||Array(18).fill(4);
   const si=courseStrokeIndex[lastRoundName]||DEFAULT_SI;
-  const overrideWinner=(window._roundWinnerOverrides||{})[lastRoundName]||null;
 
   // Deduplicate and exclude DNF players
   const seen={};
@@ -2426,7 +2425,8 @@ function renderHomeRecentResults(){
     .sort((a,b)=>a.effNet-b.effNet);
   const players=allSorted.slice(0,5);
 
-  // Position labels with ties — respect winner override
+  // Position labels with ties — tied players share a T-position (a declared
+  // tie-break winner affects only the trophy, not the standings order shown here)
   const posLabels={};
   let i=0;
   while(i<allSorted.length){
@@ -2434,14 +2434,8 @@ function renderHomeRecentResults(){
     let j=i;
     while(j<allSorted.length&&allSorted[j].effNet===score) j++;
     const tieCount=j-i;
-    if(i===0&&tieCount>1&&overrideWinner&&allSorted.slice(i,j).some(p=>p.name===overrideWinner)){
-      posLabels[overrideWinner]='1';
-      let lp=2;
-      allSorted.slice(i,j).filter(p=>p.name!==overrideWinner).forEach(p=>{ posLabels[p.name]=String(lp++); });
-    } else {
-      const label=tieCount>1?'T'+(i+1):String(i+1);
-      for(let k=i;k<j;k++) posLabels[allSorted[k].name]=label;
-    }
+    const label=tieCount>1?'T'+(i+1):String(i+1);
+    for(let k=i;k<j;k++) posLabels[allSorted[k].name]=label;
     i=j;
   }
 
@@ -4676,29 +4670,11 @@ function showRoundResultsModal(round){
     ? allPlayers.find(p=>p.name===overrideWinner)||allPlayers[0]
     : allPlayers[0];
 
-  // If there's an override, rebuild money/pts with that player forced to 1st
+  // A declared tie-break winner is SOLELY for the trophy: points and money
+  // still split evenly across the tie (finalMoneyMap/finalPtMap stay as the
+  // even-split maps). We only rebuild the rows to tag the winner with a badge.
   let finalMoneyMap=moneyMap, finalPtMap=ptMap, finalRows=rows;
   if(overrideWinner && tiedForFirst){
-    // Remove the override winner from their tied position, give them solo 1st
-    const tiedNames=allPlayers.filter(p=>p.effNet===allPlayers[0].effNet).map(p=>p.name);
-    const losers=tiedNames.filter(n=>n!==overrideWinner);
-    // Recalculate: winner gets payouts[0] and ptTable[0] solo; losers split from position 2
-    // payoutsFor() is null on playoff rounds, so no money is reassigned there.
-    const payoutsArr=payoutsFor(round)||[];
-    const ptsArr=ptsTableFor(round);
-    finalMoneyMap={...moneyMap};
-    finalPtMap={...ptMap};
-    if(payoutsArr.length){
-      finalMoneyMap[overrideWinner]=payoutsArr[0]||0;
-      const loserPayout=losers.length>0
-        ? losers.reduce((a,_,i)=>(payoutsArr[i+1]||0)+a,0)/losers.length : 0;
-      losers.forEach(n=>{ finalMoneyMap[n]=loserPayout; });
-    }
-    finalPtMap[overrideWinner]=ptsArr[0]||0;
-    const loserPts=losers.length>0
-      ? losers.reduce((a,_,i)=>(ptsArr[i+1]||0)+a,0)/losers.length : 0;
-    losers.forEach(n=>{ finalPtMap[n]=loserPts; });
-    // Rebuild rows with updated money/pts
     finalRows=allPlayers.slice(0,10).map(p=>{
       const pos=posLabels[p.name]||'—';
       const posNum=parseInt(pos.replace('T',''));
@@ -4973,6 +4949,9 @@ function assignPointsWithTies(sortedPlayers, ptsTable){
   }
   return result;
 }
+// winnerOverride is accepted for caller compatibility but no longer affects the
+// payout: a declared tie-break winner is SOLELY for the trophy, so tied players
+// always split the pooled money evenly (positions i..j-1), same as points.
 function assignMoneyWithTies(sortedPlayers, payouts, winnerOverride){
   const result={};
   let i=0;
@@ -4981,22 +4960,7 @@ function assignMoneyWithTies(sortedPlayers, payouts, winnerOverride){
     let j=i;
     while(j<sortedPlayers.length && sortedPlayers[j].effNet===score) j++;
     const tieCount=j-i;
-    // If this is the 1st place group AND there is a declared winner override
-    if(i===0 && tieCount>1 && winnerOverride){
-      const winnerIdx=sortedPlayers.slice(i,j).findIndex(p=>p.name===winnerOverride);
-      if(winnerIdx>=0){
-        // Winner gets sole 1st place money
-        result[winnerOverride]=payouts[0]||0;
-        // Losers split 2nd...Nth place money among themselves
-        const losers=sortedPlayers.slice(i,j).filter(p=>p.name!==winnerOverride);
-        let loserPool=0;
-        for(let k=1;k<tieCount;k++) loserPool+=(payouts[k]||0);
-        const loserSplit=losers.length>0?loserPool/losers.length:0;
-        losers.forEach(p=>{ result[p.name]=loserSplit; });
-        i=j; continue;
-      }
-    }
-    // Normal tie splitting
+    // Even tie splitting
     let pooled=0;
     for(let k=i;k<j;k++) pooled+=(payouts[k]||0);
     const split=pooled/tieCount;
@@ -5060,21 +5024,10 @@ function calcSeasonStandings(){
     });
     const deduped=Object.values(seen);
     const sorted=[...deduped].sort((a,b)=>a.effNet-b.effNet);
-    // Assign points with tie splitting (DNF players not in sorted, so they get nothing)
-    const overrides=window._roundWinnerOverrides||{};
-    const overrideWinner=overrides[round]||null;
+    // Assign points with tie splitting (DNF players not in sorted, so they get
+    // nothing). A declared tie-break winner is solely for the trophy — it does
+    // not change the points, so tied players always split evenly.
     let ptMap=assignPointsWithTies(sorted, PTS);
-    if(overrideWinner){
-      const tiedScore=sorted[0]?.effNet;
-      const tiedPlayers=sorted.filter(p=>p.effNet===tiedScore);
-      if(tiedPlayers.length>1 && tiedPlayers.some(p=>p.name===overrideWinner)){
-        const losers=tiedPlayers.filter(p=>p.name!==overrideWinner);
-        ptMap={...ptMap};
-        ptMap[overrideWinner]=PTS[0]||0;
-        const loserPts=losers.reduce((a,_,i)=>(PTS[i+1]||0)+a,0)/losers.length;
-        losers.forEach(p=>{ ptMap[p.name]=loserPts; });
-      }
-    }
     // Per-round effective nets, for head-to-head seed tiebreaks (finishers only)
     netByRound[round]={};
     sorted.forEach(p=>{ netByRound[round][p.name]=p.effNet; });
@@ -5728,18 +5681,9 @@ function calcPlayoffPoints(){
     });
     const sorted=Object.values(seen).sort((a,b)=>a.effNet-b.effNet);
     if(!sorted.length) return;
+    // A declared tie-break winner is solely for the trophy — tied players split
+    // points evenly, so no override redistribution here.
     let ptMap=assignPointsWithTies(sorted,table);
-    const overrideWinner=(window._roundWinnerOverrides||{})[round]||null;
-    if(overrideWinner){
-      const tied=sorted.filter(p=>p.effNet===sorted[0].effNet);
-      if(tied.length>1 && tied.some(p=>p.name===overrideWinner)){
-        const losers=tied.filter(p=>p.name!==overrideWinner);
-        ptMap={...ptMap};
-        ptMap[overrideWinner]=table[0]||0;
-        const loserPts=losers.reduce((a,_,i)=>(table[i+1]||0)+a,0)/losers.length;
-        losers.forEach(p=>{ ptMap[p.name]=loserPts; });
-      }
-    }
     Object.entries(ptMap).forEach(([n,v])=>{ out[n]=(out[n]||0)+v; });
   });
   return out;
@@ -5954,24 +5898,15 @@ function buildScheduleResults(round, submittedGroups){
   // null on playoff rounds — their prize money lives on the combined total, not here
   const payouts=payoutsFor(round);
 
-  // Points — apply override same way as calcSeasonStandings
+  // Points and money always split evenly across a tie — a declared tie-break
+  // winner is solely for the trophy (the Winner card below), not the payout.
   const ptsTable=ptsTableFor(round);
   let ptMap=assignPointsWithTies(allPlayers.map(p=>({...p})),ptsTable);
-  if(overrideWinner){
-    const tiedScore=allPlayers[0]?.effNet;
-    const tiedPlayers=allPlayers.filter(p=>p.effNet===tiedScore);
-    if(tiedPlayers.length>1 && tiedPlayers.some(p=>p.name===overrideWinner)){
-      ptMap={...ptMap};
-      ptMap[overrideWinner]=ptsTable[0]||0;
-      const losers=tiedPlayers.filter(p=>p.name!==overrideWinner);
-      const loserPts=losers.reduce((a,_,i)=>(ptsTable[i+1]||0)+a,0)/losers.length;
-      losers.forEach(p=>{ ptMap[p.name]=loserPts; });
-    }
-  }
 
-  const moneyMap=payouts?assignMoneyWithTies(allPlayers.map(p=>({...p})),payouts,overrideWinner):{};
+  const moneyMap=payouts?assignMoneyWithTies(allPlayers.map(p=>({...p})),payouts):{};
 
-  // Position labels — override winner gets sole 1st, losers get 2nd+
+  // Position labels — tied players share a T-position; the declared winner is
+  // set apart only by the Winner card, not by a distinct rank.
   let posLabels={};
   let i=0;
   while(i<allPlayers.length){
@@ -5979,17 +5914,8 @@ function buildScheduleResults(round, submittedGroups){
     let j=i;
     while(j<allPlayers.length&&allPlayers[j].effNet===score) j++;
     const tieCount=j-i;
-    // If this is the 1st place group and winner is declared, split positions
-    if(i===0 && tieCount>1 && overrideWinner && allPlayers.slice(i,j).some(p=>p.name===overrideWinner)){
-      posLabels[overrideWinner]='1';
-      let loserPos=2;
-      allPlayers.slice(i,j).filter(p=>p.name!==overrideWinner).forEach(p=>{
-        posLabels[p.name]=String(loserPos++);
-      });
-    } else {
-      const label=tieCount>1?'T'+(i+1):(i+1)+'';
-      for(let k=i;k<j;k++) posLabels[allPlayers[k].name]=label;
-    }
+    const label=tieCount>1?'T'+(i+1):(i+1)+'';
+    for(let k=i;k<j;k++) posLabels[allPlayers[k].name]=label;
     i=j;
   }
 
