@@ -2808,10 +2808,10 @@ function renderSetup(){
     </div>`;
   }
 
-  if(!isPlayoff1){
+  if(!isPlayoff1 && round!==ROUND_8_NAME){
     html += `<div style="background:var(--surf-tint);border-radius:10px;padding:10px 12px;margin-bottom:12px;border:1px solid var(--bdr)">
       <div style="font-size:11px;color:var(--muted);line-height:1.55">
-        <strong style="color:var(--gd)">Drop round.</strong> Tick <strong style="color:var(--bogey)">DROP</strong> beside a player to make ${round} their drop round — the round that pays 0 points if they play all 8. Round 8 is the drop by default; ticking a different round here moves it.
+        <strong style="color:var(--gd)">Drop round.</strong> Tick <strong style="color:var(--bogey)">DROP</strong> to lock ${round} as this player's drop round for the season — it's <strong>always dropped</strong> the moment they play it (not only after all 8), pays them 0 points but still blocks everyone behind them, and they keep any money won. Round 8 is the default drop for anyone left unticked.
       </div>
     </div>`;
   }
@@ -2826,10 +2826,12 @@ function renderSetup(){
         <input class="finp" type="text" id="tee-${g}" placeholder="Tee time" value="${grp.teeTime||''}" style="width:120px;font-size:12px;padding:6px 8px"${dis}>
       </div>`;
     const maxPlayers=isPlayoff1?4:4;
-    const showBlock=!isPlayoff1; // drop round only applies to regular rounds
+    // Drop-round checkbox: regular rounds only, and never Round 8 (that's the
+    // implicit default — pinning it would strip a player's makeup round).
+    const showBlock=!isPlayoff1 && round!==ROUND_8_NAME;
     for(let p=0;p<maxPlayers;p++){
       const pl=grp.players[p]||{name:'',hcp:0};
-      const isBlock=showBlock && pl.name && getBlockRound(pl.name)===round;
+      const isBlock=showBlock && pl.name && blockRounds[pl.name]===round;
       html+=`<div class="prow"${showBlock?' style="grid-template-columns:1fr 60px auto;align-items:center"':''}>
         <select class="fsel" id="gp-${g}-${p}" style="margin-bottom:0;font-size:13px;padding:8px"${dis}>
           <option value="">— Player ${p+1} (optional) —</option>
@@ -2982,9 +2984,10 @@ function saveGroups(){
   activeGroups[round]=groups;
   saveActiveGroups();
 
-  // Drop-round (DROP) checkboxes — regular rounds only. A player's drop round is
-  // whichever round has their box ticked; default (no override) is Round 8.
-  if(!isPlayoff1 && REGULAR_ROUNDS.includes(round)){
+  // Drop-round (DROP) checkboxes — regular rounds 1-7 only. Ticking pins that round
+  // as the player's drop round (always dropped); unticking reverts to the Round 8
+  // default. Round 8 has no checkbox, so saving it never touches blockRounds.
+  if(!isPlayoff1 && REGULAR_ROUNDS.includes(round) && round!==ROUND_8_NAME){
     const present=new Set(), checkedSet=new Set();
     for(let g=0;g<numGroups;g++)for(let p=0;p<4;p++){
       const name=document.getElementById(`gp-${g}-${p}`)?.value||'';
@@ -2994,10 +2997,10 @@ function saveGroups(){
     }
     let changed=false;
     checkedSet.forEach(name=>{ if(blockRounds[name]!==round){ blockRounds[name]=round; changed=true; } });
-    // Release the block only for players in THIS round who are now unticked and
-    // whose block currently lives here — reverting them to the Round 8 default.
+    // Release the pin only for players in THIS round who are now unticked and
+    // whose drop currently lives here — reverting them to the Round 8 default.
     present.forEach(name=>{
-      if(!checkedSet.has(name) && blockRounds[name]===round && round!==ROUND_8_NAME){ delete blockRounds[name]; changed=true; }
+      if(!checkedSet.has(name) && blockRounds[name]===round){ delete blockRounds[name]; changed=true; }
     });
     if(changed){ saveBlockRounds(); if(document.getElementById('pg-standings').classList.contains('act')) renderStandings(); }
   }
@@ -5089,9 +5092,18 @@ function calcSeasonStandings(){
     const rounds=playerRoundPts[name]||[];
     const played=rounds.length;
     const blockRound=getBlockRound(name);
+    // A non-default (non-Round-8) pinned drop round is locked in before it's played:
+    // it's always zeroed the moment the player plays it, not gated on completing 8.
+    // A stored value of 'Round 8' — the default — falls through to the gated makeup path.
+    const hasExplicitBlock = blockRounds[name] && blockRounds[name]!==ROUND_8_NAME;
     let entries=[...rounds];
     if(played===0){totals[name]=0;breakdown[name]=[];return;}
-    if(played===8){
+    if(hasExplicitBlock){
+      entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
+      const counting=entries.filter(e=>!e.blocked).sort((a,b)=>b.pts-a.pts).slice(0,5);
+      totals[name]=counting.reduce((a,e)=>a+e.pts,0);
+      breakdown[name]=entries;
+    } else if(played===8){
       entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
       entries.sort((a,b)=>b.pts-a.pts);
       totals[name]=entries.slice(0,5).reduce((a,e)=>a+e.pts,0);
@@ -5242,19 +5254,12 @@ function renderStandings(){
       i=j;
     }
 
-    const done=fullySubmittedRounds();
-    const roundsPlayed={};
-    Object.values(roundScores).forEach(sc=>{
-      if(!sc.submitted||!done.has(sc.round)) return;
-      sc.players.forEach(p=>{roundsPlayed[p.name]=(roundsPlayed[p.name]||0)+1;});
-    });
-
     el.innerHTML=`
       <div class="info-b">
         <strong>5 of 8 rule.</strong> Your best 5 regular rounds count toward your season total.<br>
-        <strong>Drop round.</strong> Play all 8 and your drop round pays you 0 points &mdash; but you still hold your finishing
-        position, so everyone behind you drops a spot on the points list. You block, you don't score. Round 8 is the
-        drop round by default; the commissioner can set a different one per player.<br>
+        <strong>Drop round.</strong> Your drop round pays 0 points &mdash; but you still hold your finishing position, so
+        everyone behind you drops a spot. You block, you don't score. Round 8 is the drop by default (once you've played
+        all 8); if the commissioner pins a different round for you, that one is always your drop.<br>
         Tap a player for their round breakdown.
       </div>
       <div class="card" style="padding:14px 16px">
@@ -5266,16 +5271,18 @@ function renderStandings(){
           <div class="st-h right">Pts</div>
         </div>
         ${rows.map((p,idx)=>{
-          const played=roundsPlayed[p.n]||0;
-          const counts=Math.min(played,5);
-          const r8blocked=played===8;
+          const bd=breakdown[p.n]||[];
+          const played=bd.length;
+          const blockedCount=bd.filter(e=>e.blocked).length;
+          const counts=Math.min(Math.max(0,played-blockedCount),5);
+          const isBlocked=blockedCount>0;
           const blockLbl=getBlockRound(p.n).replace('Round','Rd');
           const podiumCls=p.rank<=3?` podium-${p.rank}`:'';
           const playerRow = `<div class="st-row season" onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
             <div class="ho-pos${podiumCls}">${p.rankLabel}</div>
             <div class="ho-name-wrap">
               <div class="ho-name">${p.n}</div>
-              ${r8blocked?`<div class="ho-meta">${blockLbl} Blocked</div>`:played?'':`<div class="ho-meta">Awaiting Play</div>`}
+              ${isBlocked?`<div class="ho-meta">${blockLbl} Blocked</div>`:played?'':`<div class="ho-meta">Awaiting Play</div>`}
             </div>
             <div class="st-cell ${played?'':'mute'}">${played||'—'}</div>
             <div class="st-cell ${played?'':'mute'}">${played?counts:'—'}</div>
@@ -5577,13 +5584,12 @@ function showPlayerBreakdown(name){
   const entries=breakdown[name]||[];
   const played=entries.length;
 
-  // Determine which rounds COUNT
+  // Determine which rounds COUNT. Any blocked (drop) round is excluded first;
+  // this covers both an explicit pinned drop round and the default Round-8 block.
   let counting=new Set();
-  if(played===8){
+  const hasBlockEntry=entries.some(e=>e.blocked);
+  if(hasBlockEntry || played>=5){
     const sorted=[...entries].filter(e=>!e.blocked).sort((a,b)=>b.pts-a.pts);
-    sorted.slice(0,5).forEach(e=>counting.add(e.round));
-  } else if(played>=5){
-    const sorted=[...entries].sort((a,b)=>b.pts-a.pts);
     sorted.slice(0,5).forEach(e=>counting.add(e.round));
   } else {
     entries.forEach(e=>counting.add(e.round));
