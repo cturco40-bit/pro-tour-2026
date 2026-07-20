@@ -2811,7 +2811,7 @@ function renderSetup(){
   if(!isPlayoff1 && round!==ROUND_8_NAME){
     html += `<div style="background:var(--surf-tint);border-radius:10px;padding:10px 12px;margin-bottom:12px;border:1px solid var(--bdr)">
       <div style="font-size:11px;color:var(--muted);line-height:1.55">
-        <strong style="color:var(--gd)">Drop round.</strong> Tick <strong style="color:var(--bogey)">DROP</strong> to lock ${round} as this player's drop round for the season — it's <strong>always dropped</strong> the moment they play it (not only after all 8), pays them 0 points but still blocks everyone behind them, and they keep any money won. Round 8 is the default drop for anyone left unticked.
+        <strong style="color:var(--gd)">Drop round.</strong> Tick <strong style="color:var(--bogey)">DROP</strong> to lock ${round} as this player's drop round for the season — it's <strong>always dropped</strong> the moment they play it (not only after all 8), pays them 0 points but still blocks everyone behind them, and they keep any money won. Once saved the choice is <strong>locked</strong> — reversing it needs the Admin PIN (tap UNLOCK). Round 8 is the default drop for anyone left unticked.
       </div>
     </div>`;
   }
@@ -2831,16 +2831,38 @@ function renderSetup(){
     const showBlock=!isPlayoff1 && round!==ROUND_8_NAME;
     for(let p=0;p<maxPlayers;p++){
       const pl=grp.players[p]||{name:'',hcp:0};
-      const isBlock=showBlock && pl.name && blockRounds[pl.name]===round;
+      // Drop-round pin state for the player in this slot. A pin, once saved, is
+      // locked: it can only be reversed with the Admin PIN (startUnpin), never by
+      // un-ticking. 'Round 8' / absent = no pin, so the box is tickable.
+      const pinned=pl.name?blockRounds[pl.name]:'';
+      const isBlock=showBlock && pinned===round;                                  // pinned to THIS round → locked
+      const pinnedElse=showBlock && pinned && pinned!==ROUND_8_NAME && pinned!==round; // pinned to another round
+      const lblBase='display:flex;align-items:center;gap:4px;font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.08em;white-space:nowrap';
+      let blockCell='';
+      if(showBlock && isBlock){
+        const unlocking=_unlockPinFor===pl.name;
+        blockCell=`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+          <label style="${lblBase};color:var(--bogey)"><input type="checkbox" checked disabled style="width:15px;height:15px;accent-color:var(--bogey)">DROP</label>
+          ${unlocking
+            ? `<div style="display:flex;align-items:center;gap:3px">
+                 <input type="password" inputmode="numeric" id="unpin-pin" placeholder="PIN" style="width:50px;font-size:11px;padding:3px 5px;border:1px solid var(--bogey);border-radius:6px;text-align:center">
+                 <button onclick="confirmUnpin('${pl.name}')" style="border:none;background:var(--bogey);color:#fff;font-size:9px;font-weight:800;padding:4px 7px;border-radius:6px;cursor:pointer">OK</button>
+                 <button onclick="cancelUnpin()" style="border:none;background:var(--surf-tint);color:var(--muted);font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;cursor:pointer">&times;</button>
+               </div>`
+            : `<span onclick="startUnpin('${pl.name}')" style="font-family:var(--ff-mono);font-size:8px;font-weight:700;letter-spacing:.06em;color:var(--muted);cursor:pointer;text-decoration:underline">UNLOCK</span>`}
+        </div>`;
+      } else if(showBlock && pinnedElse){
+        blockCell=`<label title="Already dropping ${pinned}" style="${lblBase};color:var(--muted);opacity:.55"><input type="checkbox" disabled style="width:15px;height:15px">${pinned.replace('Round','RD')}</label>`;
+      } else if(showBlock){
+        blockCell=`<label title="Make this player's drop round" style="${lblBase};color:var(--muted);cursor:${locked?'default':'pointer'}"><input type="checkbox" id="gb-${g}-${p}"${dis} style="width:15px;height:15px;accent-color:var(--bogey)">DROP</label>`;
+      }
       html+=`<div class="prow"${showBlock?' style="grid-template-columns:1fr 60px auto;align-items:center"':''}>
         <select class="fsel" id="gp-${g}-${p}" style="margin-bottom:0;font-size:13px;padding:8px"${dis}>
           <option value="">— Player ${p+1} (optional) —</option>
           ${PLAYERS.map(nm=>`<option value="${nm}"${pl.name===nm?' selected':''}>${nm}</option>`).join('')}
         </select>
         <input class="finp" type="number" id="gh-${g}-${p}" placeholder="HCP" value="${pl.hcp||''}" min="0" max="54" style="text-align:center;width:100%"${dis}>
-        ${showBlock?`<label title="Make this player's drop round" style="display:flex;align-items:center;gap:4px;font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.08em;color:${isBlock?'var(--bogey)':'var(--muted)'};white-space:nowrap;cursor:${locked?'default':'pointer'}">
-          <input type="checkbox" id="gb-${g}-${p}" ${isBlock?'checked':''}${dis} style="width:15px;height:15px;accent-color:var(--bogey)">DROP
-        </label>`:''}
+        ${blockCell}
       </div>`;
     }
     html+=`</div>`;
@@ -2854,6 +2876,25 @@ function renderSetup(){
 
 function unlockSetup(round){ _setupUnlock[round]=true; renderSetup(); showToast(`Editing unlocked for ${round}`); }
 function lockSetup(round){ delete _setupUnlock[round]; renderSetup(); showToast(`${round} re-locked`); }
+
+// Reverse a locked drop-round pin. Gated by the Admin PIN via an inline field
+// (native prompt() is unreliable in iOS standalone PWAs, so match the proven
+// Clear-Data pattern). A player can't undo their own committed drop; only the
+// commissioner can, to fix a genuine mistake.
+let _unlockPinFor=null;
+function startUnpin(name){ _unlockPinFor=name; renderSetup(); setTimeout(()=>document.getElementById('unpin-pin')?.focus(),0); }
+function cancelUnpin(){ _unlockPinFor=null; renderSetup(); }
+function confirmUnpin(name){
+  const entered=String(document.getElementById('unpin-pin')?.value||'').trim();
+  if(!entered){ showToast('Enter your Admin PIN'); return; }
+  if(entered!==getPin()){ showToast('Incorrect PIN — drop round stays locked'); return; }
+  delete blockRounds[name];
+  saveBlockRounds();
+  _unlockPinFor=null;
+  renderSetup();
+  if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
+  showToast(`${name}'s drop round unlocked — back to Round 8 default`);
+}
 
 function doAutoAssign(){
   const groups=autoAssignPlayoffGroups();
@@ -2985,24 +3026,22 @@ function saveGroups(){
   saveActiveGroups();
 
   // Drop-round (DROP) checkboxes — regular rounds 1-7 only. Ticking pins that round
-  // as the player's drop round (always dropped); unticking reverts to the Round 8
-  // default. Round 8 has no checkbox, so saving it never touches blockRounds.
+  // as the player's drop round. A pin is a one-way commitment: it can only be ADDED
+  // here (and only for a player with no existing pin), never overwritten or removed.
+  // Reversal is PIN-gated via startUnpin/confirmUnpin. Round 8 has no checkbox, so saving it
+  // never touches blockRounds. Tickable boxes only render for un-pinned players,
+  // so a checked gb- box always means a fresh pin.
   if(!isPlayoff1 && REGULAR_ROUNDS.includes(round) && round!==ROUND_8_NAME){
-    const present=new Set(), checkedSet=new Set();
+    let changed=false; const blockedElse=[];
     for(let g=0;g<numGroups;g++)for(let p=0;p<4;p++){
       const name=document.getElementById(`gp-${g}-${p}`)?.value||'';
       if(!name) continue;
-      present.add(name);
-      if(document.getElementById(`gb-${g}-${p}`)?.checked) checkedSet.add(name);
+      if(!document.getElementById(`gb-${g}-${p}`)?.checked) continue;
+      if(!blockRounds[name] || blockRounds[name]===ROUND_8_NAME){ blockRounds[name]=round; changed=true; }
+      else if(blockRounds[name]!==round){ blockedElse.push(`${name} (locked to ${blockRounds[name]})`); }
     }
-    let changed=false;
-    checkedSet.forEach(name=>{ if(blockRounds[name]!==round){ blockRounds[name]=round; changed=true; } });
-    // Release the pin only for players in THIS round who are now unticked and
-    // whose drop currently lives here — reverting them to the Round 8 default.
-    present.forEach(name=>{
-      if(!checkedSet.has(name) && blockRounds[name]===round){ delete blockRounds[name]; changed=true; }
-    });
     if(changed){ saveBlockRounds(); if(document.getElementById('pg-standings').classList.contains('act')) renderStandings(); }
+    if(blockedElse.length){ showToast(`Drop already locked: ${blockedElse.join(', ')} — tap UNLOCK to change`); }
   }
 
   showToast(`Groups saved for ${round}! ✓`);
