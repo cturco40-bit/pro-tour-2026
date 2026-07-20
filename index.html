@@ -1598,6 +1598,7 @@ let coursePars={};
 let courseStrokeIndex={};
 let roundScores={};
 let penalties={};   // {playerName_round: penaltyStrokes}
+let blockRounds={}; // {playerName: 'Round N'} — the round zeroed when a player plays all 8. Absent → 'Round 8'.
 let sponsorLogos={};  // round -> base64 image data URI
 let ov={round:'',gi:0,hole:0};
 
@@ -2807,6 +2808,14 @@ function renderSetup(){
     </div>`;
   }
 
+  if(!isPlayoff1){
+    html += `<div style="background:var(--surf-tint);border-radius:10px;padding:10px 12px;margin-bottom:12px;border:1px solid var(--bdr)">
+      <div style="font-size:11px;color:var(--muted);line-height:1.55">
+        <strong style="color:var(--gd)">Drop round.</strong> Tick <strong style="color:var(--bogey)">DROP</strong> beside a player to make ${round} their drop round — the round that pays 0 points if they play all 8. Round 8 is the drop by default; ticking a different round here moves it.
+      </div>
+    </div>`;
+  }
+
   for(let g=0;g<numGroups;g++){
     const grp=existing[g]||{players:[{name:'',hcp:0},{name:'',hcp:0},{name:'',hcp:0},{name:'',hcp:0}],teeTime:''};
     const bonus=isPlayoff1?playoffHcpBonus(g):null;
@@ -2817,14 +2826,19 @@ function renderSetup(){
         <input class="finp" type="text" id="tee-${g}" placeholder="Tee time" value="${grp.teeTime||''}" style="width:120px;font-size:12px;padding:6px 8px"${dis}>
       </div>`;
     const maxPlayers=isPlayoff1?4:4;
+    const showBlock=!isPlayoff1; // drop round only applies to regular rounds
     for(let p=0;p<maxPlayers;p++){
       const pl=grp.players[p]||{name:'',hcp:0};
-      html+=`<div class="prow">
+      const isBlock=showBlock && pl.name && getBlockRound(pl.name)===round;
+      html+=`<div class="prow"${showBlock?' style="grid-template-columns:1fr 60px auto;align-items:center"':''}>
         <select class="fsel" id="gp-${g}-${p}" style="margin-bottom:0;font-size:13px;padding:8px"${dis}>
           <option value="">— Player ${p+1} (optional) —</option>
           ${PLAYERS.map(nm=>`<option value="${nm}"${pl.name===nm?' selected':''}>${nm}</option>`).join('')}
         </select>
         <input class="finp" type="number" id="gh-${g}-${p}" placeholder="HCP" value="${pl.hcp||''}" min="0" max="54" style="text-align:center;width:100%"${dis}>
+        ${showBlock?`<label title="Make this player's drop round" style="display:flex;align-items:center;gap:4px;font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.08em;color:${isBlock?'var(--bogey)':'var(--muted)'};white-space:nowrap;cursor:${locked?'default':'pointer'}">
+          <input type="checkbox" id="gb-${g}-${p}" ${isBlock?'checked':''}${dis} style="width:15px;height:15px;accent-color:var(--bogey)">DROP
+        </label>`:''}
       </div>`;
     }
     html+=`</div>`;
@@ -2967,6 +2981,27 @@ function saveGroups(){
   if(!groups.length){showToast('Add at least one player to a group');return;}
   activeGroups[round]=groups;
   saveActiveGroups();
+
+  // Drop-round (DROP) checkboxes — regular rounds only. A player's drop round is
+  // whichever round has their box ticked; default (no override) is Round 8.
+  if(!isPlayoff1 && REGULAR_ROUNDS.includes(round)){
+    const present=new Set(), checkedSet=new Set();
+    for(let g=0;g<numGroups;g++)for(let p=0;p<4;p++){
+      const name=document.getElementById(`gp-${g}-${p}`)?.value||'';
+      if(!name) continue;
+      present.add(name);
+      if(document.getElementById(`gb-${g}-${p}`)?.checked) checkedSet.add(name);
+    }
+    let changed=false;
+    checkedSet.forEach(name=>{ if(blockRounds[name]!==round){ blockRounds[name]=round; changed=true; } });
+    // Release the block only for players in THIS round who are now unticked and
+    // whose block currently lives here — reverting them to the Round 8 default.
+    present.forEach(name=>{
+      if(!checkedSet.has(name) && blockRounds[name]===round && round!==ROUND_8_NAME){ delete blockRounds[name]; changed=true; }
+    });
+    if(changed){ saveBlockRounds(); if(document.getElementById('pg-standings').classList.contains('act')) renderStandings(); }
+  }
+
   showToast(`Groups saved for ${round}! ✓`);
   if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
 }
@@ -4973,13 +5008,19 @@ function assignMoneyWithTies(sortedPlayers, payouts, winnerOverride){
 // Rules:
 //  1. Collect all submitted regular rounds (not playoffs).
 //  2. For each round rank by effective net (net + penalties) → assign PTS with tie-splitting.
-//  3. Round 8 blocker: positions stand but player earns 0 pts if it's their 8th personal round.
-//  4. Per player: best 5 of rounds played (Round 8 zeroed if they played all 8).
+//  3. Drop-round blocker: positions stand but a player earns 0 pts on their drop round
+//     when they've played all 8. The drop round is Round 8 by default, but the admin can
+//     designate a different round per player in group setup (blockRounds[name]).
+//  4. Per player: best 5 of rounds played (their drop round zeroed if they played all 8).
 // ──────────────────────────────────────────────────────────────────────────
 
 const REGULAR_ROUNDS=['Round 1','Round 2','Round 3','Round 4','Round 5','Round 6','Round 7','Round 8'];
 const ROUND_8_NAME='Round 8';
 const PLAYOFF_ROUNDS=['Playoff 1','Championship'];
+
+// A player's drop round — the regular round zeroed when they've played all 8.
+// Defaults to Round 8; overridden per player via the group-setup DROP checkbox.
+function getBlockRound(name){ return blockRounds[name] || ROUND_8_NAME; }
 
 // Returns Set of round names where ALL groups have submitted (minimum 2 groups)
 function fullySubmittedRounds(){
@@ -5007,7 +5048,6 @@ function calcSeasonStandings(){
   const playerRoundPts={};
   const netByRound={};
   Object.entries(byRound).forEach(([round, players])=>{
-    const isR8=round===ROUND_8_NAME;
     // Separate DNF players — recalculate from holes array (don't trust stored flag alone)
     const dnfPlayers=[];
     const seen={};
@@ -5034,12 +5074,12 @@ function calcSeasonStandings(){
     // Add finishing players to round pts
     sorted.forEach(p=>{
       if(!playerRoundPts[p.name]) playerRoundPts[p.name]=[];
-      playerRoundPts[p.name].push({round, pts:ptMap[p.name]||0, isR8});
+      playerRoundPts[p.name].push({round, pts:ptMap[p.name]||0});
     });
     // Add DNF players — round counts, 0 pts
     dnfPlayers.forEach(p=>{
       if(!playerRoundPts[p.name]) playerRoundPts[p.name]=[];
-      playerRoundPts[p.name].push({round, pts:0, isR8, dnf:true});
+      playerRoundPts[p.name].push({round, pts:0, dnf:true});
     });
   });
 
@@ -5048,10 +5088,11 @@ function calcSeasonStandings(){
   PLAYERS.forEach(name=>{
     const rounds=playerRoundPts[name]||[];
     const played=rounds.length;
+    const blockRound=getBlockRound(name);
     let entries=[...rounds];
     if(played===0){totals[name]=0;breakdown[name]=[];return;}
     if(played===8){
-      entries=entries.map(e=>e.isR8?{...e,pts:0,blocked:true}:e);
+      entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
       entries.sort((a,b)=>b.pts-a.pts);
       totals[name]=entries.slice(0,5).reduce((a,e)=>a+e.pts,0);
       breakdown[name]=entries;
@@ -5100,7 +5141,7 @@ function playoffSeedSignature(){
       return '1:'+(sc.players||[]).map(p=>`${p.name}=${p.net||0}${p.dnf?'!':''}`).join(',');
     }).join(';')
   ).join('|');
-  return subs+'#'+JSON.stringify(penalties)+'#'+JSON.stringify(window._roundWinnerOverrides||{});
+  return subs+'#'+JSON.stringify(penalties)+'#'+JSON.stringify(window._roundWinnerOverrides||{})+'#'+JSON.stringify(blockRounds);
 }
 
 function calcPlayoffSeeds(){
@@ -5211,8 +5252,9 @@ function renderStandings(){
     el.innerHTML=`
       <div class="info-b">
         <strong>5 of 8 rule.</strong> Your best 5 regular rounds count toward your season total.<br>
-        <strong>Round 8 blocker.</strong> Play all 8 and Round 8 pays you 0 points &mdash; but you still hold your finishing
-        position, so everyone behind you drops a spot on the points list. You block, you don't score.<br>
+        <strong>Drop round.</strong> Play all 8 and your drop round pays you 0 points &mdash; but you still hold your finishing
+        position, so everyone behind you drops a spot on the points list. You block, you don't score. Round 8 is the
+        drop round by default; the commissioner can set a different one per player.<br>
         Tap a player for their round breakdown.
       </div>
       <div class="card" style="padding:14px 16px">
@@ -5227,12 +5269,13 @@ function renderStandings(){
           const played=roundsPlayed[p.n]||0;
           const counts=Math.min(played,5);
           const r8blocked=played===8;
+          const blockLbl=getBlockRound(p.n).replace('Round','Rd');
           const podiumCls=p.rank<=3?` podium-${p.rank}`:'';
           const playerRow = `<div class="st-row season" onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
             <div class="ho-pos${podiumCls}">${p.rankLabel}</div>
             <div class="ho-name-wrap">
               <div class="ho-name">${p.n}</div>
-              ${r8blocked?`<div class="ho-meta">Rd 8 Blocked</div>`:played?'':`<div class="ho-meta">Awaiting Play</div>`}
+              ${r8blocked?`<div class="ho-meta">${blockLbl} Blocked</div>`:played?'':`<div class="ho-meta">Awaiting Play</div>`}
             </div>
             <div class="st-cell ${played?'':'mute'}">${played||'—'}</div>
             <div class="st-cell ${played?'':'mute'}">${played?counts:'—'}</div>
@@ -5537,7 +5580,7 @@ function showPlayerBreakdown(name){
   // Determine which rounds COUNT
   let counting=new Set();
   if(played===8){
-    const sorted=[...entries].filter(e=>!e.isR8).sort((a,b)=>b.pts-a.pts);
+    const sorted=[...entries].filter(e=>!e.blocked).sort((a,b)=>b.pts-a.pts);
     sorted.slice(0,5).forEach(e=>counting.add(e.round));
   } else if(played>=5){
     const sorted=[...entries].sort((a,b)=>b.pts-a.pts);
@@ -6541,6 +6584,10 @@ function savePenalties(){
   fbSet('penalties', safe);
 }
 
+function saveBlockRounds(){
+  fbSet('blockRounds', blockRounds);
+}
+
 function saveCourseData(){
   fbSet('courseInfo', courseInfo);
   fbSet('coursePars', coursePars);
@@ -6747,6 +6794,12 @@ function initFirebase(){
   fbOn('penalties', data=>{
     penalties={};
     if(data) Object.entries(data).forEach(([k,v])=>{ penalties[k.replace(/___/g,'__')]=v; });
+    if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
+  });
+
+  // Live listener: blockRounds (per-player drop round; keyed by player name)
+  fbOn('blockRounds', data=>{
+    blockRounds = (data && typeof data==='object' && !Array.isArray(data)) ? {...data} : {};
     if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
   });
 
