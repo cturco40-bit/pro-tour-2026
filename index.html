@@ -454,6 +454,18 @@ body.dark .icon-sun{display:none}
 .lb-thru{font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--sub);text-align:right;letter-spacing:.08em}
 .lb-thru.done{color:var(--gold-deep);font-weight:700}
 .lb-empty{padding:18px 14px;font-family:var(--ff-mono);font-size:10px;color:var(--sub);text-align:center;letter-spacing:.14em;text-transform:uppercase}
+/* This Round | Season Projection switch above a live leaderboard */
+.lbmode{display:flex;gap:0;background:var(--surf-tint);border:1px solid var(--hair);border-radius:22px;padding:3px}
+.lbmode-btn{flex:1;border:none;background:none;padding:7px 6px;border-radius:20px;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);cursor:pointer;white-space:nowrap}
+.lbmode-btn.act{background:var(--green);color:#fff}
+/* Season-projection row extras: points delta column + the per-player drop tag */
+.lb-pts{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-align:right;letter-spacing:.06em;color:var(--sub)}
+.lb-pts.gain{color:var(--birdie)}
+.lb-pts.drop{color:var(--bogey)}
+.lb-tag{display:inline-block;font-family:var(--ff-mono);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;border-radius:6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.lb-tag.is-drop{background:rgba(217,69,69,.12);color:var(--bogey)}
+.lb-tag.is-counting{background:rgba(26,77,46,.09);color:var(--green)}
+.lb-tag.is-idle{background:var(--surf-tint);color:var(--sub)}
 .lb-title-bar{background:var(--card);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hair)}
 .lb-title-bar span{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--green)}
 .lb-pulse{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(217,69,69,.18);animation:livepulse 1.6s infinite ease-in-out}
@@ -727,8 +739,14 @@ body.dark .icon-sun{display:none}
           <span style="font-family:var(--ff-mono);font-size:9px;font-weight:600;color:var(--gold-deep);letter-spacing:.18em;text-transform:uppercase">Live</span>
         </div>
       </div>
+      <div id="fs-lb-modebar" style="display:none;padding:10px 16px 0">
+        <div class="lbmode">
+          <button class="lbmode-btn act" id="fs-lbm-round" onclick="switchLBMode('round')">This Round</button>
+          <button class="lbmode-btn" id="fs-lbm-season" onclick="switchLBMode('season')">Season Projection</button>
+        </div>
+      </div>
       <div style="padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;gap:0;border-bottom:1px solid var(--hair-2);background:var(--surf-tint)">
-        <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right">Net</span><span class="st-h right">Thru</span>
+        <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right" id="fs-lb-c3">Net</span><span class="st-h right" id="fs-lb-c4">Thru</span>
       </div>
       <div id="fs-lb-rows" style="max-height:60vh;overflow-y:auto"></div>
     </div>
@@ -1521,8 +1539,14 @@ body.dark .icon-sun{display:none}
         <button onclick="document.getElementById('mid-lb-modal').style.display='none'" style="background:var(--surf-tint);border:1px solid var(--hair);color:var(--green);width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
       </div>
     </div>
+    <div id="mid-lb-modebar" style="display:none;padding:10px 16px 0">
+      <div class="lbmode">
+        <button class="lbmode-btn act" id="mid-lbm-round" onclick="switchLBMode('round')">This Round</button>
+        <button class="lbmode-btn" id="mid-lbm-season" onclick="switchLBMode('season')">Season Projection</button>
+      </div>
+    </div>
     <div style="padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;background:var(--surf-tint);border-bottom:1px solid var(--hair-2)">
-      <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right">Net</span><span class="st-h right">Thru</span>
+      <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right" id="mid-lb-c3">Net</span><span class="st-h right" id="mid-lb-c4">Thru</span>
     </div>
     <div id="mid-lb-rows" style="max-height:60vh;overflow-y:auto"></div>
     <div style="padding:14px 16px;border-top:1px solid var(--hair)">
@@ -3058,6 +3082,77 @@ function switchFSTab(tab, btn){
 
 // ═══════════════ FOURSOME LIST PAGE ═══════════════
 
+// 'round' = live net leaderboard for the round in play. 'season' = season
+// standings projected forward with that round's scores as they stand, so a
+// player can see where the playoff cut falls while they're still out there.
+let _lbMode='round';
+function switchLBMode(mode){
+  _lbMode = mode==='season' ? 'season' : 'round';
+  renderFoursomesInlineLB();
+  if(document.getElementById('mid-lb-modal')?.style.display==='block') buildMidLB();
+}
+
+// Shared body of the Season Projection board — used by the foursomes
+// Leaderboard tab and the mid-round modal so both tell the same story.
+// Returns null when the round can't be projected (playoff round, or nothing
+// posted yet), letting the caller fall back to the round board.
+function seasonProjectionLB(round){
+  const proj=calcLiveSeasonStandings(round);
+  if(!REGULAR_ROUNDS.includes(round)) return null;
+
+  const sorted=PLAYERS.map(n=>({n, p:proj.totals[n]||0}))
+    .sort((a,b)=>b.p-a.p);
+  // Tie-aware ranking, matching the Season standings page
+  const rows=[];
+  let i=0;
+  while(i<sorted.length){
+    let j=i;
+    while(j<sorted.length && sorted[j].p===sorted[i].p) j++;
+    const validTie=(j-i>1) && sorted[i].p>0;
+    for(let k=i;k<j;k++) rows.push({...sorted[k], rank:i+1, rankLabel:validTie?'T'+(i+1):String(i+1)});
+    i=j;
+  }
+
+  const rdLbl=round.replace('Round','Rd').toUpperCase();
+  const html=rows.map((r,idx)=>{
+    const posCls=r.rank===1?'gold':r.rank===2?'silver':r.rank===3?'bronze':'';
+    const lastName=(r.n||'?').split(' ').slice(-1)[0];
+    const firstName=(r.n||'?').split(' ')[0];
+    const inRound=proj.projPts[r.n]!==undefined;
+    // The tag is the whole point of this board: a player already holding 7
+    // rounds has this round zeroed as their drop, so their total can't move
+    // however well they play. Say so, or it reads as a bug.
+    let tag='';
+    if(inRound && proj.projDrop[r.n]) tag=`<span class="lb-tag is-drop">Drop</span>`;
+    else if(inRound) tag=`<span class="lb-tag is-counting">Live</span>`;
+    else tag=`<span class="lb-tag is-idle">Not Out</span>`;
+    const pts=inRound?Math.round(proj.projPts[r.n]):null;
+    const ptsCls=!inRound?'':(proj.projDrop[r.n]?'drop':(pts>0?'gain':''));
+    const ptsStr=!inRound?'—':(proj.projDrop[r.n]?'0':(pts>0?'+'+pts:'0'));
+    const row=`<div class="lb-row${r.rank===1?' lb-lead':''}">
+      <div class="lb-pos ${posCls}">${r.p>0?r.rankLabel:'—'}</div>
+      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${tag}</div>
+      <div class="lb-score" style="color:var(--green)">${r.p>0?Math.round(r.p):'—'}</div>
+      <div class="lb-pts ${ptsCls}">${ptsStr}</div>
+    </div>`;
+    const isLastInTop12 = r.rank<=12 && (idx===rows.length-1 || rows[idx+1].rank>12);
+    if(isLastInTop12 && rows.length>12 && rows[idx+1] && rows[idx+1].p>0){
+      return row + `<div class="cut-divider" style="padding:8px 14px">
+        <div class="cut-line"></div>
+        <div class="cut-label">Playoff Cut · Top 12</div>
+        <div class="cut-line"></div>
+      </div>`;
+    }
+    return row;
+  }).join('');
+
+  const sub = proj.live
+    ? `${proj.scoring} of ${proj.field} scoring · as if ${round} ended now`
+    : (fullySubmittedRounds().has(round) ? `${round} final · season standings` : 'No scores yet — season standings as they stand');
+
+  return {html, sub, rdLbl, live:proj.live};
+}
+
 function renderFoursomesInlineLB(){
   try { _renderFoursomesInlineLBInner(); } catch(e){ console.warn('renderFoursomesInlineLB failed:', e); }
 }
@@ -3078,6 +3173,31 @@ function _renderFoursomesInlineLBInner(){
   for(const r of roundOrder){ if(allRounds.includes(r)) activeRound=r; }
 
   if(titleEl) titleEl.textContent=roundTitle(activeRound);
+
+  // The mode switch only makes sense on a regular round — playoffs never feed
+  // season points, so there's nothing to project there.
+  const canProject=REGULAR_ROUNDS.includes(activeRound);
+  const bar=document.getElementById('fs-lb-modebar');
+  if(bar) bar.style.display=canProject?'block':'none';
+  if(!canProject && _lbMode==='season') _lbMode='round';
+  document.getElementById('fs-lbm-round')?.classList.toggle('act', _lbMode==='round');
+  document.getElementById('fs-lbm-season')?.classList.toggle('act', _lbMode==='season');
+
+  const c3=document.getElementById('fs-lb-c3'), c4=document.getElementById('fs-lb-c4');
+  if(_lbMode==='season' && canProject){
+    // Heaviest calc in the app — only run it when this view is actually on screen.
+    const proj=seasonProjectionLB(activeRound);
+    if(proj){
+      if(c3) c3.textContent='Pts';
+      if(c4) c4.textContent=proj.rdLbl;
+      if(subEl) subEl.textContent=proj.sub;
+      if(pulseEl) pulseEl.style.background=proj.live?'var(--birdie)':'var(--sub)';
+      rowsEl.innerHTML=proj.html;
+      return;
+    }
+  }
+  if(c3) c3.textContent='Net';
+  if(c4) c4.textContent='Thru';
 
   const pars=coursePars[activeRound]||Array(18).fill(4);
   const si=courseStrokeIndex[activeRound]||DEFAULT_SI;
@@ -5128,35 +5248,105 @@ function calcSeasonStandings(){
   const totals={};
   const breakdown={};
   PLAYERS.forEach(name=>{
-    const rounds=playerRoundPts[name]||[];
-    const played=rounds.length;
-    const blockRound=getBlockRound(name);
-    // A non-default (non-Round-8) pinned drop round is locked in before it's played:
-    // it's always zeroed the moment the player plays it, not gated on completing 8.
-    // A stored value of 'Round 8' — the default — falls through to the gated makeup path.
-    const hasExplicitBlock = blockRounds[name] && blockRounds[name]!==ROUND_8_NAME;
-    let entries=[...rounds];
-    if(played===0){totals[name]=0;breakdown[name]=[];return;}
-    if(hasExplicitBlock){
-      entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
-      const counting=entries.filter(e=>!e.blocked).sort((a,b)=>b.pts-a.pts).slice(0,5);
-      totals[name]=counting.reduce((a,e)=>a+e.pts,0);
-      breakdown[name]=entries;
-    } else if(played===8){
-      entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
-      entries.sort((a,b)=>b.pts-a.pts);
-      totals[name]=entries.slice(0,5).reduce((a,e)=>a+e.pts,0);
-      breakdown[name]=entries;
-    } else if(played>=5){
-      entries.sort((a,b)=>b.pts-a.pts);
-      totals[name]=entries.slice(0,5).reduce((a,e)=>a+e.pts,0);
-      breakdown[name]=entries;
-    } else {
-      totals[name]=entries.reduce((a,e)=>a+e.pts,0);
-      breakdown[name]=entries;
-    }
+    const {total,entries}=applySeasonRules(name, playerRoundPts[name]||[]);
+    totals[name]=total;
+    breakdown[name]=entries;
   });
   return {totals,breakdown,byRound,playerRoundPts,netByRound};
+}
+
+// The drop-round blocker + best-5-of-8 reduction for one player, given their
+// per-round points. Split out of calcSeasonStandings so the live projection
+// (calcLiveSeasonStandings) runs the identical rules over a provisional round
+// instead of duplicating them. Returned entries carry blocked:true on the
+// dropped round — the standings row, the breakdown modal and the projected
+// board all read that flag.
+function applySeasonRules(name, rounds){
+  const played=rounds.length;
+  const blockRound=getBlockRound(name);
+  // A non-default (non-Round-8) pinned drop round is locked in before it's played:
+  // it's always zeroed the moment the player plays it, not gated on completing 8.
+  // A stored value of 'Round 8' — the default — falls through to the gated makeup path.
+  const hasExplicitBlock = blockRounds[name] && blockRounds[name]!==ROUND_8_NAME;
+  let entries=[...rounds];
+  if(played===0) return {total:0, entries:[]};
+  if(hasExplicitBlock){
+    entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
+    const counting=entries.filter(e=>!e.blocked).sort((a,b)=>b.pts-a.pts).slice(0,5);
+    return {total:counting.reduce((a,e)=>a+e.pts,0), entries};
+  } else if(played===8){
+    entries=entries.map(e=>e.round===blockRound?{...e,pts:0,blocked:true}:e);
+    entries.sort((a,b)=>b.pts-a.pts);
+    return {total:entries.slice(0,5).reduce((a,e)=>a+e.pts,0), entries};
+  } else if(played>=5){
+    entries.sort((a,b)=>b.pts-a.pts);
+    return {total:entries.slice(0,5).reduce((a,e)=>a+e.pts,0), entries};
+  } else {
+    return {total:entries.reduce((a,e)=>a+e.pts,0), entries};
+  }
+}
+
+// ─── Live season projection ───────────────────────────────────────────────
+// Season standings as they WOULD stand if the in-progress round ended right
+// now — so a player on the course in Round 8 can see whether they're inside
+// the playoff cut. Ranks the provisional field exactly the way the live
+// leaderboard does (current net-vs-par, however many holes are in), pays the
+// same PTS table with tie-splitting, then runs the provisional round through
+// the identical drop-round / best-5 rules via applySeasonRules.
+//
+// Two things this deliberately surfaces per player:
+//   projPts   — points the provisional round would pay them
+//   projDrop  — true when this round is their drop round, i.e. those points
+//               are zeroed and their total can't move. Without the tag a
+//               7-round player looks frozen and assumes the board is broken.
+//
+// Only regular rounds project; playoffs never feed season points. This is the
+// heaviest calc in the app (calcSeasonStandings walks every scorecard), so
+// call it only when the season view is actually on screen.
+function calcLiveSeasonStandings(round){
+  const settled=calcSeasonStandings();
+  const out={
+    totals:{...settled.totals},
+    breakdown:{...settled.breakdown},
+    projPts:{}, projDrop:{}, projPlayed:{},
+    live:false, scoring:0, field:0, round
+  };
+  if(!REGULAR_ROUNDS.includes(round)) return out;
+  if(fullySubmittedRounds().has(round)) return out; // already in the real standings
+
+  // Provisional field: anyone in a group for this round with at least one hole
+  // posted. Players yet to tee off are left out entirely (same as the live
+  // leaderboard) rather than being ranked last off an empty card.
+  const seen={};
+  Object.values(roundScores).forEach(sc=>{
+    if(sc.round!==round) return;
+    (sc.players||[]).forEach(pl=>{
+      if(!pl || !pl.name) return;
+      out.field++;
+      const posted=(pl.holes||[]).filter(h=>h!==null&&h!==undefined).length;
+      if(!posted) return;
+      // getEffectiveNvp folds in penalties, matching the settled standings.
+      const effNet=getEffectiveNvp(pl, round);
+      if(!seen[pl.name] || effNet < seen[pl.name].effNet) seen[pl.name]={name:pl.name, effNet, thru:posted};
+    });
+  });
+  const sorted=Object.values(seen).sort((a,b)=>a.effNet-b.effNet);
+  out.scoring=sorted.length;
+  if(!sorted.length) return out;
+  out.live=true;
+
+  const ptMap=assignPointsWithTies(sorted, PTS);
+  sorted.forEach(p=>{
+    const prior=(settled.playerRoundPts[p.name]||[]).filter(e=>e.round!==round);
+    const entries=[...prior,{round, pts:ptMap[p.name]||0}];
+    const res=applySeasonRules(p.name, entries);
+    out.totals[p.name]=res.total;
+    out.breakdown[p.name]=res.entries;
+    out.projPts[p.name]=ptMap[p.name]||0;
+    out.projDrop[p.name]=!!res.entries.find(e=>e.round===round)?.blocked;
+    out.projPlayed[p.name]=entries.length;
+  });
+  return out;
 }
 
 // ─── Playoff seeding ──────────────────────────────────────────────────────
@@ -5299,6 +5489,8 @@ function renderStandings(){
         <strong>Drop round.</strong> Your drop round pays 0 points &mdash; but you still hold your finishing position, so
         everyone behind you drops a spot. You block, you don't score. Round 8 is the drop by default (once you've played
         all 8); if the commissioner pins a different round for you, that one is always your drop.<br>
+        <strong>Drop Pending</strong> marks a player sitting on 7 rounds &mdash; play the last one and it's dropped automatically.
+        Nothing to tick.<br>
         Tap a player for their round breakdown.
       </div>
       <div class="card" style="padding:14px 16px">
@@ -5315,13 +5507,22 @@ function renderStandings(){
           const blockedCount=bd.filter(e=>e.blocked).length;
           const counts=Math.min(Math.max(0,played-blockedCount),5);
           const isBlocked=blockedCount>0;
-          const blockLbl=getBlockRound(p.n).replace('Round','Rd');
+          const blockRound=getBlockRound(p.n);
+          const blockLbl=blockRound.replace('Round','Rd');
+          // One round short of the full 8, with their drop round still unplayed:
+          // the moment they post that round it's zeroed automatically. Flagged
+          // here so nobody has to be ticked off manually to make it happen.
+          const dropPending = !isBlocked
+            && played===REGULAR_ROUNDS.length-1
+            && !bd.some(e=>e.round===blockRound);
           const podiumCls=p.rank<=3?` podium-${p.rank}`:'';
           const playerRow = `<div class="st-row season" onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
             <div class="ho-pos${podiumCls}">${p.rankLabel}</div>
             <div class="ho-name-wrap">
               <div class="ho-name">${p.n}</div>
-              ${isBlocked?`<div class="ho-meta">${blockLbl} Blocked</div>`:played?'':`<div class="ho-meta">Awaiting Play</div>`}
+              ${isBlocked?`<div class="ho-meta">${blockLbl} Blocked</div>`
+                :dropPending?`<div class="ho-meta" style="color:var(--bogey)">${blockLbl} Drop Pending</div>`
+                :played?'':`<div class="ho-meta">Awaiting Play</div>`}
             </div>
             <div class="st-cell ${played?'':'mute'}">${played||'—'}</div>
             <div class="st-cell ${played?'':'mute'}">${played?counts:'—'}</div>
@@ -8246,6 +8447,27 @@ function _buildMidLBInner(){
   for(const r of roundOrder){if(allRounds.includes(r)) activeRound=r;}
 
   document.getElementById('mid-lb-title').textContent=roundTitle(activeRound);
+
+  const canProject=REGULAR_ROUNDS.includes(activeRound);
+  const bar=document.getElementById('mid-lb-modebar');
+  if(bar) bar.style.display=canProject?'block':'none';
+  if(!canProject && _lbMode==='season') _lbMode='round';
+  document.getElementById('mid-lbm-round')?.classList.toggle('act', _lbMode==='round');
+  document.getElementById('mid-lbm-season')?.classList.toggle('act', _lbMode==='season');
+
+  const mc3=document.getElementById('mid-lb-c3'), mc4=document.getElementById('mid-lb-c4');
+  if(_lbMode==='season' && canProject){
+    const proj=seasonProjectionLB(activeRound);
+    if(proj){
+      if(mc3) mc3.textContent='Pts';
+      if(mc4) mc4.textContent=proj.rdLbl;
+      document.getElementById('mid-lb-sub').textContent=proj.sub;
+      document.getElementById('mid-lb-rows').innerHTML=proj.html;
+      return;
+    }
+  }
+  if(mc3) mc3.textContent='Net';
+  if(mc4) mc4.textContent='Thru';
 
   const pars=coursePars[activeRound]||Array(18).fill(4);
   const si=courseStrokeIndex[activeRound]||DEFAULT_SI;
