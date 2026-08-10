@@ -3122,13 +3122,15 @@ function seasonProjectionLB(round){
     // The tag is the whole point of this board: a player already holding 7
     // rounds has this round zeroed as their drop, so their total can't move
     // however well they play. Say so, or it reads as a bug.
+    const dnf=!inRound && proj.projDnf[r.n];
     let tag='';
     if(inRound && proj.projDrop[r.n]) tag=`<span class="lb-tag is-drop">Drop</span>`;
     else if(inRound) tag=`<span class="lb-tag is-counting">Live</span>`;
+    else if(dnf) tag=`<span class="lb-tag is-drop">DNF</span>`;
     else tag=`<span class="lb-tag is-idle">Not Out</span>`;
     const pts=inRound?Math.round(proj.projPts[r.n]):null;
-    const ptsCls=!inRound?'':(proj.projDrop[r.n]?'drop':(pts>0?'gain':''));
-    const ptsStr=!inRound?'—':(proj.projDrop[r.n]?'0':(pts>0?'+'+pts:'0'));
+    const ptsCls=!inRound?(dnf?'drop':''):(proj.projDrop[r.n]?'drop':(pts>0?'gain':''));
+    const ptsStr=!inRound?(dnf?'0':'—'):(proj.projDrop[r.n]?'0':(pts>0?'+'+pts:'0'));
     const row=`<div class="lb-row${r.rank===1?' lb-lead':''}">
       <div class="lb-pos ${posCls}">${r.p>0?r.rankLabel:'—'}</div>
       <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${tag}</div>
@@ -5308,11 +5310,16 @@ function calcLiveSeasonStandings(round){
   const out={
     totals:{...settled.totals},
     breakdown:{...settled.breakdown},
-    projPts:{}, projDrop:{}, projPlayed:{},
+    projPts:{}, projDrop:{}, projPlayed:{}, projDnf:{},
     live:false, scoring:0, field:0, round
   };
   if(!REGULAR_ROUNDS.includes(round)) return out;
   if(fullySubmittedRounds().has(round)) return out; // already in the real standings
+
+  // Field size comes from the groups, not the scorecards: a group that hasn't
+  // tapped Start Round has no roundScores entry yet, and counting only cards
+  // would claim "8 of 8 scoring" with half the field still on the range.
+  out.field=(activeGroups[round]||[]).reduce((a,g)=>a+(g.players||[]).filter(p=>p&&p.name).length,0);
 
   // Provisional field: anyone in a group for this round with at least one hole
   // posted. Players yet to tee off are left out entirely (same as the live
@@ -5322,9 +5329,14 @@ function calcLiveSeasonStandings(round){
     if(sc.round!==round) return;
     (sc.players||[]).forEach(pl=>{
       if(!pl || !pl.name) return;
-      out.field++;
       const posted=(pl.holes||[]).filter(h=>h!==null&&h!==undefined).length;
       if(!posted) return;
+      // DNF pays 0 in the settled standings, so it must here too — groups
+      // submit at different times, and a card already in with holes missing
+      // would otherwise collect full points on this board and zero on the
+      // real one. Only judge a card once it's submitted; an in-progress card
+      // always has holes outstanding.
+      if(pl.dnf===true || (sc.submitted && posted<18)){ out.projDnf[pl.name]=true; return; }
       // getEffectiveNvp folds in penalties, matching the settled standings.
       const effNet=getEffectiveNvp(pl, round);
       if(!seen[pl.name] || effNet < seen[pl.name].effNet) seen[pl.name]={name:pl.name, effNet, thru:posted};
@@ -5466,6 +5478,7 @@ function renderStandings(){
   const el=document.getElementById('standings-content');
   if(activeTab==='season'){
     const {totals,breakdown,byRound,playerRoundPts}=calcSeasonStandings();
+    const doneRounds=fullySubmittedRounds(); // for the drop-pending marker below
     const sortedRows=PLAYERS.map(n=>({n,p:totals[n]||0,rounds:(breakdown[n]||[]).length}))
       .sort((a,b)=>b.p-a.p);
     // Tie-aware ranking: players with the same points share a rank (T-prefixed)
@@ -5512,9 +5525,13 @@ function renderStandings(){
           // One round short of the full 8, with their drop round still unplayed:
           // the moment they post that round it's zeroed automatically. Flagged
           // here so nobody has to be ticked off manually to make it happen.
+          // The drop round has to still be ahead of them — a player pinned to a
+          // round that's already come and gone without them simply keeps their
+          // best 5 of 7, with no drop to pend.
           const dropPending = !isBlocked
             && played===REGULAR_ROUNDS.length-1
-            && !bd.some(e=>e.round===blockRound);
+            && !bd.some(e=>e.round===blockRound)
+            && !doneRounds.has(blockRound);
           const podiumCls=p.rank<=3?` podium-${p.rank}`:'';
           const playerRow = `<div class="st-row season" onclick="showPlayerBreakdown('${p.n}')" style="cursor:pointer">
             <div class="ho-pos${podiumCls}">${p.rankLabel}</div>
