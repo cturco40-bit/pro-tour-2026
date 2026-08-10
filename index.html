@@ -429,15 +429,25 @@ body.dark .icon-sun{display:none}
 
 /* ─── LIVE LEADERBOARD (in scorecard overlay) ─────────────────── */
 /* Scorecard-overlay leaderboard. Own flex column so the title bar, mode tabs
-   and column header stay put while only the rows scroll. Collapsed, it drops
-   to the title bar alone and the hole gets the space back. */
+   and column header stay put while only the rows scroll. Two independent
+   controls: the header button hides it outright, the title-bar caret swaps
+   between the peek height and running most of the way up the screen. */
+/* No transition on max-height: Chrome latches the start value when the inline
+   px set by sizeLiveStd() replaces the stylesheet value on a flex item, and the
+   panel never resizes at all. The toggle snaps instead. */
 .live-std{background:var(--card);border-top:1px solid var(--hair);flex-shrink:0;display:flex;flex-direction:column;max-height:196px;overflow:hidden}
-.live-std.collapsed{max-height:none}
-.live-std.collapsed #ov-live-body{display:none}
+/* Full height is measured in JS (sizeLiveStd) and applied as a plain px inline
+   style, so the hole nav can never be pushed off-screen. Deliberately NO
+   max-height here: transitioning between a min()/calc() value and a px value
+   leaves the browser stuck on an uninterpolatable calc, and the panel never
+   resizes. Both states must be plain px for the transition to work. */
+.live-std.full{box-shadow:0 -6px 20px rgba(13,46,26,.10)}
+.live-std.hidden{display:none}
 #ov-live-body{display:flex;flex-direction:column;min-height:0}
 #ov-live-rows{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
-.lb-caret{flex-shrink:0;transition:transform .18s ease}
-.live-std.collapsed .lb-caret{transform:rotate(-90deg)}
+.lb-caret{flex-shrink:0;transform:rotate(180deg);transition:transform .18s ease} /* points up: tap to expand */
+.live-std.full .lb-caret{transform:rotate(0deg)}                                  /* points down: tap to shrink */
+#ov-lb-toggle.off svg{stroke:var(--sub);opacity:.55}
 .lb-header{background:var(--card);padding:8px 14px 6px;display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;border-bottom:1px solid var(--hair);position:sticky;top:0;z-index:2}
 .lb-header span{font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--sub)}
 .lb-header span.right{text-align:right}
@@ -1467,6 +1477,11 @@ body.dark .icon-sun{display:none}
         <div class="sc-ohdr-sub" id="ov-sub">Round 1</div>
       </div>
     </div>
+    <!-- The way back once the board is hidden outright — nothing else on the
+         card would bring it up again. -->
+    <button id="ov-lb-toggle" onclick="toggleLiveStdHidden()" aria-label="Show or hide the leaderboard" title="Leaderboard">
+      <svg viewBox="0 0 24 24"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg>
+    </button>
   </div>
 
   <!-- Progress bar -->
@@ -4361,13 +4376,50 @@ function adjScore(pi,delta){
 function fmtScore(diff){if(diff===0)return'E';return(diff>0?'+':'')+diff;}
 function scoreCls(diff){if(diff<0)return'under';if(diff===0)return'even';return'over';}
 
-// Collapsed state for the overlay leaderboard. Persisted, because a player who
-// wants the hole full-screen wants it that way on every hole, not just this one.
-const LIVE_STD_COLLAPSED_KEY='ptLiveStdCollapsed';
-let _liveStdCollapsed=(()=>{ try{ return localStorage.getItem(LIVE_STD_COLLAPSED_KEY)==='1'; }catch(e){ return false; } })();
+// Two independent bits of state for the overlay leaderboard, both persisted —
+// a player who wants the hole to themselves wants that on every hole, not just
+// this one, and the same goes for wanting the full board.
+//   hidden : gone entirely; the header button is the only way back
+//   full   : runs most of the way up the screen instead of the peek height
+// Defaults are "shown, peek", i.e. exactly what the card looked like before.
+const LIVE_STD_HIDDEN_KEY='ptLiveStdHidden';
+const LIVE_STD_FULL_KEY='ptLiveStdFull';
+const _lsGet=(k)=>{ try{ return localStorage.getItem(k)==='1'; }catch(e){ return false; } };
+const _lsSet=(k,v)=>{ try{ localStorage.setItem(k, v?'1':'0'); }catch(e){} };
+let _liveStdHidden=_lsGet(LIVE_STD_HIDDEN_KEY);
+let _liveStdFull=_lsGet(LIVE_STD_FULL_KEY);
+
+// How tall the full board is allowed to get. Measured rather than guessed: the
+// overlay's chrome (header, hole band, pace strip, nav) differs by device and a
+// fixed reserve pushed Prev/Next off the bottom of the screen. Everything that
+// isn't the board or the score cards is measured, then a sliver of card area is
+// kept so the hole you're on stays reachable.
+const LIVE_STD_MIN_CARDS=56;
+function sizeLiveStd(){
+  const panel=document.getElementById('ov-live-std');
+  const shell=document.getElementById('sc-overlay');
+  const cards=document.getElementById('ov-players');
+  if(!panel||!shell||!cards) return;
+  if(!_liveStdFull || _liveStdHidden){ panel.style.maxHeight=''; return; }
+  let reserve=0;
+  [...shell.children].forEach(c=>{ if(c!==panel && c!==cards) reserve+=c.offsetHeight; });
+  const avail=shell.clientHeight - reserve - LIVE_STD_MIN_CARDS;
+  panel.style.maxHeight=Math.max(160, avail)+'px';
+}
+// Rotate the phone or let the address bar collapse and the reserve changes.
+window.addEventListener('resize', ()=>{ if(document.getElementById('sc-overlay')?.classList.contains('open')) sizeLiveStd(); });
+
+// Header button — show or hide the board outright.
+function toggleLiveStdHidden(){
+  _liveStdHidden=!_liveStdHidden;
+  _lsSet(LIVE_STD_HIDDEN_KEY, _liveStdHidden);
+  renderLiveStandings();
+}
+// Title bar — peek height or all the way up. Hiding and showing again keeps
+// whichever height was chosen; it's their setting, and one tap changes it.
 function toggleLiveStd(){
-  _liveStdCollapsed=!_liveStdCollapsed;
-  try{ localStorage.setItem(LIVE_STD_COLLAPSED_KEY, _liveStdCollapsed?'1':'0'); }catch(e){}
+  _liveStdFull=!_liveStdFull;
+  _lsSet(LIVE_STD_FULL_KEY, _liveStdFull);
   renderLiveStandings();
 }
 
@@ -4381,8 +4433,17 @@ function _renderLiveStandingsInner(){
 
   const panel=document.getElementById('ov-live-std');
   const bar=document.getElementById('ov-lb-bar');
-  if(panel) panel.classList.toggle('collapsed', _liveStdCollapsed);
-  if(bar) bar.setAttribute('aria-expanded', _liveStdCollapsed?'false':'true');
+  const hdrBtn=document.getElementById('ov-lb-toggle');
+  if(panel){
+    panel.classList.toggle('hidden', _liveStdHidden);
+    panel.classList.toggle('full', _liveStdFull && !_liveStdHidden);
+  }
+  if(bar) bar.setAttribute('aria-expanded', _liveStdFull?'true':'false');
+  if(hdrBtn){
+    hdrBtn.classList.toggle('off', _liveStdHidden);
+    hdrBtn.setAttribute('aria-pressed', _liveStdHidden?'false':'true');
+  }
+  sizeLiveStd();
 
   // Season projection only makes sense on a regular round.
   const canProject=REGULAR_ROUNDS.includes(round);
@@ -4392,13 +4453,9 @@ function _renderLiveStandingsInner(){
   document.getElementById('ov-lbm-round')?.classList.toggle('act', _lbMode==='round');
   document.getElementById('ov-lbm-season')?.classList.toggle('act', _lbMode==='season');
 
-  // Collapsed: the rows aren't visible, so don't pay for building them. This is
+  // Hidden: the rows aren't on screen, so don't pay for building them. This is
   // the hottest render path in the app — it fires on every hole commit.
-  if(_liveStdCollapsed){
-    document.getElementById('ov-round-lbl').textContent=
-      roundTitle(round).toUpperCase()+(_lbMode==='season'&&canProject?' — SEASON':' — LIVE');
-    return;
-  }
+  if(_liveStdHidden) return;
 
   const c3=document.getElementById('ov-lb-c3'), c4=document.getElementById('ov-lb-c4');
   if(_lbMode==='season' && canProject){
