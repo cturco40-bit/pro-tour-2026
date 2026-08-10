@@ -428,7 +428,16 @@ body.dark .icon-sun{display:none}
 .hnav-btn:disabled{opacity:.35;cursor:not-allowed}
 
 /* ─── LIVE LEADERBOARD (in scorecard overlay) ─────────────────── */
-.live-std{background:var(--card);border-top:1px solid var(--hair);flex-shrink:0;max-height:160px;overflow-y:auto}
+/* Scorecard-overlay leaderboard. Own flex column so the title bar, mode tabs
+   and column header stay put while only the rows scroll. Collapsed, it drops
+   to the title bar alone and the hole gets the space back. */
+.live-std{background:var(--card);border-top:1px solid var(--hair);flex-shrink:0;display:flex;flex-direction:column;max-height:196px;overflow:hidden}
+.live-std.collapsed{max-height:none}
+.live-std.collapsed #ov-live-body{display:none}
+#ov-live-body{display:flex;flex-direction:column;min-height:0}
+#ov-live-rows{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+.lb-caret{flex-shrink:0;transition:transform .18s ease}
+.live-std.collapsed .lb-caret{transform:rotate(-90deg)}
 .lb-header{background:var(--card);padding:8px 14px 6px;display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;border-bottom:1px solid var(--hair);position:sticky;top:0;z-index:2}
 .lb-header span{font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--sub)}
 .lb-header span.right{text-align:right}
@@ -458,15 +467,20 @@ body.dark .icon-sun{display:none}
 .lbmode{display:flex;gap:0;background:var(--surf-tint);border:1px solid var(--hair);border-radius:22px;padding:3px}
 .lbmode-btn{flex:1;border:none;background:none;padding:7px 6px;border-radius:20px;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);cursor:pointer;white-space:nowrap}
 .lbmode-btn.act{background:var(--green);color:#fff}
+/* Tighter variant for the scorecard overlay, where vertical space is scarce */
+.lbmode.mini{margin:6px 14px 2px;padding:2px;border-radius:16px}
+.lbmode.mini .lbmode-btn{padding:5px 4px;font-size:8px;letter-spacing:.12em}
 /* Season-projection row extras: points delta column + the per-player drop tag */
 .lb-pts{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-align:right;letter-spacing:.06em;color:var(--sub)}
 .lb-pts.gain{color:var(--birdie)}
 .lb-pts.drop{color:var(--bogey)}
-.lb-tag{display:inline-block;font-family:var(--ff-mono);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;border-radius:6px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.lb-tag{display:inline-block;font-family:var(--ff-mono);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;border-radius:6px;margin-left:6px;vertical-align:1px;white-space:nowrap;flex-shrink:0}
+.lb-name-flex{display:flex;align-items:center;min-width:0}
+.lb-name-flex .lb-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .lb-tag.is-drop{background:rgba(217,69,69,.12);color:var(--bogey)}
 .lb-tag.is-counting{background:rgba(26,77,46,.09);color:var(--green)}
 .lb-tag.is-idle{background:var(--surf-tint);color:var(--sub)}
-.lb-title-bar{background:var(--card);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hair)}
+.lb-title-bar{background:var(--card);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--hair);cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;flex-shrink:0}
 .lb-title-bar span{font-family:var(--ff-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--green)}
 .lb-pulse{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(217,69,69,.18);animation:livepulse 1.6s infinite ease-in-out}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -1491,19 +1505,31 @@ body.dark .icon-sun{display:none}
   <!-- Player score blocks (scrollable) -->
   <div class="players-area" id="ov-players"></div>
 
-  <!-- Live Leaderboard -->
+  <!-- Live Leaderboard — collapsible, tap the title bar to give the hole back its screen -->
   <div class="live-std" id="ov-live-std">
-    <div class="lb-title-bar">
+    <div class="lb-title-bar" id="ov-lb-bar" onclick="toggleLiveStd()" role="button" tabindex="0" aria-expanded="true" aria-controls="ov-live-body">
       <span id="ov-round-lbl">LIVE LEADERBOARD</span>
-      <div style="display:flex;align-items:center;gap:7px"><div class="lb-pulse"></div><span style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--red);letter-spacing:.14em">LIVE</span></div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="lb-pulse"></div>
+        <span style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--red);letter-spacing:.14em">LIVE</span>
+        <svg class="lb-caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
     </div>
-    <div class="lb-header">
-      <span style="text-align:center">POS</span>
-      <span style="padding-left:6px">PLAYER</span>
-      <span class="right">NET</span>
-      <span class="right">THRU</span>
+    <div id="ov-live-body">
+      <div id="ov-lb-modebar" style="display:none">
+        <div class="lbmode mini">
+          <button class="lbmode-btn act" id="ov-lbm-round" onclick="switchLBMode('round')">Round</button>
+          <button class="lbmode-btn" id="ov-lbm-season" onclick="switchLBMode('season')">Season</button>
+        </div>
+      </div>
+      <div class="lb-header">
+        <span style="text-align:center">POS</span>
+        <span style="padding-left:6px">PLAYER</span>
+        <span class="right" id="ov-lb-c3">NET</span>
+        <span class="right" id="ov-lb-c4">THRU</span>
+      </div>
+      <div id="ov-live-rows"></div>
     </div>
-    <div id="ov-live-rows"></div>
   </div>
 
   <!-- Hole navigation -->
@@ -3090,6 +3116,7 @@ function switchLBMode(mode){
   _lbMode = mode==='season' ? 'season' : 'round';
   renderFoursomesInlineLB();
   if(document.getElementById('mid-lb-modal')?.style.display==='block') buildMidLB();
+  if(document.getElementById('sc-overlay')?.classList.contains('open')) renderLiveStandings();
 }
 
 // Shared body of the Season Projection board — used by the foursomes
@@ -3114,6 +3141,7 @@ function seasonProjectionLB(round){
   }
 
   const rdLbl=round.replace('Round','Rd').toUpperCase();
+  const me=(typeof myPlayerName==='function'?myPlayerName():'')||'';
   const html=rows.map((r,idx)=>{
     const posCls=r.rank===1?'gold':r.rank===2?'silver':r.rank===3?'bronze':'';
     const lastName=(r.n||'?').split(' ').slice(-1)[0];
@@ -3131,9 +3159,11 @@ function seasonProjectionLB(round){
     const pts=inRound?Math.round(proj.projPts[r.n]):null;
     const ptsCls=!inRound?(dnf?'drop':''):(proj.projDrop[r.n]?'drop':(pts>0?'gain':''));
     const ptsStr=!inRound?(dnf?'0':'—'):(proj.projDrop[r.n]?'0':(pts>0?'+'+pts:'0'));
-    const row=`<div class="lb-row${r.rank===1?' lb-lead':''}">
+    // Flex name cell, not the plain ellipsised one: the tag carries the drop
+    // rule and must never be the thing that gets truncated on a narrow phone.
+    const row=`<div class="lb-row${r.rank===1?' lb-lead':''}${r.n===me?' lb-me':''}"${r.n===me?' data-me="1"':''}>
       <div class="lb-pos ${posCls}">${r.p>0?r.rankLabel:'—'}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${tag}</div>
+      <div class="lb-name lb-name-flex"><span class="lb-nm">${lastName}<span class="lb-flag">${firstName[0]}.</span></span>${tag}</div>
       <div class="lb-score" style="color:var(--green)">${r.p>0?Math.round(r.p):'—'}</div>
       <div class="lb-pts ${ptsCls}">${ptsStr}</div>
     </div>`;
@@ -4331,6 +4361,16 @@ function adjScore(pi,delta){
 function fmtScore(diff){if(diff===0)return'E';return(diff>0?'+':'')+diff;}
 function scoreCls(diff){if(diff<0)return'under';if(diff===0)return'even';return'over';}
 
+// Collapsed state for the overlay leaderboard. Persisted, because a player who
+// wants the hole full-screen wants it that way on every hole, not just this one.
+const LIVE_STD_COLLAPSED_KEY='ptLiveStdCollapsed';
+let _liveStdCollapsed=(()=>{ try{ return localStorage.getItem(LIVE_STD_COLLAPSED_KEY)==='1'; }catch(e){ return false; } })();
+function toggleLiveStd(){
+  _liveStdCollapsed=!_liveStdCollapsed;
+  try{ localStorage.setItem(LIVE_STD_COLLAPSED_KEY, _liveStdCollapsed?'1':'0'); }catch(e){}
+  renderLiveStandings();
+}
+
 function renderLiveStandings(){
   try { _renderLiveStandingsInner(); } catch(e){ console.warn('renderLiveStandings failed:', e); }
 }
@@ -4338,6 +4378,52 @@ function _renderLiveStandingsInner(){
   const {round,gi:myGi}=ov;
   const pars=coursePars[round]||Array(18).fill(4);
   const si=courseStrokeIndex[round]||DEFAULT_SI;
+
+  const panel=document.getElementById('ov-live-std');
+  const bar=document.getElementById('ov-lb-bar');
+  if(panel) panel.classList.toggle('collapsed', _liveStdCollapsed);
+  if(bar) bar.setAttribute('aria-expanded', _liveStdCollapsed?'false':'true');
+
+  // Season projection only makes sense on a regular round.
+  const canProject=REGULAR_ROUNDS.includes(round);
+  const modebar=document.getElementById('ov-lb-modebar');
+  if(modebar) modebar.style.display=canProject?'block':'none';
+  if(!canProject && _lbMode==='season') _lbMode='round';
+  document.getElementById('ov-lbm-round')?.classList.toggle('act', _lbMode==='round');
+  document.getElementById('ov-lbm-season')?.classList.toggle('act', _lbMode==='season');
+
+  // Collapsed: the rows aren't visible, so don't pay for building them. This is
+  // the hottest render path in the app — it fires on every hole commit.
+  if(_liveStdCollapsed){
+    document.getElementById('ov-round-lbl').textContent=
+      roundTitle(round).toUpperCase()+(_lbMode==='season'&&canProject?' — SEASON':' — LIVE');
+    return;
+  }
+
+  const c3=document.getElementById('ov-lb-c3'), c4=document.getElementById('ov-lb-c4');
+  if(_lbMode==='season' && canProject){
+    const proj=seasonProjectionLB(round);
+    if(proj){
+      if(c3) c3.textContent='PTS';
+      if(c4) c4.textContent=proj.rdLbl;
+      document.getElementById('ov-round-lbl').textContent=roundTitle(round).toUpperCase()+' — SEASON';
+      const rowsEl=document.getElementById('ov-live-rows');
+      rowsEl.innerHTML=proj.html;
+      // Only about three rows fit in this panel, so centre the signed-in player
+      // on their own row — "am I inside the cut" is the question it's here to
+      // answer. Scroll the container directly rather than scrollIntoView, which
+      // can drag the page behind the overlay.
+      const meRow=rowsEl.querySelector('[data-me="1"]');
+      if(meRow){
+        const delta=(meRow.getBoundingClientRect().top - rowsEl.getBoundingClientRect().top)
+                    - (rowsEl.clientHeight - meRow.offsetHeight)/2;
+        rowsEl.scrollTop=Math.max(0, rowsEl.scrollTop + delta);
+      }
+      return;
+    }
+  }
+  if(c3) c3.textContent='NET';
+  if(c4) c4.textContent='THRU';
 
   // Gather all players across all groups for this round
   const allPlayers=[];
