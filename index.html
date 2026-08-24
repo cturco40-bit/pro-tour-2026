@@ -3067,14 +3067,15 @@ function lockPlayoffField(){
 // alternate, and leaves every issued startStrokes alone.
 function promptWithdrawPlayoff(name){
   if(!playoffFieldLocked()) return;
-  // Never rewrite a roster that already has a recorded result against it.
-  const played=Object.values(roundScores).some(sc=>sc.round===PLAYOFF_BONUS_ROUND&&sc.submitted);
-  if(played){ showToast('Playoff 1 already has submitted cards — withdrawals are closed'); return; }
+  // Never rewrite a roster that's already in play. A scorecard exists the moment
+  // someone taps Start Scorecard, so guard on the card existing at all — not on
+  // it being submitted, or a re-seed would desync a group mid-round.
+  const played=Object.values(roundScores).some(sc=>sc.round===PLAYOFF_BONUS_ROUND);
+  if(played){ showToast('Playoff 1 is already under way — withdrawals are closed'); return; }
   if(!confirm(`Withdraw ${name} from the playoffs?
 
 Everyone below moves up one seed for group placement. Nobody's start strokes change. The next player in standings order is called up.`)) return;
-  const {order}=calcPlayoffSeeds();
-  playoffField=withdrawFromField(playoffField, name, order);
+  playoffField=withdrawFromField(playoffField, name, playoffField.standingsOrder||[]);
   savePlayoffField();
   renderSetup();
   const alt=activeFieldOrder(playoffField).find(e=>e.origin==='alternate'&&e.callUpOrder===(playoffField.nextCallUp-1));
@@ -3399,7 +3400,7 @@ function _renderFoursomesInlineLBInner(){
       const played=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(played.length===0) return;
       const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, activeRound);
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, activeRound)+getCarryIn(pl.name, activeRound);
       const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
       allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
     });
@@ -4646,9 +4647,10 @@ function _renderLiveStandingsInner(){
       const thru=confirmed.length;
       // Use full holes array — calcNetVsPar skips nulls. Slicing by `thru` (a count, not an index)
       // was wrong when middle holes were skipped: it dropped the most-recent hole.
-      // Seed head start rides along in Playoff 1, so this board agrees with the
-      // foursomes board, the mid-round modal and the final combined table.
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, round);
+      // Start strokes ride along in Playoff 1, and the Championship carries in
+      // the Playoff 1 net, so this board agrees with the foursomes board, the
+      // mid-round modal and the final combined table.
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, round)+getCarryIn(pl.name, round);
       const grossTotal=confirmed.reduce((a,v)=>a+v,0);
       // Elapsed time for finished groups
       const elapsed = sc.submitted && sc.roundStartedAt
@@ -5695,7 +5697,7 @@ function playoffSeedSignature(){
 }
 
 function calcPlayoffSeeds(){
-  const empty={order:[],seed:{},bonus:{}};
+  const empty={order:[],seed:{}};
   // This used to be able to re-enter: calcSeasonStandings -> getEffectiveNet ->
   // getSeedBonus -> calcPlayoffSeeds. getStartStrokes now reads the locked field
   // record instead of recomputing seeds, so the cycle is gone — the guard stays
@@ -5808,6 +5810,10 @@ function assignInitialField(order, lockedAt){
   return {
     lockedAt: lockedAt||0,
     nextCallUp: 1,
+    // The call-up queue, frozen with the rest of the record. Everything else
+    // here is immutable, so the alternate list must be too — recomputing it
+    // live would let a post-lock penalty edit change WHO comes in next.
+    standingsOrder: (order||[]).slice(),
     entries: names.map((name,i)=>({
       name,
       seed: i+1,
@@ -5835,7 +5841,8 @@ function withdrawFromField(field, name, standingsOrder){
   // the field (withdrawn entries included; a player who pulled out isn't an
   // alternate for their own vacancy).
   const inField=new Set(entries.map(e=>e.name));
-  const alt=(standingsOrder||[]).find(n=>!inField.has(n));
+  const queue=(field.standingsOrder&&field.standingsOrder.length)?field.standingsOrder:(standingsOrder||[]);
+  const alt=queue.find(n=>!inField.has(n));
   if(alt){
     entries.push({
       name: alt,
@@ -5890,6 +5897,28 @@ function playoffEntryFor(name){
 // "START -2" / "START E" / "START +2"
 function fmtStart(n){ return 'START '+fmtNvp(n||0); }
 
+// A player's starting score for the Championship: their Playoff 1 net, which
+// already carries their start strokes and any penalties. Round 2 picks up where
+// round 1 left off, so every LIVE board during the Championship must show the
+// running 2-round total — the same number the Playoffs standings tab shows in
+// its R2 column. Without this a player who finished Playoff 1 at -13 opens the
+// leaderboard mid-Championship and sees today's score from even.
+//
+// Deliberately NOT folded into getEffectiveNvp: buildPlayoffCombined sums
+// r1 + r2 itself, so a carry-in inside the per-round net would count round 1
+// twice. It belongs only where a single round's number is shown live.
+function getCarryIn(name, round){
+  if(round!==PLAYOFF_FINAL_ROUND) return 0;
+  let net=0;
+  Object.values(roundScores).forEach(sc=>{
+    if(!sc.submitted||sc.round!==PLAYOFF_BONUS_ROUND) return;
+    (sc.players||[]).forEach(p=>{
+      if(p&&p.name===name) net=getEffectiveNvp(p, PLAYOFF_BONUS_ROUND);
+    });
+  });
+  return net;
+}
+
 // Firebase returns arrays as numeric-keyed objects when keys aren't dense, so
 // coerce `entries` back to a real array. Field-shape defaults are applied here
 // so a hand-edited record can't crash the seeding math.
@@ -5912,9 +5941,13 @@ function normalizePlayoffField(data){
   // Rebuild the counter from the record itself rather than trusting the stored
   // value — it must stay strictly above every call-up ever issued.
   const maxCall=entries.reduce((m,e)=>Math.max(m,e.callUpOrder||0),0);
+  const ord=data.standingsOrder;
   return {
     lockedAt: Number(data.lockedAt)||0,
     nextCallUp: Math.max(Number(data.nextCallUp)||1, maxCall+1),
+    standingsOrder: Array.isArray(ord) ? ord.slice()
+      : (ord && typeof ord==='object') ? Object.keys(ord).sort((a,b)=>Number(a)-Number(b)).map(k=>ord[k])
+      : [],
     entries,
   };
 }
@@ -8983,7 +9016,7 @@ function _buildMidLBInner(){
       const played=pl.holes.filter(h=>h!==null&&h!==undefined);
       if(played.length===0) return;
       const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, activeRound);
+      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, activeRound)+getCarryIn(pl.name, activeRound);
       const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
       allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
     });

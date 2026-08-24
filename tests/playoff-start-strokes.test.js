@@ -38,12 +38,25 @@ const FNS = [
   'assignInitialField', 'withdrawFromField', 'activeFieldOrder',
   'normalizePlayoffField', 'getStartStrokes', 'playoffFieldLocked',
   'strokesOnHole', 'netOnHole', 'calcNetVsPar',
+  // Round-shaped functions — these read module globals, stubbed per test below.
+  'getPenalty', 'getEffectiveNvp', 'getCarryIn', 'latestHandicaps',
+  'autoAssignChampionshipGroups', 'autoAssignPlayoffGroups',
+  'fullySubmittedRounds', 'calcPrizePool', 'payoutsFor',
+  'calcRoundPayouts', 'calcPayoutsFromPool', 'roundTo5',
 ];
 
-const sandbox = { playoffField: null };
+// Module globals these functions close over. Tests set them per scenario.
+const sandbox = {
+  playoffField: null, roundScores: {}, activeGroups: {}, penalties: {},
+  coursePars: {}, courseStrokeIndex: {},
+  settings: { entryFee: 60, sponsorDiscount: 0, playoffEntryFee: 100, seasonWinnerPrize: 500,
+              prizePercentages: [52, 26, 14, 8] },
+};
 vm.createContext(sandbox);
 vm.runInContext(
-  [extractConst('PLAYOFF_FIELD_SIZE'), extractConst('PLAYOFF_BONUS_ROUND')]
+  [extractConst('PLAYOFF_FIELD_SIZE'), extractConst('PLAYOFF_BONUS_ROUND'),
+   extractConst('PLAYOFF_FINAL_ROUND'), extractConst('PLAYOFF_ROUNDS'),
+   extractConst('REGULAR_ROUNDS'), extractConst('DEFAULT_SI')]
     .concat(FNS.map(extractFn)).join('\n'),
   sandbox
 );
@@ -315,57 +328,170 @@ test('normalizer rebuilds the call-up counter above every issued call-up', funct
   assert.strictEqual(byName(next)['Sal Moretti'].startStrokes, 4, 'and prices at +4');
 });
 
-console.log('\n' + passed + ' passed' + (process.exitCode ? ', with failures' : '') + '\n');
 
-// ── 7. Championship tee order ────────────────────────────────────────────
-// Playoff 1 sends the leaders out FIRST (group 1 = seeds 1-4). The final round
-// reverses it: 9th-12th after R1 go off first, 5th-8th in the middle, and the
-// top 4 play in the last group. Mirrors autoAssignChampionshipGroups().
-function championshipTeeOrder(rankedBestFirst) {
-  const teeOrder = rankedBestFirst.slice().reverse();
-  const groups = [];
-  for (let i = 0; i < teeOrder.length; i += 4) groups.push(teeOrder.slice(i, i + 4));
-  return groups;
+// ── 7. Championship: tee order reverses Playoff 1 ────────────────────────
+// These drive the REAL autoAssignChampionshipGroups() through the sandbox, so
+// flipping the sort in index.html fails them.
+
+// Build a submitted Playoff 1 whose finishing order is exactly names[0..n]:
+// position i finishes at (i - 12) vs par, so names[0] is the leader.
+function seedPlayoff1(names) {
+  sandbox.roundScores = {};
+  sandbox.penalties = {};
+  sandbox.playoffField = null;                 // no start strokes needed here
+  sandbox.coursePars = { 'Playoff 1': PARS, 'Championship': PARS };
+  sandbox.courseStrokeIndex = { 'Playoff 1': SI, 'Championship': SI };
+  const hcps = {};
+  names.forEach(function (n, i) { hcps[n] = 5 + i; });
+  sandbox.activeGroups = { 'Playoff 1': [] };
+  for (let g = 0; g * 4 < names.length; g++) {
+    const slice = names.slice(g * 4, g * 4 + 4);
+    sandbox.activeGroups['Playoff 1'].push({
+      players: slice.map(function (n) { return { name: n, hcp: hcps[n] }; }), teeTime: '',
+    });
+    sandbox.roundScores['Playoff 1__' + g] = {
+      round: 'Playoff 1', gi: g, submitted: true,
+      players: slice.map(function (n) {
+        const pos = names.indexOf(n);
+        // net-vs-par = gross - hcp - par, so put the whole delta on hole 1.
+        const holes = PARS.slice();
+        holes[0] = PARS[0] + hcps[n] + (pos - 12);
+        return { name: n, hcp: hcps[n], holes: holes };
+      }),
+    };
+  }
+  return hcps;
 }
 
-test('Championship: leaders go off last, tail group goes off first', function () {
-  const positions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];   // best net first
-  const groups = championshipTeeOrder(positions);
+test('Championship: 9th-12th tee off first, top 4 play in the final group', function () {
+  const names = ORDER.slice(0, 12);
+  seedPlayoff1(names);
+  const groups = sandbox.autoAssignChampionshipGroups();
+  assert.strictEqual(groups.length, 3, 'three groups');
+  const nameOf = function (g) { return Array.from(g.players, function (p) { return p.name; }); };
+  assert.deepStrictEqual(nameOf(groups[0]), names.slice(8, 12).reverse(), 'first off is 9th-12th');
+  assert.deepStrictEqual(nameOf(groups[1]), names.slice(4, 8).reverse(), 'middle is 5th-8th');
+  assert.deepStrictEqual(nameOf(groups[2]), names.slice(0, 4).reverse(), 'final group is the top 4');
+  assert.ok(nameOf(groups[groups.length - 1]).indexOf(names[0]) >= 0,
+    'the leader is in the last group');
+});
+
+test('Championship tee order is the exact reverse of the Playoff 1 blocks', function () {
+  const names = ORDER.slice(0, 12);
+  seedPlayoff1(names);
+  const ch = Array.from(sandbox.autoAssignChampionshipGroups(), function (g) {
+    return Array.from(g.players, function (p) { return p.name; }).sort();
+  });
+  const p1 = [names.slice(0, 4), names.slice(4, 8), names.slice(8, 12)]
+    .map(function (g) { return g.slice().sort(); }).reverse();
+  assert.deepStrictEqual(ch, p1, 'the block that tees off first in R1 tees off last in R2');
+});
+
+test('Championship handicaps are locked to the Playoff 1 card', function () {
+  const names = ORDER.slice(0, 12);
+  const hcps = seedPlayoff1(names);
+  Array.from(sandbox.autoAssignChampionshipGroups()).forEach(function (g) {
+    Array.from(g.players).forEach(function (p) {
+      assert.strictEqual(p.hcp, hcps[p.name], p.name + ' carries the same handicap');
+    });
+  });
+});
+
+test('Championship groups are empty until Playoff 1 is fully submitted', function () {
+  seedPlayoff1(ORDER.slice(0, 12));
+  sandbox.roundScores['Playoff 1__0'].submitted = false;
+  assert.strictEqual(sandbox.autoAssignChampionshipGroups().length, 0);
+});
+
+// ── 8. Round 2 starts from the Round 1 net ───────────────────────────────
+test('the Playoff 1 net carries in as the Championship starting score', function () {
+  const names = ORDER.slice(0, 12);
+  seedPlayoff1(names);
+  names.forEach(function (n, i) {
+    // seedPlayoff1 put each player at (i - 12) vs par in Playoff 1.
+    assert.strictEqual(sandbox.getCarryIn(n, 'Championship'), i - 12, n);
+  });
+});
+
+test('carry-in applies to the Championship only, never to Playoff 1 or a regular round', function () {
+  seedPlayoff1(ORDER.slice(0, 12));
+  ['Playoff 1', 'Round 1', 'Round 8'].forEach(function (r) {
+    assert.strictEqual(sandbox.getCarryIn(ORDER[0], r), 0, r);
+  });
+});
+
+test('carry-in is zero for someone who did not play Playoff 1', function () {
+  seedPlayoff1(ORDER.slice(0, 12));
+  assert.strictEqual(sandbox.getCarryIn('Sal Moretti', 'Championship'), 0);
+});
+
+test('carry-in is NOT folded into the per-round net, so it cannot double count', function () {
+  const names = ORDER.slice(0, 12);
+  seedPlayoff1(names);
+  // getEffectiveNvp must still report Playoff 1 alone, or buildPlayoffCombined
+  // (which sums r1 + r2) would count round 1 twice.
+  sandbox.roundScores['Playoff 1__0'].players.forEach(function (p) {
+    assert.strictEqual(sandbox.getEffectiveNvp(p, 'Playoff 1'), names.indexOf(p.name) - 12, p.name);
+  });
+});
+
+// ── 9. Handicaps are never touched by seeding ────────────────────────────
+test('autoAssignPlayoffGroups uses each player own handicap, unmodified', function () {
+  const names = ORDER.slice(0, 12);
+  const hcps = seedPlayoff1(names);
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  const groups = sandbox.autoAssignPlayoffGroups();
   assert.strictEqual(groups.length, 3);
-  assert.deepStrictEqual(groups[0], [12, 11, 10, 9], 'first tee time is 9th-12th');
-  assert.deepStrictEqual(groups[1], [8, 7, 6, 5], 'middle is 5th-8th');
-  assert.deepStrictEqual(groups[2], [4, 3, 2, 1], 'final group is the top 4');
-  assert.strictEqual(groups[groups.length - 1].includes(1), true, 'the leader is in the last group');
+  groups.forEach(function (g) {
+    g.players.forEach(function (p) {
+      assert.strictEqual(p.hcp, hcps[p.name], p.name + ' plays off their own handicap');
+      assert.strictEqual(p.baseHcp, undefined, 'no legacy baseHcp is written');
+      assert.strictEqual(p.bonus, undefined, 'no legacy per-group bonus is written');
+    });
+  });
+  sandbox.playoffField = null;
 });
 
-test('Championship tee order is the exact reverse of Playoff 1', function () {
-  const positions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-  // Playoff 1: group 1 is seeds 1-4.
-  const p1 = [];
-  for (let i = 0; i < positions.length; i += 4) p1.push(positions.slice(i, i + 4));
-  const ch = championshipTeeOrder(positions);
-  assert.deepStrictEqual(
-    ch.map(function (g) { return g.slice().sort(function (a, b) { return a - b; }); }),
-    p1.slice().reverse(),
-    'the block that tees off first in R1 tees off last in R2');
+test('autoAssignPlayoffGroups refuses to build without a locked field', function () {
+  seedPlayoff1(ORDER.slice(0, 12));
+  sandbox.playoffField = null;
+  assert.strictEqual(sandbox.autoAssignPlayoffGroups().length, 0);
 });
 
-// ── 8. Money: playoff rounds carry no per-round purse ────────────────────
+// ── 10. Money: playoff rounds carry no per-round purse ───────────────────
 test('the round entry fee never applies to a playoff round', function () {
-  // calcPrizePool short-circuits on playoff rounds before touching entryFee.
-  const src = extractFn('calcPrizePool');
-  assert.ok(/PLAYOFF_ROUNDS\.includes\(round\)\s*\)\s*return 0;/.test(src),
-    'calcPrizePool must return 0 for playoff rounds');
-  const guardAt = src.indexOf('return 0;');
-  const feeAt = src.indexOf('settings.entryFee');
-  assert.ok(guardAt !== -1 && feeAt !== -1 && guardAt < feeAt,
-    'the playoff guard must come before the entry-fee math');
+  seedPlayoff1(ORDER.slice(0, 12));
+  sandbox.activeGroups['Championship'] = sandbox.activeGroups['Playoff 1'];
+  sandbox.activeGroups['Round 1'] = sandbox.activeGroups['Playoff 1'];
+  assert.strictEqual(sandbox.calcPrizePool('Playoff 1'), 0, 'Playoff 1 has no purse');
+  assert.strictEqual(sandbox.calcPrizePool('Championship'), 0, 'the Championship has no purse');
+  // The same 12 players on a regular round DO pay the round entry fee.
+  assert.strictEqual(sandbox.calcPrizePool('Round 1'), 12 * 60, 'a regular round still pools');
 });
 
 test('payoutsFor pays nothing on a playoff round', function () {
-  const src = extractFn('payoutsFor');
-  assert.ok(/REGULAR_ROUNDS\.includes\(round\)/.test(src) && /null/.test(src),
-    'playoff rounds return null, not an empty payout array');
+  assert.strictEqual(sandbox.payoutsFor('Playoff 1'), null);
+  assert.strictEqual(sandbox.payoutsFor('Championship'), null);
+  assert.ok(Array.isArray(sandbox.payoutsFor('Round 1')), 'regular rounds still pay out');
 });
 
-console.log('\n' + passed + ' passed total' + (process.exitCode ? ', with failures' : '') + '\n');
+// ── 11. The alternate queue is frozen at lock time ───────────────────────
+test('the call-up queue is stored on the field, not recomputed live', function () {
+  const f = assignInitialField(ORDER, 1);
+  assert.deepStrictEqual(f.standingsOrder, ORDER, 'the full standings order is frozen in');
+  // Withdraw passing a DIFFERENT live order — the frozen queue must win.
+  const bogus = ['Sal Moretti', 'Vince Colangelo', 'Anthony Arci'];
+  const after = withdrawFromField(f, 'Phil Schieda', bogus);
+  assert.strictEqual(byName(after)['Anthony Arci'].startStrokes, 2,
+    'the 13th-place player at lock time is still the one called up');
+  assert.ok(!byName(after)['Sal Moretti'], 'a re-ordered live standings cannot jump the queue');
+});
+
+test('the frozen queue survives a Firebase round-trip', function () {
+  const f = assignInitialField(ORDER, 1);
+  const back = normalizePlayoffField(JSON.parse(JSON.stringify(f)));
+  assert.deepStrictEqual(back.standingsOrder, ORDER);
+  assert.strictEqual(byName(withdrawFromField(back, 'Phil Schieda', []))['Anthony Arci'].startStrokes, 2);
+});
+
+console.log('\n' + passed + ' passed' + (process.exitCode ? ', with failures' : '') + '\n');
