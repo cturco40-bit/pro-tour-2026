@@ -2803,21 +2803,21 @@ function latestHandicaps(){
   return h;
 }
 
-// Build the Playoff 1 groups from the LOCKED field. Group placement follows
-// effective seed (which shifts up on a withdrawal); handicaps are the players'
-// own; start strokes live on the field record, not on the group.
-// Returns [] if the field hasn't been locked — locking is the gating step.
+// Build the Playoff 1 groups from the season standings: top 12, four per group,
+// with each player's own handicap and the conventional start pre-filled. Every
+// value lands in an editable input — nothing here is binding.
+// Returns [] if the standings aren't settled yet.
 function autoAssignPlayoffGroups(){
-  const field=activeFieldOrder(playoffField);
-  if(!field.length) return [];
+  const {order}=calcPlayoffSeeds();
+  if(!order.length) return [];
   const hcps=latestHandicaps();
   const groups=[];
-  field.forEach(e=>{
-    const g=e.group-1;
+  order.slice(0,PLAYOFF_FIELD_SIZE).forEach((name,i)=>{
+    const g=Math.floor(i/4);
     if(!groups[g]) groups[g]={players:[],teeTime:'',autoAssigned:true};
-    groups[g].players.push({name:e.name, hcp:hcps[e.name]||0});
+    groups[g].players.push({name, hcp:hcps[name]||0, startStrokes:startStrokesForSeed(i+1)});
   });
-  return groups.filter(Boolean);
+  return groups;
 }
 
 // Build the Championship groups off the Playoff 1 result.
@@ -2869,67 +2869,6 @@ function doAutoAssignChampionship(){
   showToast('Final tee order set — leader goes off last');
 }
 
-// Reconcile the locked field with a hand-edited Playoff 1 roster.
-//
-// There are two ways a commissioner swaps a player out: the WD button in the
-// Playoff Field panel, or just changing the name in a group dropdown. The
-// second one is the natural move, and it used to leave the field record
-// untouched — so the player who came in carried no start strokes and the
-// player who dropped out still held theirs.
-//
-// This treats the saved roster as the intent: anyone in the field but no
-// longer in the groups is withdrawn, and anyone in the groups without an
-// entry is called up. Existing entries keep the startStrokes they were
-// issued (the whole point of the record); new entrants are priced by call-up
-// order like any other alternate — 1st +2, 2nd +3, 3rd +4.
-//
-// Returns {withdrawn:[], calledUp:[{name,startStrokes}]} describing what moved.
-function reconcilePlayoffFieldWithGroups(groups){
-  const nil={withdrawn:[],calledUp:[]};
-  if(!playoffFieldLocked()) return nil;
-
-  const inGroups=[];
-  (groups||[]).forEach(g=>(g&&g.players||[]).forEach(p=>{ if(p&&p.name) inGroups.push(p.name); }));
-  if(!inGroups.length) return nil;                 // never empty the field on a blank save
-  const groupSet=new Set(inGroups);
-
-  const live=playoffField.entries.filter(e=>!e.withdrawn);
-  const liveSet=new Set(live.map(e=>e.name));
-
-  const gone=live.filter(e=>!groupSet.has(e.name)).map(e=>e.name);
-  const added=inGroups.filter(n=>!liveSet.has(n));
-  if(!gone.length && !added.length) return nil;
-
-  // Withdraw first, with no auto call-up — the roster already names the
-  // replacements, so letting withdrawFromField pull from the standings queue
-  // would add a player the commissioner didn't pick.
-  let entries=playoffField.entries.map(e=>
-    gone.indexOf(e.name)>=0 && !e.withdrawn ? {...e, withdrawn:true} : {...e});
-  let nextCallUp=playoffField.nextCallUp||1;
-
-  const calledUp=[];
-  added.forEach(name=>{
-    // A player who withdrew earlier and is being put back keeps their original
-    // entry and the start it carried — coming back isn't a fresh call-up.
-    const prior=entries.findIndex(e=>e.name===name && e.withdrawn);
-    if(prior>=0){
-      entries[prior]={...entries[prior], withdrawn:false};
-      calledUp.push({name, startStrokes:entries[prior].startStrokes, restored:true});
-      return;
-    }
-    entries.push({
-      name, seed:0,
-      startStrokes: startStrokesForCallUp(nextCallUp),
-      origin:'alternate', callUpOrder:nextCallUp, withdrawn:false,
-    });
-    calledUp.push({name, startStrokes:startStrokesForCallUp(nextCallUp)});
-    nextCallUp++;                                   // monotonic: never recycles
-  });
-
-  playoffField={...playoffField, entries, nextCallUp};
-  savePlayoffField();
-  return {withdrawn:gone, calledUp};
-}
 
 // Rounds the admin has explicitly unlocked for editing after completion (per round).
 let _setupUnlock={};
@@ -2989,7 +2928,18 @@ function renderSetup(){
     }
   }
   if(isPlayoff1 && !isComplete){
-    html+=renderPlayoffFieldPanel();
+    html+=`<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">
+      <div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);margin-bottom:8px;letter-spacing:.16em;text-transform:uppercase;word-break:keep-all">Playoff 1 — Start Strokes</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">
+        Type each player's advantage in the <strong>ADV</strong> box next to their handicap. It adjusts their
+        <strong>score</strong>, never their handicap. Negative is an advantage: <strong>&minus;2</strong> for the
+        top 4, <strong>&minus;1</strong> for 5th&ndash;8th, <strong>0</strong> for 9th&ndash;12th, and
+        <strong>+2 / +3 / +4</strong> for anyone called up from 13th, 14th, 15th.
+        <br>Applies to Playoff 1 only — the Championship starts everyone on their Playoff 1 net.
+      </div>
+      <button onclick="fillPlayoffStartStrokes()" style="width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">Fill by Group (&minus;2 / &minus;1 / 0)</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">Fills the boxes from group position so you don't type all twelve. Change any of them afterwards — what's in the box is what counts.</div>
+    </div>`;
   }
   if(isChampionship && !isComplete){
     const ready=fullySubmittedRounds().has(PLAYOFF_BONUS_ROUND);
@@ -3030,7 +2980,12 @@ function renderSetup(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-size:13px;font-weight:800;color:var(--gd)">Group ${g+1}${bonusLabel}</span>
         <input class="finp" type="text" id="tee-${g}" placeholder="Tee time" value="${grp.teeTime||''}" style="width:120px;font-size:12px;padding:6px 8px"${dis}>
-      </div>`;
+      </div>
+      ${isPlayoff1?`<div style="display:grid;grid-template-columns:1fr 60px 60px;gap:6px;margin-bottom:4px">
+        <span></span>
+        <span style="font-family:var(--ff-mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:700;text-align:center">HCP</span>
+        <span style="font-family:var(--ff-mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-deep);font-weight:700;text-align:center">Adv</span>
+      </div>`:''}`;
     const maxPlayers=isPlayoff1?4:4;
     // Drop-round checkbox: regular rounds only, and never Round 8 (that's the
     // implicit default — pinning it would strip a player's makeup round).
@@ -3062,13 +3017,21 @@ function renderSetup(){
       } else if(showBlock){
         blockCell=`<label title="Make this player's drop round" style="${lblBase};color:var(--muted);cursor:${locked?'default':'pointer'}"><input type="checkbox" id="gb-${g}-${p}"${dis} style="width:15px;height:15px;accent-color:var(--bogey)">DROP</label>`;
       }
-      html+=`<div class="prow"${showBlock?' style="grid-template-columns:1fr 60px auto;align-items:center"':''}>
+      // Playoff 1 gets a start-stroke box next to the handicap box. Negative is
+      // an advantage, so it takes a minus — hence no min of 0 like HCP has.
+      const advCell=isPlayoff1
+        ? `<input class="finp" type="number" id="gs-${g}-${p}" placeholder="ADV" value="${pl.startStrokes!==undefined&&pl.startStrokes!==null?pl.startStrokes:''}" step="1" style="text-align:center;width:100%"${dis}>`
+        : '';
+      const rowStyle=isPlayoff1
+        ? ' style="grid-template-columns:1fr 60px 60px;align-items:center"'
+        : (showBlock?' style="grid-template-columns:1fr 60px auto;align-items:center"':'');
+      html+=`<div class="prow"${rowStyle}>
         <select class="fsel" id="gp-${g}-${p}" style="margin-bottom:0;font-size:13px;padding:8px"${dis}>
           <option value="">— Player ${p+1} (optional) —</option>
           ${PLAYERS.map(nm=>`<option value="${nm}"${pl.name===nm?' selected':''}>${nm}</option>`).join('')}
         </select>
         <input class="finp" type="number" id="gh-${g}-${p}" placeholder="HCP" value="${pl.hcp||''}" min="0" max="54" style="text-align:center;width:100%"${dis}>
-        ${blockCell}
+        ${advCell}${blockCell}
       </div>`;
     }
     html+=`</div>`;
@@ -3080,155 +3043,7 @@ function renderSetup(){
   if(sb){ sb.disabled=locked; sb.style.opacity=locked?'.45':''; sb.style.pointerEvents=locked?'none':''; sb.textContent=locked?'Locked — Unlock to Edit':'Save Groups'; }
 }
 
-// The commissioner arranges the Playoff 1 groups by hand, in standings order:
-// group 1 is the top 4, group 2 the next 4, group 3 the last 4. That running
-// order IS the seeding, so locking FROM the groups is the natural path — it
-// matches how the field actually gets built, rather than asking for the field
-// first and the groups second.
-//
-// Returns the full call-up queue: the 12 in the groups (in group order, so
-// slot 1 of group 1 is seed 1), then everyone else — standings order first,
-// then any remaining roster player — as alternates.
-function playoffOrderFromGroups(){
-  const inField=[];
-  (activeGroups[PLAYOFF_BONUS_ROUND]||[]).forEach(g=>
-    (g&&g.players||[]).forEach(p=>{
-      if(p&&p.name&&inField.indexOf(p.name)<0) inField.push(p.name);
-    }));
-  if(!inField.length) return [];
-  const seen=new Set(inField);
-  const queue=[];
-  ((calcPlayoffSeeds()||{}).order||[]).forEach(n=>{ if(!seen.has(n)){ seen.add(n); queue.push(n); } });
-  PLAYERS.forEach(n=>{ if(!seen.has(n)){ seen.add(n); queue.push(n); } });
-  return inField.concat(queue);
-}
 
-// Freeze the field from the groups the admin has already set up.
-function lockPlayoffFieldFromGroups(){
-  if(playoffFieldLocked()){ showToast('Playoff field is already locked'); return; }
-  const order=playoffOrderFromGroups();
-  if(!order.length){ showToast('Set up the Playoff 1 groups first, then lock'); return; }
-  playoffField=assignInitialField(order, Date.now());
-  savePlayoffField();
-  renderSetup();
-  if(document.getElementById('pg-foursomes')?.classList.contains('act')) renderFoursomePage();
-  showToast('Field locked from your groups — start strokes issued');
-}
-
-// ─── Playoff field admin panel (Setup > Playoff 1) ────────────────────────
-// Locking the field is the gating step for the playoffs: it is what issues
-// start strokes, and autoAssignPlayoffGroups() refuses to build groups without
-// it. Before the lock this panel shows a clearly-labelled PROJECTION off the
-// live standings — that projection never feeds a net calculation.
-function renderPlayoffFieldPanel(){
-  const box=(inner)=>`<div style="background:var(--surf-tint);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid var(--bdr)">${inner}</div>`;
-  const hdr=(t)=>`<div style="font-family:var(--ff-mono);font-size:10px;font-weight:600;color:var(--green);margin-bottom:8px;letter-spacing:.16em;text-transform:uppercase;word-break:keep-all">${t}</div>`;
-  const rules=`<div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">
-      Seeds 1–4 start at <strong>&minus;2</strong>, seeds 5–8 at <strong>&minus;1</strong>, seeds 9–12 at <strong>E</strong>.
-      Start strokes adjust the <strong>score</strong>, never the handicap, and are issued once when the field locks.
-      A withdrawal moves everyone below up a seed for <strong>group placement only</strong> — nobody's start changes.
-    </div>`;
-
-  if(!playoffFieldLocked()){
-    const btn='width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer';
-    const preview=(names)=>names.slice(0,PLAYOFF_FIELD_SIZE).map((n,i)=>
-      `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">
-         <span style="font-family:var(--ff-mono);font-size:10px;color:var(--sub);width:22px">${i+1}</span>
-         <span style="flex:1;font-weight:600;color:var(--green);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span>
-         <span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;color:var(--gold-deep);font-weight:700">${fmtStart(startStrokesForSeed(i+1))}</span>
-       </div>`).join('');
-    const lbl=(t)=>`<div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:4px">${t}</div>`;
-
-    // Preferred path: the admin has already built the groups by hand, in
-    // standings order. Seed straight off that running order — group 1 slot 1
-    // is seed 1 — so what this box shows always equals what the groups show.
-    const fromGroups=playoffOrderFromGroups();
-    if(fromGroups.length){
-      const n=Math.min(fromGroups.length, PLAYOFF_FIELD_SIZE);
-      return box(hdr('Playoff Field — Not Locked')+rules+
-        lbl(`From your Playoff 1 groups · not yet issued`)+
-        `<div style="margin-bottom:10px">${preview(fromGroups)}</div>
-         <button onclick="lockPlayoffFieldFromGroups()" style="${btn}">Lock Field from These Groups</button>
-         <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55">Seeds follow your running order — group 1 is seeds 1&ndash;4, group 2 is 5&ndash;8, group 3 is 9&ndash;12. Change the groups above and save first if that order is wrong; nothing is issued until you lock.${n<PLAYOFF_FIELD_SIZE?`<br><strong style="color:var(--bogey)">Only ${n} players in the groups.</strong>`:''}</div>`);
-    }
-
-    // No groups yet — fall back to seeding off the final standings.
-    const {order}=calcPlayoffSeeds();
-    return box(hdr('Playoff Field — Not Locked')+rules+
-      (order.length
-        ? lbl('Projected from final standings · not yet issued')+
-          `<div style="margin-bottom:10px">${preview(order)}</div>
-           <button onclick="lockPlayoffField()" style="${btn}">Lock Playoff Field</button>`
-        : `<div style="font-size:11px;color:var(--bogey)">No Playoff 1 groups set up yet, and seeds are not fixed until all 8 regular rounds are submitted. Add the groups above and save, then lock.</div>`));
-  }
-
-  const live=activeFieldOrder(playoffField);
-  const out=(playoffField.entries||[]).filter(e=>e.withdrawn);
-  const rows=live.map(e=>{
-    const alt=e.origin==='alternate';
-    const seedLbl=alt?`ALT ${e.callUpOrder}`:`Seed ${e.seed}`;
-    const moved=!alt&&e.effectiveSeed!==e.seed;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--hair-2);font-size:12px">
-      <span style="font-family:var(--ff-mono);font-size:10px;color:var(--sub);width:22px">${e.effectiveSeed}</span>
-      <span style="flex:1;min-width:0">
-        <span style="font-weight:600;color:var(--green);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name}</span>
-        <span style="font-family:var(--ff-mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)">${seedLbl}${moved?' · moved up':''} · Grp ${e.group}</span>
-      </span>
-      <span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;color:var(--gold-deep);font-weight:700;width:58px;text-align:right">${fmtStart(e.startStrokes)}</span>
-      <button onclick="promptWithdrawPlayoff('${e.name.replace(/'/g,"\'")}')" style="border:none;background:transparent;color:var(--bogey);font-family:var(--ff-mono);font-size:8px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-decoration:underline;padding:2px">WD</button>
-    </div>`;
-  }).join('');
-  const outRows=out.length?`<div style="margin-top:8px;font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600">Withdrawn</div>
-    ${out.map(e=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;text-decoration:line-through">${e.name}${e.seed?` (seed ${e.seed})`:''}</div>`).join('')}`:'';
-
-  return box(hdr('Playoff Field — Locked')+rules+rows+outRows+
-    `<button onclick="doAutoAssign()" style="margin-top:10px;width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">Build Groups from Field</button>
-     ${live.length<PLAYOFF_FIELD_SIZE?`<div style="font-size:11px;color:var(--bogey);margin-top:6px">Only ${live.length} players in the field — no alternates left to call up.</div>`:''}`);
-}
-
-// Freeze the field. One-way: start strokes are issued here and never reissued.
-function lockPlayoffField(){
-  if(playoffFieldLocked()){ showToast('Playoff field is already locked'); return; }
-  const {order}=calcPlayoffSeeds();
-  if(!order.length){ showToast('Seeds aren\'t set until all 8 regular rounds are submitted'); return; }
-  playoffField=assignInitialField(order, Date.now());
-  savePlayoffField();
-  renderSetup();
-  showToast('Playoff field locked — start strokes issued');
-}
-
-// Withdraw a qualified player. Re-seeds for group placement, calls up the next
-// alternate, and leaves every issued startStrokes alone.
-function promptWithdrawPlayoff(name){
-  if(!playoffFieldLocked()) return;
-  // Never rewrite a roster that's already in play. A scorecard exists the moment
-  // someone taps Start Scorecard, so guard on the card existing at all — not on
-  // it being submitted, or a re-seed would desync a group mid-round.
-  const played=Object.values(roundScores).some(sc=>sc.round===PLAYOFF_BONUS_ROUND);
-  if(played){ showToast('Playoff 1 is already under way — withdrawals are closed'); return; }
-  if(!confirm(`Withdraw ${name} from the playoffs?
-
-Everyone below moves up one seed for group placement. Nobody's start strokes change. The next player in standings order is called up.`)) return;
-  playoffField=withdrawFromField(playoffField, name, playoffField.standingsOrder||[]);
-  savePlayoffField();
-
-  // Re-seed the groups to match, in the same action. A withdrawal that leaves
-  // the old roster sitting in activeGroups is exactly the desync this panel
-  // exists to prevent — don't make it depend on the admin remembering to hit
-  // Build Groups afterwards. Only touches Playoff 1, and the guard above has
-  // already established the round hasn't started.
-  const hadGroups=(activeGroups[PLAYOFF_BONUS_ROUND]||[]).length>0;
-  if(hadGroups){
-    activeGroups[PLAYOFF_BONUS_ROUND]=autoAssignPlayoffGroups();
-    saveActiveGroups();
-  }
-
-  renderSetup();
-  if(document.getElementById('pg-foursomes')?.classList.contains('act')) renderFoursomePage();
-  const alt=activeFieldOrder(playoffField).find(e=>e.origin==='alternate'&&e.callUpOrder===(playoffField.nextCallUp-1));
-  const tail=hadGroups?' · groups re-seeded':'';
-  showToast(alt?`${name} withdrawn — ${alt.name} called up at ${fmtStart(alt.startStrokes)}${tail}`:`${name} withdrawn${tail}`);
-}
 
 function unlockSetup(round){ _setupUnlock[round]=true; renderSetup(); showToast(`Editing unlocked for ${round}`); }
 function lockSetup(round){ delete _setupUnlock[round]; renderSetup(); showToast(`${round} re-locked`); }
@@ -3252,14 +3067,29 @@ function confirmUnpin(name){
   showToast(`${name}'s drop round unlocked — back to Round 8 default`);
 }
 
+// Fill the ADV boxes from group position, using the league convention:
+// group 1 at -2, group 2 at -1, group 3 at even. Writes into the inputs only —
+// nothing is saved until the admin hits Save Groups, and any box can be
+// overridden first (a called-up alternate typically gets +2 / +3 / +4).
+function fillPlayoffStartStrokes(){
+  let n=0;
+  for(let g=0;g<3;g++)for(let p=0;p<4;p++){
+    if(!document.getElementById(`gp-${g}-${p}`)?.value) continue;
+    const el=document.getElementById(`gs-${g}-${p}`);
+    if(!el||el.disabled) continue;
+    el.value=startStrokesForSeed(g*4+p+1);
+    n++;
+  }
+  showToast(n?`Filled ${n} start strokes — edit any of them, then Save Groups`:'Add players to the groups first');
+}
+
 function doAutoAssign(){
-  if(!playoffFieldLocked()){ showToast('Lock the playoff field first — that\'s what issues start strokes'); return; }
   const groups=autoAssignPlayoffGroups();
-  if(!groups.length){showToast('Playoff field is empty');return;}
+  if(!groups.length){showToast('Season standings are not settled yet — fill the groups in by hand');return;}
   // Temporarily store so renderSetup can read them as "existing"
   activeGroups['Playoff 1']=groups;
   renderSetup();
-  showToast('Groups built from the locked field — adjust as needed, then Save');
+  showToast('Top 12 filled in from standings — adjust anything, then Save');
 }
 
 function doAutoAssignByPrev(){
@@ -3372,7 +3202,12 @@ function saveGroups(){
     for(let p=0;p<4;p++){
       const name=document.getElementById(`gp-${g}-${p}`)?.value||'';
       const hcp=parseInt(document.getElementById(`gh-${g}-${p}`)?.value)||0;
-      if(name) players.push({name,hcp});
+      if(!name) continue;
+      // Playoff rounds carry a per-player start-stroke box next to the handicap.
+      const advEl=document.getElementById(`gs-${g}-${p}`);
+      const rec={name,hcp};
+      if(advEl) rec.startStrokes=parseInt(advEl.value)||0;
+      players.push(rec);
     }
     if(players.length){
       groups.push({players,teeTime:document.getElementById(`tee-${g}`)?.value||''});
@@ -3381,28 +3216,6 @@ function saveGroups(){
   if(!groups.length){showToast('Add at least one player to a group');return;}
   activeGroups[round]=groups;
   saveActiveGroups();
-
-  // A hand-edited Playoff 1 roster is a withdrawal + call-up. Keep the locked
-  // field in step with it, or the player swapped in carries no start strokes.
-  if(isPlayoff1){
-    const moved=reconcilePlayoffFieldWithGroups(groups);
-    if(moved.withdrawn.length||moved.calledUp.length){
-      // The roster actually changed, so re-seed: everyone below the player who
-      // left moves up one, and a called-up alternate drops into the vacated
-      // last spot. This is the "it should adjust" step — without it the new
-      // player just sits in whatever slot they were typed into.
-      // A save that DOESN'T change the roster reconciles to a no-op and never
-      // reaches here, so a hand-arranged running order still sticks.
-      activeGroups[round]=autoAssignPlayoffGroups();
-      saveActiveGroups();
-      renderSetup();
-      const inS=moved.calledUp.map(c=>`${c.name} ${fmtStart(c.startStrokes)}`).join(', ');
-      const outS=moved.withdrawn.join(', ');
-      showToast(`${outS?'Out: '+outS:''}${outS&&inS?' · ':''}${inS?'In: '+inS:''} · groups re-seeded`);
-      if(document.getElementById('pg-foursomes')?.classList.contains('act')) renderFoursomePage();
-      return;   // toast + render already handled
-    }
-  }
 
   // Drop-round (DROP) checkboxes — regular rounds 1-7 only. Ticking pins that round
   // as the player's drop round. A pin is a one-way commitment: it can only be ADDED
@@ -3702,41 +3515,35 @@ function renderPlayoffAdvantageBoard(round){
   };
 
   if(round===PLAYOFF_BONUS_ROUND){
-    // Not locked = no starts issued yet. Say so out loud rather than rendering
-    // nothing — an empty space looks identical to a broken feature, and the
-    // lock is an easy step to not know about.
-    if(!playoffFieldLocked()){
+    const players=[];
+    (activeGroups[round]||[]).forEach((g,gi)=>(g&&g.players||[]).forEach(pl=>{
+      if(pl&&pl.name) players.push({name:pl.name, start:Number(pl.startStrokes)||0, group:gi+1});
+    }));
+    if(!players.length) return '';
+    // Nothing entered yet — say so rather than rendering a wall of E.
+    if(!players.some(pl=>pl.start)){
       const isAdmin=typeof adminUnlocked!=='undefined'&&adminUnlocked;
       return `<div class="card adv-card">
         <div class="ctitle">Start Strokes · Playoff 1</div>
-        <div class="adv-empty">Not issued yet.</div>
+        <div class="adv-empty">Not set yet.</div>
         <div class="adv-foot" style="border-top:none;padding-top:0;margin-top:6px">
           ${isAdmin
-            ? 'Lock the playoff field to issue them — <strong>Admin &rsaquo; Round Setup &rsaquo; Playoff 1 &rsaquo; Lock Playoff Field</strong>. Seeds are fixed from the final standings at that moment and do not change afterwards.'
-            : 'The commissioner has not locked the playoff field yet. Once they do, each player\'s start shows here.'}
+            ? 'Enter each player&rsquo;s advantage in the ADV box &mdash; <strong>Admin &rsaquo; Round Setup &rsaquo; Playoff 1</strong>.'
+            : 'The commissioner has not set the start strokes yet.'}
         </div>
       </div>`;
     }
-    const field=activeFieldOrder(playoffField);
-    if(!field.length) return '';
-    // Group by start value, best (most negative) first.
+    // Group by value, best (most negative) first.
     const tiers=new Map();
-    field.forEach(e=>{
-      if(!tiers.has(e.startStrokes)) tiers.set(e.startStrokes,[]);
-      tiers.get(e.startStrokes).push(e);
+    players.forEach(pl=>{
+      if(!tiers.has(pl.start)) tiers.set(pl.start,[]);
+      tiers.get(pl.start).push(pl);
     });
-    const vals=[...tiers.keys()].sort((a,b)=>a-b);
-    const rows=vals.map(v=>{
+    const rows=[...tiers.keys()].sort((a,b)=>a-b).map(v=>{
       const es=tiers.get(v);
-      const alts=es.filter(e=>e.origin==='alternate');
-      // Label by the ORIGINAL seeds in this tier — that's what earned the start.
-      const seeds=es.filter(e=>e.origin!=='alternate').map(e=>e.seed).sort((a,b)=>a-b);
-      const label=alts.length
-        ? `Alternate ${alts.map(a=>a.callUpOrder).join(', ')}`
-        : seeds.length>1 ? `Seeds ${seeds[0]}–${seeds[seeds.length-1]}` : `Seed ${seeds[0]}`;
-      return tierRow(v, label, es.map(e=>e.name));
+      const gs=[...new Set(es.map(e=>e.group))].sort((a,b)=>a-b);
+      return tierRow(v, gs.length>1?`Groups ${gs.join(', ')}`:`Group ${gs[0]}`, es.map(e=>e.name));
     }).join('');
-
     return `<div class="card adv-card">
       <div class="ctitle">Start Strokes · Playoff 1</div>
       ${rows}
@@ -3844,12 +3651,11 @@ function renderGroupBody(round,gi,grp,sc,done,inProg){
 
   // Players list — matches home tee-row style (yellow-dot bullet, Inter Tight 600 green)
   html+=`<div style="margin-bottom:14px">`;
-  const showStart=round===PLAYOFF_BONUS_ROUND&&playoffFieldLocked();
+  const showStart=hasStartStrokes(round);
   grp.players.forEach(pl=>{
     // HCP is the player's handicap and nothing else. START is the separate
     // playoff stroke adjustment — the two never fold into each other.
-    const e=showStart?playoffEntryFor(pl.name):null;
-    const startPill=e?`<div class="fs-start-pill">${fmtStart(e.startStrokes)}</div>`:'';
+    const startPill=showStart?`<div class="fs-start-pill">${fmtStart(pl.startStrokes)}</div>`:'';
     html+=`<div class="fs-player-row">
       <div class="fs-player-name">${pl.name}</div>
       ${startPill}
@@ -6031,137 +5837,61 @@ function calcPlayoffSeeds(){
   }
 }
 
-// ─── Playoff field: the locked entry record ───────────────────────────────
-// A player's playoff advantage is a START STROKE adjustment, never a handicap
-// change. Handicap is the player's handicap, everywhere in the app, always.
+
+
+// ─── Playoff start strokes ────────────────────────────────────────────────
+// The playoff advantage is a START STROKE adjustment to the score, never a
+// handicap change. Handicap is the player's handicap, everywhere, always.
 //
-//   Playoff net = gross - course handicap + startStrokes
+//     Playoff net = gross - course handicap + startStrokes
 //
-// startStrokes is assigned ONCE, from the player's ORIGINAL final-standings
-// seed, at the moment the field is locked:
-//     seeds 1-4  -> -2      seeds 5-8  -> -1      seeds 9-12 -> 0
-// and is immutable from then on. Withdrawals re-seed the field for GROUP
-// PLACEMENT ONLY: everyone below the withdrawal moves up one effective seed
-// (so seed 5 at -1 can end up in group 1, still at -1), while every surviving
-// entry keeps the startStrokes it was issued. The vacated 12th spot is filled
-// from standings order (13th, then 14th, ...), and call-ups are priced by
-// CALL-UP ORDER rather than by seed: 1st alternate +2, 2nd +3, 3rd +4.
+// It is a plain per-player number the commissioner types in Round Setup, right
+// next to the handicap, and it lives on the group's player record alongside it:
+// {name, hcp, startStrokes}. That record is the ONE source of truth — nothing
+// is derived at read time.
 //
-// Like the old seed bonus, the start applies to Playoff 1 only and rides
-// through to the combined 2-round total — it is NOT re-applied in the
-// Championship.
+// It used to be computed from a separate locked seeding record, and every bug
+// that model produced was the same bug: the number shown somewhere disagreed
+// with the number the commissioner meant. Seeds are the *convention* for
+// filling these in (1-4 at -2, 5-8 at -1, 9-12 at even, call-ups at +2/+3/+4),
+// and fillPlayoffStartStrokes() below writes that convention into the inputs on
+// request — but the typed value always wins, so a mid-season swap is just
+// "change the name, type the number".
 //
-// Shape: { lockedAt, entries:[ {name, seed, startStrokes, origin, callUpOrder,
-//          withdrawn, withdrawnAt} ], nextCallUp }
-// `nextCallUp` is a monotonic counter, never derived from how many alternates
-// are currently active — if the 1st alternate also withdraws, the 2nd must
-// still be priced +3, not +2.
+// Applies to Playoff 1 only. The Championship re-applies nothing: a player's
+// Playoff 1 net is their starting score there (see getCarryIn).
 const PLAYOFF_FIELD_SIZE=12;
 
-let playoffField=null;
-
-// startStrokes for an original seed. seedNum is 1-based.
+// The conventional start for a given finishing position (1-based).
+// Positions 13+ are call-ups: 13th +2, 14th +3, 15th +4.
 function startStrokesForSeed(seedNum){
   if(seedNum<=4) return -2;
   if(seedNum<=8) return -1;
-  return 0;
-}
-// startStrokes for an alternate, priced by call-up order (1-based).
-function startStrokesForCallUp(callUpOrder){ return callUpOrder+1; }
-
-// ── Pure field operations (no DOM, no Firebase) ──────────────────────────
-// Build the initial field from a standings order. Returns a new field object.
-function assignInitialField(order, lockedAt){
-  const names=(order||[]).slice(0,PLAYOFF_FIELD_SIZE);
-  return {
-    lockedAt: lockedAt||0,
-    nextCallUp: 1,
-    // The call-up queue, frozen with the rest of the record. Everything else
-    // here is immutable, so the alternate list must be too — recomputing it
-    // live would let a post-lock penalty edit change WHO comes in next.
-    standingsOrder: (order||[]).slice(),
-    entries: names.map((name,i)=>({
-      name,
-      seed: i+1,
-      startStrokes: startStrokesForSeed(i+1),
-      origin: 'seed',
-      callUpOrder: 0,
-      withdrawn: false,
-    })),
-  };
+  if(seedNum<=PLAYOFF_FIELD_SIZE) return 0;
+  return seedNum-PLAYOFF_FIELD_SIZE+1;
 }
 
-// Withdraw `name` and call up the next eligible alternate from `standingsOrder`.
-// Returns a NEW field — startStrokes on every surviving entry is carried over
-// untouched. Returns the field unchanged if `name` isn't an active entry.
-function withdrawFromField(field, name, standingsOrder){
-  if(!field || !Array.isArray(field.entries)) return field;
-  const idx=field.entries.findIndex(e=>e.name===name && !e.withdrawn);
-  if(idx<0) return field;
-
-  const entries=field.entries.map(e=>
-    e.name===name && !e.withdrawn ? {...e, withdrawn:true} : {...e});
-  let nextCallUp=field.nextCallUp||1;
-
-  // Fill the vacated spot from standings order — first player not already in
-  // the field (withdrawn entries included; a player who pulled out isn't an
-  // alternate for their own vacancy).
-  const inField=new Set(entries.map(e=>e.name));
-  const queue=(field.standingsOrder&&field.standingsOrder.length)?field.standingsOrder:(standingsOrder||[]);
-  const alt=queue.find(n=>!inField.has(n));
-  if(alt){
-    entries.push({
-      name: alt,
-      seed: 0,                                   // no original seed — called up
-      startStrokes: startStrokesForCallUp(nextCallUp),
-      origin: 'alternate',
-      callUpOrder: nextCallUp,
-      withdrawn: false,
-    });
-    nextCallUp++;                                 // monotonic: never recycles
-  }
-  return {...field, entries, nextCallUp};
-}
-
-// The playing field, in playing order: surviving original seeds by seed asc,
-// then alternates by call-up order. effectiveSeed is 1-based position in that
-// list and drives GROUP PLACEMENT ONLY (groups of 4: 1-4, 5-8, 9-12).
-function activeFieldOrder(field){
-  if(!field || !Array.isArray(field.entries)) return [];
-  const live=field.entries.filter(e=>e && !e.withdrawn);
-  const seeded=live.filter(e=>e.origin!=='alternate').sort((a,b)=>a.seed-b.seed);
-  const alts=live.filter(e=>e.origin==='alternate').sort((a,b)=>a.callUpOrder-b.callUpOrder);
-  return [...seeded,...alts].map((e,i)=>({
-    name: e.name,
-    seed: e.seed,                 // original seed (0 for an alternate)
-    startStrokes: e.startStrokes, // immutable
-    origin: e.origin,
-    callUpOrder: e.callUpOrder,
-    effectiveSeed: i+1,
-    group: Math.floor(i/4)+1,
-  }));
-}
-
-// ── Accessors over the live field ────────────────────────────────────────
-function playoffFieldLocked(){ return !!(playoffField && Array.isArray(playoffField.entries) && playoffField.entries.length); }
-
-// A player's immutable start strokes. Reads the LOCKED record only — there is
-// deliberately no live-derived fallback, so a post-lock penalty edit can never
-// silently shift a start that's already been issued.
+// A player's start strokes for a round — read straight off the group record.
 function getStartStrokes(name, round){
   if(round!==PLAYOFF_BONUS_ROUND) return 0;
-  if(!playoffFieldLocked()) return 0;
-  const e=playoffField.entries.find(x=>x.name===name && !x.withdrawn);
-  return e ? (e.startStrokes||0) : 0;
+  let v=0;
+  (activeGroups[round]||[]).forEach(g=>
+    (g&&g.players||[]).forEach(p=>{
+      if(p&&p.name===name&&p.startStrokes!==undefined&&p.startStrokes!==null) v=Number(p.startStrokes)||0;
+    }));
+  return v;
 }
 
-// Field entry lookup for display (seed, effective seed, group, start).
-function playoffEntryFor(name){
-  return activeFieldOrder(playoffField).find(e=>e.name===name)||null;
+// Does this round carry any start strokes at all? Drives whether the board and
+// the per-player pills render — no separate lock step to forget.
+function hasStartStrokes(round){
+  if(round!==PLAYOFF_BONUS_ROUND) return false;
+  return (activeGroups[round]||[]).some(g=>
+    (g&&g.players||[]).some(p=>p&&p.name&&Number(p.startStrokes)));
 }
 
 // "START -2" / "START E" / "START +2"
-function fmtStart(n){ return 'START '+fmtNvp(n||0); }
+function fmtStart(n){ return 'START '+fmtNvp(Number(n)||0); }
 
 // A player's starting score for the Championship: their Playoff 1 net, which
 // already carries their start strokes and any penalties. Round 2 picks up where
@@ -6185,38 +5915,6 @@ function getCarryIn(name, round){
   return net;
 }
 
-// Firebase returns arrays as numeric-keyed objects when keys aren't dense, so
-// coerce `entries` back to a real array. Field-shape defaults are applied here
-// so a hand-edited record can't crash the seeding math.
-function normalizePlayoffField(data){
-  if(!data || typeof data!=='object') return null;
-  const raw=data.entries;
-  const arr=Array.isArray(raw) ? raw
-    : (raw && typeof raw==='object') ? Object.keys(raw).sort((a,b)=>Number(a)-Number(b)).map(k=>raw[k])
-    : [];
-  const entries=arr.filter(e=>e&&e.name).map(e=>({
-    name: e.name,
-    seed: Number(e.seed)||0,
-    startStrokes: Number(e.startStrokes)||0,
-    origin: e.origin==='alternate'?'alternate':'seed',
-    callUpOrder: Number(e.callUpOrder)||0,
-    withdrawn: e.withdrawn===true,
-    withdrawnAt: e.withdrawnAt||0,
-  }));
-  if(!entries.length) return null;
-  // Rebuild the counter from the record itself rather than trusting the stored
-  // value — it must stay strictly above every call-up ever issued.
-  const maxCall=entries.reduce((m,e)=>Math.max(m,e.callUpOrder||0),0);
-  const ord=data.standingsOrder;
-  return {
-    lockedAt: Number(data.lockedAt)||0,
-    nextCallUp: Math.max(Number(data.nextCallUp)||1, maxCall+1),
-    standingsOrder: Array.isArray(ord) ? ord.slice()
-      : (ord && typeof ord==='object') ? Object.keys(ord).sort((a,b)=>Number(a)-Number(b)).map(k=>ord[k])
-      : [],
-    entries,
-  };
-}
 
 // One-time repair for groups saved by the OLD model, which wrote an inflated
 // `hcp` (real handicap + group bonus) alongside `baseHcp`. That inflation now
@@ -6328,8 +6026,11 @@ function renderStandings(){
     const payouts=calcPlayoffPayouts();
 
     const seeds=calcPlayoffSeeds();
-    const fieldByName={};
-    activeFieldOrder(playoffField).forEach(e=>{ fieldByName[e.name]=e; });
+    // Start strokes come off the Playoff 1 group records — the typed values.
+    const startByName={};
+    (activeGroups[PLAYOFF_BONUS_ROUND]||[]).forEach(g=>(g&&g.players||[]).forEach(pl=>{
+      if(pl&&pl.name) startByName[pl.name]=Number(pl.startStrokes)||0;
+    }));
     el.innerHTML=`<div class="info-b">
       Top 12 from season standings qualify. Combined net score over 2 rounds.<br>
       <strong>Start strokes.</strong> Seeds 1&ndash;4 begin Playoff 1 at &minus;2, seeds 5&ndash;8 at &minus;1,
@@ -6387,11 +6088,12 @@ function renderStandings(){
         const totCls=p.combinedNet<0?'under':p.combinedNet>0?'over':'';
         // Seed shown is the ORIGINAL seed; START is the immutable stroke
         // adjustment. An alternate has no seed, so it's labelled by call-up.
-        const fe=fieldByName[p.name];
-        const seedLbl=fe ? (fe.origin==='alternate'?`Alternate ${fe.callUpOrder}`:`Seed ${fe.seed}`) : (seeds.seed[p.name]?`Seed ${seeds.seed[p.name]}`:'');
-        const seedMeta=fe
-          ? `<div class="ho-meta">${seedLbl} · ${fmtStart(fe.startStrokes)}</div>`
-          : (seedLbl?`<div class="ho-meta">${seedLbl}</div>`:'');
+        const st=startByName[p.name];
+        const sd=seeds.seed[p.name];
+        const bits=[];
+        if(sd&&sd<=PLAYOFF_FIELD_SIZE) bits.push(`Seed ${sd}`);
+        if(st!==undefined) bits.push(fmtStart(st));
+        const seedMeta=bits.length?`<div class="ho-meta">${bits.join(' · ')}</div>`:'';
         return `<div class="st-row playoff">
           <div class="ho-pos${podiumCls}">${posLabels[p.name]||'—'}</div>
           <div class="ho-name-wrap"><div class="ho-name">${p.name}</div>${seedMeta}</div>
@@ -7618,11 +7320,7 @@ function saveBlockRounds(){
   fbSet('blockRounds', blockRounds);
 }
 
-// The locked playoff entry record. Written on lock and on each withdrawal;
-// startStrokes inside it are never recomputed, only carried forward.
-function savePlayoffField(){
-  fbSet('playoffField', playoffField||null);
-}
+
 
 function saveCourseData(){
   fbSet('courseInfo', courseInfo);
@@ -7839,11 +7537,6 @@ function initFirebase(){
     if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
   });
 
-  fbOn('playoffField', data=>{
-    playoffField = normalizePlayoffField(data);
-    if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
-    if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
-  });
 
   // Live listener: settings
   fbOn('settings', data=>{
