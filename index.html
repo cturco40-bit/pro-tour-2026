@@ -171,6 +171,7 @@ body.dark .icon-sun{display:none}
 .adv-tier-lbl{font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:3px;word-break:keep-all}
 .adv-list{font-family:var(--ff-body);font-size:13px;font-weight:600;color:var(--green);line-height:1.45}
 .adv-foot{font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px;padding-top:10px;border-top:1px solid var(--hair)}
+.adv-empty{font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--sub);text-transform:uppercase;line-height:1;margin:4px 0 8px;word-break:keep-all}
 .adv-start-row{display:grid;grid-template-columns:26px minmax(0,1fr) 48px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--hair-2)}
 .adv-start-row:last-child{border-bottom:none}
 .adv-start-pos{font-family:var(--ff-mono);font-size:10px;color:var(--sub);font-weight:600;text-align:center}
@@ -3079,6 +3080,41 @@ function renderSetup(){
   if(sb){ sb.disabled=locked; sb.style.opacity=locked?'.45':''; sb.style.pointerEvents=locked?'none':''; sb.textContent=locked?'Locked — Unlock to Edit':'Save Groups'; }
 }
 
+// The commissioner arranges the Playoff 1 groups by hand, in standings order:
+// group 1 is the top 4, group 2 the next 4, group 3 the last 4. That running
+// order IS the seeding, so locking FROM the groups is the natural path — it
+// matches how the field actually gets built, rather than asking for the field
+// first and the groups second.
+//
+// Returns the full call-up queue: the 12 in the groups (in group order, so
+// slot 1 of group 1 is seed 1), then everyone else — standings order first,
+// then any remaining roster player — as alternates.
+function playoffOrderFromGroups(){
+  const inField=[];
+  (activeGroups[PLAYOFF_BONUS_ROUND]||[]).forEach(g=>
+    (g&&g.players||[]).forEach(p=>{
+      if(p&&p.name&&inField.indexOf(p.name)<0) inField.push(p.name);
+    }));
+  if(!inField.length) return [];
+  const seen=new Set(inField);
+  const queue=[];
+  ((calcPlayoffSeeds()||{}).order||[]).forEach(n=>{ if(!seen.has(n)){ seen.add(n); queue.push(n); } });
+  PLAYERS.forEach(n=>{ if(!seen.has(n)){ seen.add(n); queue.push(n); } });
+  return inField.concat(queue);
+}
+
+// Freeze the field from the groups the admin has already set up.
+function lockPlayoffFieldFromGroups(){
+  if(playoffFieldLocked()){ showToast('Playoff field is already locked'); return; }
+  const order=playoffOrderFromGroups();
+  if(!order.length){ showToast('Set up the Playoff 1 groups first, then lock'); return; }
+  playoffField=assignInitialField(order, Date.now());
+  savePlayoffField();
+  renderSetup();
+  if(document.getElementById('pg-foursomes')?.classList.contains('act')) renderFoursomePage();
+  showToast('Field locked from your groups — start strokes issued');
+}
+
 // ─── Playoff field admin panel (Setup > Playoff 1) ────────────────────────
 // Locking the field is the gating step for the playoffs: it is what issues
 // start strokes, and autoAssignPlayoffGroups() refuses to build groups without
@@ -3094,20 +3130,36 @@ function renderPlayoffFieldPanel(){
     </div>`;
 
   if(!playoffFieldLocked()){
-    const {order}=calcPlayoffSeeds();
-    const ready=order.length>0;
-    const proj=order.slice(0,PLAYOFF_FIELD_SIZE).map((n,i)=>
+    const btn='width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer';
+    const preview=(names)=>names.slice(0,PLAYOFF_FIELD_SIZE).map((n,i)=>
       `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">
          <span style="font-family:var(--ff-mono);font-size:10px;color:var(--sub);width:22px">${i+1}</span>
          <span style="flex:1;font-weight:600;color:var(--green);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span>
          <span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;color:var(--gold-deep);font-weight:700">${fmtStart(startStrokesForSeed(i+1))}</span>
        </div>`).join('');
+    const lbl=(t)=>`<div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:4px">${t}</div>`;
+
+    // Preferred path: the admin has already built the groups by hand, in
+    // standings order. Seed straight off that running order — group 1 slot 1
+    // is seed 1 — so what this box shows always equals what the groups show.
+    const fromGroups=playoffOrderFromGroups();
+    if(fromGroups.length){
+      const n=Math.min(fromGroups.length, PLAYOFF_FIELD_SIZE);
+      return box(hdr('Playoff Field — Not Locked')+rules+
+        lbl(`From your Playoff 1 groups · not yet issued`)+
+        `<div style="margin-bottom:10px">${preview(fromGroups)}</div>
+         <button onclick="lockPlayoffFieldFromGroups()" style="${btn}">Lock Field from These Groups</button>
+         <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55">Seeds follow your running order — group 1 is seeds 1&ndash;4, group 2 is 5&ndash;8, group 3 is 9&ndash;12. Change the groups above and save first if that order is wrong; nothing is issued until you lock.${n<PLAYOFF_FIELD_SIZE?`<br><strong style="color:var(--bogey)">Only ${n} players in the groups.</strong>`:''}</div>`);
+    }
+
+    // No groups yet — fall back to seeding off the final standings.
+    const {order}=calcPlayoffSeeds();
     return box(hdr('Playoff Field — Not Locked')+rules+
-      (ready
-        ? `<div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-bottom:4px">Projected — not yet issued</div>
-           <div style="margin-bottom:10px">${proj}</div>
-           <button onclick="lockPlayoffField()" style="width:100%;padding:9px;background:var(--gold);color:var(--amber-deep);border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer">Lock Playoff Field</button>`
-        : `<div style="font-size:11px;color:var(--bogey)">Seeds aren't set until all 8 regular rounds are submitted.</div>`));
+      (order.length
+        ? lbl('Projected from final standings · not yet issued')+
+          `<div style="margin-bottom:10px">${preview(order)}</div>
+           <button onclick="lockPlayoffField()" style="${btn}">Lock Playoff Field</button>`
+        : `<div style="font-size:11px;color:var(--bogey)">No Playoff 1 groups set up yet, and seeds are not fixed until all 8 regular rounds are submitted. Add the groups above and save, then lock.</div>`));
   }
 
   const live=activeFieldOrder(playoffField);
@@ -3650,7 +3702,21 @@ function renderPlayoffAdvantageBoard(round){
   };
 
   if(round===PLAYOFF_BONUS_ROUND){
-    if(!playoffFieldLocked()) return '';
+    // Not locked = no starts issued yet. Say so out loud rather than rendering
+    // nothing — an empty space looks identical to a broken feature, and the
+    // lock is an easy step to not know about.
+    if(!playoffFieldLocked()){
+      const isAdmin=typeof adminUnlocked!=='undefined'&&adminUnlocked;
+      return `<div class="card adv-card">
+        <div class="ctitle">Start Strokes · Playoff 1</div>
+        <div class="adv-empty">Not issued yet.</div>
+        <div class="adv-foot" style="border-top:none;padding-top:0;margin-top:6px">
+          ${isAdmin
+            ? 'Lock the playoff field to issue them — <strong>Admin &rsaquo; Round Setup &rsaquo; Playoff 1 &rsaquo; Lock Playoff Field</strong>. Seeds are fixed from the final standings at that moment and do not change afterwards.'
+            : 'The commissioner has not locked the playoff field yet. Once they do, each player\'s start shows here.'}
+        </div>
+      </div>`;
+    }
     const field=activeFieldOrder(playoffField);
     if(!field.length) return '';
     // Group by start value, best (most negative) first.
