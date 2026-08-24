@@ -43,6 +43,7 @@ const FNS = [
   'autoAssignChampionshipGroups', 'autoAssignPlayoffGroups',
   'fullySubmittedRounds', 'calcPrizePool', 'payoutsFor',
   'calcRoundPayouts', 'calcPayoutsFromPool', 'roundTo5',
+  'reconcilePlayoffFieldWithGroups', 'savePlayoffField', 'fmtStart', 'fmtNvp',
 ];
 
 // Module globals these functions close over. Tests set them per scenario.
@@ -51,6 +52,10 @@ const sandbox = {
   coursePars: {}, courseStrokeIndex: {},
   settings: { entryFee: 60, sponsorDiscount: 0, playoffEntryFee: 100, seasonWinnerPrize: 500,
               prizePercentages: [52, 26, 14, 8] },
+  // savePlayoffField() persists via fbSet — capture the writes so a test can
+  // assert the record actually gets saved, not just mutated in memory.
+  _writes: [],
+  fbSet: function (path, value) { sandbox._writes.push({ path: path, value: value }); },
 };
 vm.createContext(sandbox);
 vm.runInContext(
@@ -492,6 +497,118 @@ test('the frozen queue survives a Firebase round-trip', function () {
   const back = normalizePlayoffField(JSON.parse(JSON.stringify(f)));
   assert.deepStrictEqual(back.standingsOrder, ORDER);
   assert.strictEqual(byName(withdrawFromField(back, 'Phil Schieda', []))['Anthony Arci'].startStrokes, 2);
+});
+
+
+// ── 12. Hand-edited roster reconciles with the locked field ──────────────
+// The commissioner's real move: swap a name in a group dropdown and hit Save,
+// rather than using the WD button. The field record has to follow.
+function groupsFrom(names) {
+  const gs = [];
+  for (let i = 0; i < names.length; i += 4) {
+    gs.push({ players: names.slice(i, i + 4).map(function (n) { return { name: n, hcp: 10 }; }), teeTime: '' });
+  }
+  return gs;
+}
+
+test('swapping a name in the groups withdraws one and calls up the other at +2', function () {
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  // Phil Schieda (seed 3, -2) out; Anthony Arci (13th) in — the spec example.
+  const names = ORDER.slice(0, 12).map(function (n) {
+    return n === 'Phil Schieda' ? 'Anthony Arci' : n;
+  });
+  const moved = sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(names));
+  assert.deepStrictEqual(Array.from(moved.withdrawn), ['Phil Schieda']);
+  assert.strictEqual(moved.calledUp.length, 1);
+  assert.strictEqual(moved.calledUp[0].name, 'Anthony Arci');
+  assert.strictEqual(moved.calledUp[0].startStrokes, 2, 'called up at +2');
+  assert.strictEqual(sandbox.getStartStrokes('Anthony Arci', 'Playoff 1'), 2);
+  assert.strictEqual(sandbox.getStartStrokes('Phil Schieda', 'Playoff 1'), 0, 'the player who left carries nothing');
+  assert.ok(sandbox._writes.some(function (w) { return w.path === 'playoffField'; }),
+    'the updated field is persisted, not just held in memory');
+  sandbox.playoffField = null;
+});
+
+test('a swap does not disturb anyone else’s start strokes', function () {
+  const before = assignInitialField(ORDER, 1);
+  sandbox.playoffField = before;
+  const beforeStarts = startsOf(before);
+  const names = ORDER.slice(0, 12).map(function (n) {
+    return n === 'Phil Schieda' ? 'Anthony Arci' : n;
+  });
+  sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(names));
+  Array.from(sandbox.playoffField.entries)
+    .filter(function (e) { return !e.withdrawn && e.origin !== 'alternate'; })
+    .forEach(function (e) {
+      assert.strictEqual(e.startStrokes, beforeStarts[e.name], e.name + ' kept their start');
+    });
+  sandbox.playoffField = null;
+});
+
+test('the replacement moves up for group placement but keeps +2', function () {
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  const names = ORDER.slice(0, 12).map(function (n) {
+    return n === 'Phil Schieda' ? 'Anthony Arci' : n;
+  });
+  sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(names));
+  const live = activeFieldOrder(sandbox.playoffField);
+  assert.strictEqual(live.length, 12, 'field is still 12 deep');
+  // Seed 5 slides up into group 1 and is still -1.
+  const ap = live.find(function (e) { return e.name === 'Anthony Piacentini'; });
+  assert.strictEqual(ap.effectiveSeed, 4);
+  assert.strictEqual(ap.group, 1);
+  assert.strictEqual(ap.startStrokes, -1);
+  sandbox.playoffField = null;
+});
+
+test('two separate swaps price the replacements +2 then +3', function () {
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  let names = ORDER.slice(0, 12).map(function (n) {
+    return n === 'Phil Schieda' ? 'Anthony Arci' : n;
+  });
+  sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(names));
+  names = names.map(function (n) { return n === 'Adrian Perpetua' ? 'Vince Colangelo' : n; });
+  const moved = sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(names));
+  assert.strictEqual(moved.calledUp[0].startStrokes, 3, 'second replacement is +3');
+  assert.strictEqual(sandbox.getStartStrokes('Anthony Arci', 'Playoff 1'), 2, 'the first is still +2');
+  sandbox.playoffField = null;
+});
+
+test('putting a withdrawn player back restores their original start, not a call-up price', function () {
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  const swapped = ORDER.slice(0, 12).map(function (n) {
+    return n === 'Phil Schieda' ? 'Anthony Arci' : n;
+  });
+  sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(swapped));
+  // Changed their mind — Phil is back in, Arci out again.
+  sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(ORDER.slice(0, 12)));
+  assert.strictEqual(sandbox.getStartStrokes('Phil Schieda', 'Playoff 1'), -2,
+    'seed 3 gets his -2 back, not +2');
+  assert.strictEqual(sandbox.getStartStrokes('Anthony Arci', 'Playoff 1'), 0);
+  sandbox.playoffField = null;
+});
+
+test('an unchanged roster is a no-op', function () {
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  const moved = sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(ORDER.slice(0, 12)));
+  assert.strictEqual(moved.withdrawn.length, 0);
+  assert.strictEqual(moved.calledUp.length, 0);
+  sandbox.playoffField = null;
+});
+
+test('an empty save never empties the field', function () {
+  sandbox.playoffField = assignInitialField(ORDER, 1);
+  const moved = sandbox.reconcilePlayoffFieldWithGroups([]);
+  assert.strictEqual(moved.withdrawn.length, 0);
+  assert.strictEqual(activeFieldOrder(sandbox.playoffField).length, 12);
+  sandbox.playoffField = null;
+});
+
+test('reconciling does nothing when no field is locked', function () {
+  sandbox.playoffField = null;
+  const moved = sandbox.reconcilePlayoffFieldWithGroups(groupsFrom(ORDER.slice(0, 12)));
+  assert.strictEqual(moved.withdrawn.length, 0);
+  assert.strictEqual(moved.calledUp.length, 0);
 });
 
 console.log('\n' + passed + ' passed' + (process.exitCode ? ', with failures' : '') + '\n');

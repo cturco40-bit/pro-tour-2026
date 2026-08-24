@@ -116,6 +116,9 @@ The playoff advantage is a **start-stroke adjustment to the score, never a handi
 - **Championship tee order reverses Playoff 1**: `autoAssignChampionshipGroups()` sends 9th–12th after R1 off first and puts the top 4 in the final group. Handicaps are locked to what each player played Playoff 1 off.
 - Pure, testable core: `assignInitialField`, `withdrawFromField`, `activeFieldOrder`. Tests live in `tests/playoff-start-strokes.test.js` (`node tests/playoff-start-strokes.test.js`) and extract the real functions out of `index.html` rather than copying them.
 - `repairLegacyPlayoffHandicaps()` restores `hcp` from `baseHcp` on Playoff 1 groups saved by the **old** model, which inflated the handicap by a group bonus. That inflation would now double-count against start strokes.
+- **Two ways a player gets swapped, both keep the field in step.** The WD button in the Playoff Field panel, and simply changing a name in a group dropdown then saving — the latter goes through `reconcilePlayoffFieldWithGroups()`, which treats the saved roster as the intent: anyone dropped is withdrawn, anyone added is called up at the next call-up price. Both paths then re-seed `activeGroups['Playoff 1']` and persist. A save that does **not** change the roster reconciles to a no-op, so a hand-arranged running order still sticks.
+- Re-adding a previously withdrawn player restores their original entry and start — coming back is not a fresh call-up.
+- Players see the whole field's starts on the Foursomes page before teeing off via `renderPlayoffAdvantageBoard(round)`, above the group cards. For the Championship the same board shows each player's Playoff 1 net (their starting score) instead.
 
 ### Admin
 
