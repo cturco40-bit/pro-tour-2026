@@ -37,7 +37,13 @@ sq(180).save('apple-touch-icon.png','PNG',optimize=True)
 "
 ```
 
-There are no tests. There is no lint. Verify changes by loading the local preview and clicking through the affected flow.
+There is no lint and no test runner. The one test file is plain Node, no deps:
+
+```bash
+node tests/playoff-start-strokes.test.js   # playoff start-stroke model
+```
+
+Otherwise verify changes by loading the local preview and clicking through the affected flow.
 
 ## Architecture
 
@@ -96,7 +102,20 @@ Hard rules from the redesign work — re-check them before any UI change:
 - `strokesOnHole(hcp, si)` returns how many handicap strokes a player gets on that hole (`floor(hcp/18) + (si <= hcp%18 ? 1 : 0)`). Used everywhere — including the asterisk display in unplayed cells.
 - `calcNetVsPar(holes, hcp, pars, siArr)` returns net-vs-par as a signed integer; `getEffectiveNet(player, round)` adds penalty strokes and returns the comparable number for leaderboards. **Always** prefer `getEffectiveNet` for season/standings calcs — raw `holes.sum() - hcp` ignores penalty adjustments.
 - Season standings (`calcSeasonStandings`): top 5 of 8 regular rounds count, with Round 8 blocked if the player played all 8. Ties on the same score get a `T` prefix in the rank label.
-- Playoff money: combined net over Playoff 1 + Championship; pool = `players × playoffEntryFee − seasonWinnerPrize` (the season-winner prize is **carved out** of the playoff pool, not added on top). `assignMoneyWithTies` splits payouts evenly across tied positions.
+- Playoff money: combined net over Playoff 1 + Championship; pool = `players × playoffEntryFee − seasonWinnerPrize` (the season-winner prize is **carved out** of the playoff pool, not added on top). `assignMoneyWithTies` splits payouts evenly across tied positions. Playoff rounds carry **no per-round purse** — the round entry fee never applies to them, and `calcPrizePool()` returns 0 for a playoff round so it can't leak into a displayed purse.
+
+### Playoff start strokes
+
+The playoff advantage is a **start-stroke adjustment to the score, never a handicap change** — handicap is the player's handicap everywhere in the app. `Playoff net = gross − course handicap + startStrokes`.
+
+- The field is a locked record at Firebase `playoffField` (`playoffField` global, `savePlayoffField()`). Admin locks it from Setup → Playoff 1; that lock is what **issues** start strokes and is the gating step — `autoAssignPlayoffGroups()` refuses to build groups without it.
+- `startStrokes` is assigned once from the player's **original** final-standings seed: seeds 1–4 → −2, 5–8 → −1, 9–12 → 0. Immutable after that. There is deliberately **no live-derived fallback** in `getStartStrokes()`, so a post-lock penalty edit can never shift a start already issued.
+- Withdrawals re-seed for **group placement only** (`activeFieldOrder()` → `effectiveSeed`, `group`). Seed 5 at −1 can end up in group 1 and is still −1.
+- Alternates fill the vacated 12th spot from standings order and are priced by **call-up order**, not seed: 1st +2, 2nd +3, 3rd +4. `nextCallUp` is monotonic — never derive it from how many alternates are currently active, or a withdrawn alternate makes the next call-up recycle a price.
+- Start strokes apply to **Playoff 1 only** and ride into the combined total; the Championship re-applies nothing. A player's Playoff 1 net *is* their Championship starting score.
+- **Championship tee order reverses Playoff 1**: `autoAssignChampionshipGroups()` sends 9th–12th after R1 off first and puts the top 4 in the final group. Handicaps are locked to what each player played Playoff 1 off.
+- Pure, testable core: `assignInitialField`, `withdrawFromField`, `activeFieldOrder`. Tests live in `tests/playoff-start-strokes.test.js` (`node tests/playoff-start-strokes.test.js`) and extract the real functions out of `index.html` rather than copying them.
+- `repairLegacyPlayoffHandicaps()` restores `hcp` from `baseHcp` on Playoff 1 groups saved by the **old** model, which inflated the handicap by a group bonus. That inflation would now double-count against start strokes.
 
 ### Admin
 
