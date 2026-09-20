@@ -476,6 +476,19 @@ body.dark .icon-sun{display:none}
 .lb-header span.right{text-align:right}
 .lb-row{display:grid;grid-template-columns:28px 1fr 52px 44px;gap:0;align-items:center;padding:8px 14px;border-bottom:1px solid var(--hair-2);transition:background .1s}
 .lb-row:last-child{border-bottom:none}
+/* Live-board header grid. Kept in CSS, not inline, so the two-round variant
+   below can widen it — the header and the rows must move together. */
+.lb-hgrid{padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;gap:0;background:var(--surf-tint);border-bottom:1px solid var(--hair-2)}
+/* Championship only: today's score and the running 2-round total are different
+   numbers, so the board carries both. Regular rounds stay on four columns
+   rather than repeating the same figure twice. */
+.lb-hgrid.lb-2rd{grid-template-columns:32px 1fr 44px 54px 36px}
+.lb-row.lb-2rd,.lb-header.lb-2rd{grid-template-columns:28px 1fr 44px 54px 36px}
+.lb-today{font-family:var(--ff-display);font-size:14px;font-weight:700;text-align:right;padding-right:4px;line-height:1;color:var(--sub);font-feature-settings:"tnum"}
+.lb-today.under{color:var(--birdie)}
+.lb-today.over{color:var(--bogey)}
+/* Nobody in the group has teed off yet — the row is the score they start on. */
+.lb-row.lb-pre .lb-score,.lb-row.lb-pre .lb-today{opacity:.8}
 .lb-row.lb-lead{background:rgba(244,217,64,.10)}
 .lb-row.lb-me{background:var(--surf-tint);border-left:3px solid var(--gold)}
 .lb-pos{font-family:var(--ff-display);font-size:15px;font-weight:800;color:var(--green);text-align:center;line-height:1}
@@ -792,7 +805,7 @@ body.dark .icon-sun{display:none}
           <button class="lbmode-btn" id="fs-lbm-season" onclick="switchLBMode('season')">Season Projection</button>
         </div>
       </div>
-      <div style="padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;gap:0;border-bottom:1px solid var(--hair-2);background:var(--surf-tint)">
+      <div class="lb-hgrid" id="fs-lb-head">
         <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right" id="fs-lb-c3">Net</span><span class="st-h right" id="fs-lb-c4">Thru</span>
       </div>
       <div id="fs-lb-rows" style="max-height:60vh;overflow-y:auto"></div>
@@ -1560,11 +1573,11 @@ body.dark .icon-sun{display:none}
           <button class="lbmode-btn" id="ov-lbm-season" onclick="switchLBMode('season')">Season</button>
         </div>
       </div>
-      <div class="lb-header">
-        <span style="text-align:center">POS</span>
-        <span style="padding-left:6px">PLAYER</span>
-        <span class="right" id="ov-lb-c3">NET</span>
-        <span class="right" id="ov-lb-c4">THRU</span>
+      <div class="lb-header" id="ov-lb-head">
+        <span class="st-h">Pos</span>
+        <span class="st-h left" style="padding-left:6px">Player</span>
+        <span class="st-h right" id="ov-lb-c3">Net</span>
+        <span class="st-h right" id="ov-lb-c4">Thru</span>
       </div>
       <div id="ov-live-rows"></div>
     </div>
@@ -1609,7 +1622,7 @@ body.dark .icon-sun{display:none}
         <button class="lbmode-btn" id="mid-lbm-season" onclick="switchLBMode('season')">Season Projection</button>
       </div>
     </div>
-    <div style="padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;background:var(--surf-tint);border-bottom:1px solid var(--hair-2)">
+    <div class="lb-hgrid" id="mid-lb-head">
       <span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span><span class="st-h right" id="mid-lb-c3">Net</span><span class="st-h right" id="mid-lb-c4">Thru</span>
     </div>
     <div id="mid-lb-rows" style="max-height:60vh;overflow-y:auto"></div>
@@ -3327,6 +3340,122 @@ function seasonProjectionLB(round){
   return {html, sub, rdLbl, live:proj.live};
 }
 
+// ═══════════════ LIVE BOARD ═══════════════
+// The foursomes pane, the mid-round modal and the in-scorecard review panel are
+// the same leaderboard in three frames. They each used to gather and format
+// their own rows, which is how they drifted — a column added to one went
+// missing from the other two. One row builder, one row writer, one header
+// writer; each site keeps only its own chrome.
+//
+// Two rules the shared version adds:
+//  · The FIELD is the round's groups, not just the cards with a hole posted on
+//    them. In a playoff round a player already has a score before they tee off
+//    — start strokes in Playoff 1, their Playoff 1 net in the Championship — so
+//    the board opens on the standings going INTO the round instead of an empty
+//    panel until the first group makes the turn.
+//  · TODAY and TOTAL are separate columns in the Championship, where they are
+//    different numbers. Everywhere else today's score IS the total, so the board
+//    stays on four columns rather than printing the same figure twice.
+
+// Does this round carry a score in from a previous one? Only the Championship
+// does, and only once Playoff 1 is in the book.
+function lbHasCarryIn(round){
+  return round===PLAYOFF_FINAL_ROUND && fullySubmittedRounds().has(PLAYOFF_BONUS_ROUND);
+}
+
+// Every player on the board for a round, sorted. `today` is this round's own
+// net (start strokes included); `carry` is what they brought in; `nvp` is the
+// number they're actually playing for and the one the board ranks on.
+function buildLiveRows(round){
+  const pars=coursePars[round]||Array(18).fill(4);
+  const si=courseStrokeIndex[round]||DEFAULT_SI;
+  const rows=[]; const seen=new Set();
+  Object.values(roundScores).forEach(sc=>{
+    if(sc.round!==round) return;
+    (sc.players||[]).forEach(pl=>{
+      if(!pl||!pl.name) return;
+      const played=(pl.holes||[]).filter(h=>h!==null&&h!==undefined);
+      // Opening a scorecard creates the card before a single hole is posted. A
+      // player with nothing on it isn't on the board — on a regular round that
+      // would park their whole group at E, above everyone over par. In a playoff
+      // round the field pass below seats them on the score they start from.
+      if(!played.length) return;
+      const today=calcNetVsPar(pl.holes||[], pl.hcp, pars, si)+getStartStrokes(pl.name, round);
+      const carry=getCarryIn(pl.name, round);
+      seen.add(pl.name);
+      rows.push({
+        name:pl.name, today, carry, nvp:today+carry, thru:played.length,
+        started:true, done:!!sc.submitted||played.length===18, gi:sc.gi,
+        elapsed:sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'',
+        liveElapsed:!sc.submitted&&sc.roundStartedAt?fmtElapsed(Date.now()-sc.roundStartedAt):''
+      });
+    });
+  });
+  // Playoff rounds only: seat the rest of the field on the score they start on.
+  // On a regular round everyone starts level, so this would just be a wall of E.
+  if(PLAYOFF_ROUNDS.includes(round)){
+    (activeGroups[round]||[]).forEach((g,gi)=>(g&&g.players||[]).forEach(pl=>{
+      if(!pl||!pl.name||seen.has(pl.name)) return;
+      seen.add(pl.name);
+      const today=getStartStrokes(pl.name, round), carry=getCarryIn(pl.name, round);
+      rows.push({name:pl.name, today, carry, nvp:today+carry, thru:0,
+                 started:false, done:false, gi, elapsed:'', liveElapsed:''});
+    }));
+  }
+  rows.sort((a,b)=>a.nvp!==b.nvp?a.nvp-b.nvp:b.thru-a.thru);
+  return rows;
+}
+
+// Writes a live board's header so the columns can't drift from the rows under
+// them. `twoRd` adds the Championship's extra TODAY column.
+function paintLBHead(id, prefix, twoRd, lbl3, lbl4){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('lb-2rd', !!twoRd);
+  el.innerHTML=`<span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span>`
+    +(twoRd?`<span class="st-h right">Today</span>`:'')
+    +`<span class="st-h right" id="${prefix}-c3">${lbl3}</span>`
+    +`<span class="st-h right" id="${prefix}-c4">${lbl4}</span>`;
+}
+
+// opts: {twoRd} show the TODAY column, {myGi} highlight the signed-in player's group.
+function liveBoardHTML(rows, opts){
+  const o=opts||{};
+  const twoRd=!!o.twoRd;
+  let pos=1;
+  return rows.map((p,i,arr)=>{
+    if(i>0&&p.nvp!==arr[i-1].nvp) pos=i+1;
+    const tied=arr.filter(x=>x.nvp===p.nvp).length>1;
+    const posStr=(tied?'T':'')+pos;
+    const posCls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+    const lastName=(p.name||'?').split(' ').slice(-1)[0];
+    const firstName=(p.name||'?').split(' ')[0];
+    const clock=p.done?(p.elapsed||''):(p.liveElapsed||'');
+    // A player who hasn't posted a hole has no holes-thru to report — an em dash,
+    // not a 0, or the board reads as if they teed off and made no progress.
+    const thruStr=p.done?'F':(p.started?String(p.thru):'—');
+    const isMe=o.myGi!==undefined&&p.gi===o.myGi;
+    return `<div class="lb-row${twoRd?' lb-2rd':''}${pos===1?' lb-lead':''}${isMe?' lb-me':''}${p.started?'':' lb-pre'}">
+      <div class="lb-pos ${posCls}">${posStr}</div>
+      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clock?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clock}</span>`:''}</div>
+      ${twoRd?`<div class="lb-today ${p.started?nvpCls(p.today):''}">${p.started?fmtNvp(p.today):'—'}</div>`:''}
+      <div class="lb-score ${nvpCls(p.nvp)}${pos===1?' lead':''}">${fmtNvp(p.nvp)}</div>
+      <div class="lb-thru${p.done?' done':''}">${thruStr}</div>
+    </div>`;
+  }).join('');
+}
+
+// The line under the board title.
+function liveBoardSub(rows, round){
+  const inProgress=rows.filter(r=>r.started&&!r.done).length;
+  if(!rows.some(r=>r.started)){
+    return lbHasCarryIn(round) ? 'Standings going into the final round'
+         : (PLAYOFF_ROUNDS.includes(round) ? 'Start strokes · no groups away yet'
+                                           : 'No groups have teed off yet');
+  }
+  return inProgress>0?`${inProgress} player${inProgress>1?'s':''} still playing`:'Round complete';
+}
+
 function renderFoursomesInlineLB(){
   try { _renderFoursomesInlineLBInner(); } catch(e){ console.warn('renderFoursomesInlineLB failed:', e); }
 }
@@ -3357,38 +3486,21 @@ function _renderFoursomesInlineLBInner(){
   document.getElementById('fs-lbm-round')?.classList.toggle('act', _lbMode==='round');
   document.getElementById('fs-lbm-season')?.classList.toggle('act', _lbMode==='season');
 
-  const c3=document.getElementById('fs-lb-c3'), c4=document.getElementById('fs-lb-c4');
   if(_lbMode==='season' && canProject){
     // Heaviest calc in the app — only run it when this view is actually on screen.
     const proj=seasonProjectionLB(activeRound);
     if(proj){
-      if(c3) c3.textContent='Pts';
-      if(c4) c4.textContent=proj.rdLbl;
+      paintLBHead('fs-lb-head','fs-lb',false,'Pts',proj.rdLbl);
       if(subEl) subEl.textContent=proj.sub;
       if(pulseEl) pulseEl.style.background=proj.live?'var(--birdie)':'var(--sub)';
       rowsEl.innerHTML=proj.html;
       return;
     }
   }
-  if(c3) c3.textContent='Net';
-  if(c4) c4.textContent='Thru';
+  const twoRd=lbHasCarryIn(activeRound);
+  paintLBHead('fs-lb-head','fs-lb',twoRd,twoRd?'Total':'Net','Thru');
 
-  const pars=coursePars[activeRound]||Array(18).fill(4);
-  const si=courseStrokeIndex[activeRound]||DEFAULT_SI;
-
-  const allPlayers=[];
-  Object.values(roundScores).forEach(sc=>{
-    if(sc.round!==activeRound) return;
-    sc.players.forEach(pl=>{
-      const played=pl.holes.filter(h=>h!==null&&h!==undefined);
-      if(played.length===0) return;
-      const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, activeRound)+getCarryIn(pl.name, activeRound);
-      const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
-      allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
-    });
-  });
-
+  const allPlayers=buildLiveRows(activeRound);
   if(!allPlayers.length){
     if(subEl) subEl.textContent='No scores yet';
     if(pulseEl) pulseEl.style.background='var(--sub)';
@@ -3396,33 +3508,10 @@ function _renderFoursomesInlineLBInner(){
     return;
   }
 
-  allPlayers.sort((a,b)=>a.nvp!==b.nvp?a.nvp-b.nvp:b.thru-a.thru);
-
-  const inProgress=allPlayers.filter(p=>!p.done).length;
-  if(subEl) subEl.textContent=inProgress>0?`${inProgress} player${inProgress>1?'s':''} still playing`:'Round complete';
+  const inProgress=allPlayers.filter(p=>p.started&&!p.done).length;
+  if(subEl) subEl.textContent=liveBoardSub(allPlayers, activeRound);
   if(pulseEl) pulseEl.style.background=inProgress>0?'var(--birdie)':'var(--gold-deep)';
-
-  let pos=1;
-  rowsEl.innerHTML=allPlayers.map((p,i,arr)=>{
-    if(i>0&&p.nvp!==arr[i-1].nvp) pos=i+1;
-    const tied = arr.filter(x => x.nvp === p.nvp).length > 1;
-    const posStr = tied ? 'T'+pos : String(pos);
-    const posCls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
-    const nvpStr=fmtNvp(p.nvp);
-    const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
-    const lastName=(p.name||'?').split(' ').slice(-1)[0];
-    const firstName=(p.name||'?').split(' ')[0];
-    const clockStr2 = p.done
-      ? (p.elapsed || '')
-      : (p.liveElapsed || '');
-    const thruStr2 = p.done ? 'F' : String(p.thru);
-    return `<div class="lb-row${pos===1?' lb-lead':''}">
-      <div class="lb-pos ${posCls}">${posStr}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr2?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clockStr2}</span>`:''}</div>
-      <div class="lb-score ${nvpCls2}${pos===1?' lead':''}">${nvpStr}</div>
-      <div class="lb-thru${p.done?' done':''}">${thruStr2}</div>
-    </div>`;
-  }).join('');
+  rowsEl.innerHTML=liveBoardHTML(allPlayers,{twoRd});
 }
 
 function renderFoursomePage(preferredRound){
@@ -3561,7 +3650,12 @@ function renderPlayoffAdvantageBoard(round){
         if(p&&p.name) seen[p.name]=getEffectiveNvp(p, PLAYOFF_BONUS_ROUND);
       });
     });
-    const ranked=Object.entries(seen).sort((a,b)=>a[1]-b[1]);
+    // Only the players teeing off today. A withdrawal's Playoff 1 net is not a
+    // starting score for a round they aren't in.
+    const field=championshipField();
+    const ranked=Object.entries(seen)
+      .filter(([name])=>!field.size||field.has(name))
+      .sort((a,b)=>a[1]-b[1]);
     if(!ranked.length) return '';
     const rows=ranked.map(([name,net],i)=>{
       const cls=net<0?'under':net>0?'over':'even';
@@ -4655,8 +4749,6 @@ function renderLiveStandings(){
 }
 function _renderLiveStandingsInner(){
   const {round,gi:myGi}=ov;
-  const pars=coursePars[round]||Array(18).fill(4);
-  const si=courseStrokeIndex[round]||DEFAULT_SI;
 
   const panel=document.getElementById('ov-live-std');
   const bar=document.getElementById('ov-lb-bar');
@@ -4684,12 +4776,10 @@ function _renderLiveStandingsInner(){
   // the hottest render path in the app — it fires on every hole commit.
   if(_liveStdHidden) return;
 
-  const c3=document.getElementById('ov-lb-c3'), c4=document.getElementById('ov-lb-c4');
   if(_lbMode==='season' && canProject){
     const proj=seasonProjectionLB(round);
     if(proj){
-      if(c3) c3.textContent='PTS';
-      if(c4) c4.textContent=proj.rdLbl;
+      paintLBHead('ov-lb-head','ov-lb',false,'Pts',proj.rdLbl);
       document.getElementById('ov-round-lbl').textContent=roundTitle(round).toUpperCase()+' — SEASON';
       const rowsEl=document.getElementById('ov-live-rows');
       rowsEl.innerHTML=proj.html;
@@ -4706,78 +4796,14 @@ function _renderLiveStandingsInner(){
       return;
     }
   }
-  if(c3) c3.textContent='NET';
-  if(c4) c4.textContent='THRU';
-
-  // Gather all players across all groups for this round
-  const allPlayers=[];
-  Object.entries(roundScores).forEach(([key,sc])=>{
-    if(sc.round!==round) return;
-    sc.players.forEach(pl=>{
-      const confirmed=pl.holes.filter(h=>h!==null&&h!==undefined);
-      if(confirmed.length===0) return;
-      const thru=confirmed.length;
-      // Use full holes array — calcNetVsPar skips nulls. Slicing by `thru` (a count, not an index)
-      // was wrong when middle holes were skipped: it dropped the most-recent hole.
-      // Start strokes ride along in Playoff 1, and the Championship carries in
-      // the Playoff 1 net, so this board agrees with the foursomes board, the
-      // mid-round modal and the final combined table.
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, round)+getCarryIn(pl.name, round);
-      const grossTotal=confirmed.reduce((a,v)=>a+v,0);
-      // Elapsed time for finished groups
-      const elapsed = sc.submitted && sc.roundStartedAt
-        ? fmtElapsed(sc.submittedAt - sc.roundStartedAt) : '';
-      // Live running clock for in-progress groups
-      const liveElapsed = !sc.submitted && sc.roundStartedAt
-        ? fmtElapsed(Date.now() - sc.roundStartedAt) : '';
-      allPlayers.push({
-        name:pl.name, nvp, grossTotal, thru,
-        done:sc.submitted||thru===18, isMe:(sc.gi===myGi),
-        elapsed, liveElapsed
-      });
-    });
-  });
-
-  // Sort by net-vs-par ascending, tiebreak by holes played desc
-  allPlayers.sort((a,b)=>a.nvp!==b.nvp?a.nvp-b.nvp:b.thru-a.thru);
-
-  // This board shows position, net and holes-thru only. It used to also compute
-  // potential points and money that nothing rendered; the money in particular paid
-  // the full playoff pool on a single playoff round. Removed rather than fixed.
-
-  // Assign positions with T for ties — every player in a tie group gets the T prefix
-  const positioned=allPlayers.map((p,i,arr)=>{
-    const firstIdx = arr.findIndex(x => x.nvp === p.nvp);
-    const tied = arr.filter(x => x.nvp === p.nvp).length > 1;
-    const posNum = firstIdx + 1;
-    return {...p, posStr: tied ? 'T'+posNum : String(posNum)};
-  });
+  const twoRd=lbHasCarryIn(round);
+  paintLBHead('ov-lb-head','ov-lb',twoRd,twoRd?'Total':'Net','Thru');
 
   const rowsEl=document.getElementById('ov-live-rows');
-  if(!positioned.length){rowsEl.innerHTML=`<div class="lb-empty">No scores entered yet this round</div>`;return;}
-
+  const allPlayers=buildLiveRows(round);
   document.getElementById('ov-round-lbl').textContent=roundTitle(round).toUpperCase()+' — LIVE';
-
-  rowsEl.innerHTML=positioned.map((p,i)=>{
-    const posNum=parseInt(p.posStr.replace('T',''));
-    const posCls=posNum===1?'gold':posNum===2?'silver':posNum===3?'bronze':'';
-    const isLead=posNum===1;
-    const nvpStr=fmtNvp(p.nvp);
-    const lastName=(p.name||'?').split(' ').slice(-1)[0];
-    const firstName=(p.name||'?').split(' ')[0];
-    // Timer next to name: elapsed time only (light font)
-    const clockStr = p.done
-      ? (p.elapsed || '')
-      : (p.liveElapsed || '');
-    const thruStr = p.done ? 'F' : String(p.thru);
-    const thruCls = p.done ? 'done' : '';
-    return `<div class="lb-row${isLead?' lb-lead':''}${p.isMe?' lb-me':''}">
-      <div class="lb-pos ${posCls}">${p.posStr}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clockStr}</span>`:''}</div>
-      <div class="lb-score ${nvpCls(p.nvp)}${isLead?' lead':''}">${nvpStr}</div>
-      <div class="lb-thru ${thruCls}">${thruStr}</div>
-    </div>`;
-  }).join('');
+  if(!allPlayers.length){rowsEl.innerHTML=`<div class="lb-empty">No scores entered yet this round</div>`;return;}
+  rowsEl.innerHTML=liveBoardHTML(allPlayers,{twoRd, myGi});
 }
 
 function prevHole(){
@@ -6037,6 +6063,8 @@ function renderStandings(){
       seeds 9&ndash;12 at even; alternates called up start at +2, +3, +4 in call-up order.
       Start adjusts your <strong>score</strong>, not your handicap. It applies once, in Playoff 1, and carries
       into your total &mdash; Round 2 picks up where Round 1 left off.<br>
+      <strong>Money settles once, on the 2-round total.</strong> Nothing is owed on Playoff 1 alone
+      &mdash; the $ column fills in when the Championship is complete.<br>
       Prize pool: <strong>$${pool.toLocaleString()}</strong> (${PLAYERS.length} × $${settings.playoffEntryFee}${swp>0?' − $'+swp+' Season Winner':''})
     </div>`;
 
@@ -6045,24 +6073,30 @@ function renderStandings(){
       return;
     }
 
-    const sorted=combined.sort((a,b)=>a.combinedNet-b.combinedNet);
-    const sortedForCalc=sorted.map(p=>({...p,effNet:p.combinedNet}));
-    // Money rides on the combined 2-round total. Points do not — each playoff
-    // round pays its own table, and the Pts column shows the sum of both.
+    // A withdrawal doesn't hold a position. Their Playoff 1 result stays on the
+    // board, at the foot of it, out of the ranking and out of the money.
+    const live=combined.filter(p=>!p.wd).sort((a,b)=>a.combinedNet-b.combinedNet);
+    const withdrawn=combined.filter(p=>p.wd).sort((a,b)=>a.combinedNet-b.combinedNet);
+    const sorted=live.concat(withdrawn);
+    // Money rides on the combined 2-round total and settles only when both
+    // rounds are complete — calcPlayoffEarnings owns that call, here too, so the
+    // standings and the earnings page can't disagree about what is owed.
     const ptMap=calcPlayoffPoints();
-    const moneyMap=assignMoneyWithTies(sortedForCalc,payouts);
+    const moneyMap=calcPlayoffEarnings();
+    const settled=playoffsSettled();
 
-    // Position labels with T for ties
+    // Position labels with T for ties — over the live field only
     const posLabels={};
     let i=0;
-    while(i<sorted.length){
-      const score=sorted[i].combinedNet;
+    while(i<live.length){
+      const score=live[i].combinedNet;
       let j=i;
-      while(j<sorted.length&&sorted[j].combinedNet===score) j++;
+      while(j<live.length&&live[j].combinedNet===score) j++;
       const label=j-i>1?'T'+(i+1):(i+1)+'';
-      for(let k=i;k<j;k++) posLabels[sorted[k].name]=label;
+      for(let k=i;k<j;k++) posLabels[live[k].name]=label;
       i=j;
     }
+    withdrawn.forEach(p=>{ posLabels[p.name]='WD'; });
 
     el.innerHTML+=`<div class="card" style="padding:14px 16px">
       <div class="st-head playoff">
@@ -6093,15 +6127,18 @@ function renderStandings(){
         const bits=[];
         if(sd&&sd<=PLAYOFF_FIELD_SIZE) bits.push(`Seed ${sd}`);
         if(st!==undefined) bits.push(fmtStart(st));
+        if(p.wd) bits.push('Withdrawn');
         const seedMeta=bits.length?`<div class="ho-meta">${bits.join(' · ')}</div>`:'';
-        return `<div class="st-row playoff">
+        return `<div class="st-row playoff"${p.wd?' style="opacity:.55"':''}>
           <div class="ho-pos${podiumCls}">${posLabels[p.name]||'—'}</div>
           <div class="ho-name-wrap"><div class="ho-name">${p.name}</div>${seedMeta}</div>
           <div class="st-cell ${r1Cls}">${r1}</div>
           <div class="st-cell ${r2Cls}">${r2}</div>
           <div class="st-cell ${totCls}">${tot}</div>
           <div style="text-align:right">
-            <div class="ho-val gold" style="font-size:16px;color:${money>0?'var(--gold-deep)':'var(--sub)'}">${money>0?'$'+Math.round(money):'—'}</div>
+            <div class="ho-val gold" style="font-size:16px;color:${money>0?'var(--gold-deep)':'var(--sub)'}">${money>0?'$'+Math.round(money)
+              : settled?'—'
+              : `<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:600">Pending</span>`}</div>
             <div class="ho-val-sub">${pts>0?Math.round(pts)+' Pts':'—'}</div>
           </div>
         </div>`;
@@ -6233,7 +6270,7 @@ function renderStandings(){
       </div>
       <div>
         <div class="ho-val gold">$${playoffPool.toLocaleString()}</div>
-        <div class="ho-val-sub">Pool</div>
+        <div class="ho-val-sub">${playoffsSettled()?'Pool':'Pool · Pending'}</div>
       </div>
     </div>`:'';
     const playoffPcts=settings.playoffPrizePercentages||DEFAULT_SETTINGS.playoffPrizePercentages;
@@ -6404,6 +6441,25 @@ function showPlayerBreakdown(name){
   document.body.appendChild(modal);
 }
 
+// Who is actually playing the Championship, off the groups the commissioner
+// built. Empty = the field isn't set yet, which is not the same as nobody being
+// in it — every caller treats an empty field as "no withdrawals known".
+function championshipField(){
+  const out=new Set();
+  (activeGroups[PLAYOFF_FINAL_ROUND]||[]).forEach(g=>(g&&g.players||[]).forEach(p=>{
+    if(p&&p.name) out.add(p.name);
+  }));
+  return out;
+}
+
+// Playoff money settles ONCE, when both playoff rounds are complete. Until then
+// every combined total is a partial one, and paying off it publishes a payout
+// that the Championship then rearranges.
+function playoffsSettled(){
+  const done=fullySubmittedRounds();
+  return PLAYOFF_ROUNDS.every(r=>done.has(r));
+}
+
 function buildPlayoffCombined(){
   // Gather all players who played in any playoff round
   const p1Scores={};  // name -> effNet round 1
@@ -6418,13 +6474,19 @@ function buildPlayoffCombined(){
     }
   });
   const names=new Set([...Object.keys(p1Scores),...Object.keys(p2Scores)]);
+  // A player who posted Playoff 1 and is not in the Championship field has
+  // withdrawn. Their combined total is frozen on round 1 while everyone else
+  // plays 18 more holes, so it can't be ranked against a 2-round score and it
+  // can't be paid on. The row survives — the round they played is still theirs.
+  const field=championshipField();
   const result=[];
   names.forEach(name=>{
     const r1=p1Scores[name]??null;
     const r2=p2Scores[name]??null;
     // Combined = r1 + r2 if both played, otherwise just what they played
     const combined=(r1!==null?r1:0)+(r2!==null?r2:0);
-    result.push({name,r1,r2,combinedNet:combined,bothRounds:r1!==null&&r2!==null});
+    result.push({name,r1,r2,combinedNet:combined,bothRounds:r1!==null&&r2!==null,
+                 wd:field.size>0 && !field.has(name)});
   });
   return result;
 }
@@ -6467,7 +6529,11 @@ function calcPlayoffPoints(){
 // Playoff prize money settles ONCE, on the combined 2-round total — it is never
 // owed for Playoff 1 or the Championship on their own. Returns { name: money }.
 function calcPlayoffEarnings(){
-  const combined=buildPlayoffCombined();
+  // Nothing is owed until the Championship is in the book. Without this the
+  // full pool is assigned the moment Playoff 1 finishes, and the standings read
+  // as a settled payout when half the playoffs are still to play.
+  if(!playoffsSettled()) return {};
+  const combined=buildPlayoffCombined().filter(p=>!p.wd);
   if(!combined.length) return {};
   const sorted=[...combined]
     .sort((a,b)=>a.combinedNet-b.combinedNet)
@@ -8951,71 +9017,27 @@ function _buildMidLBInner(){
   document.getElementById('mid-lbm-round')?.classList.toggle('act', _lbMode==='round');
   document.getElementById('mid-lbm-season')?.classList.toggle('act', _lbMode==='season');
 
-  const mc3=document.getElementById('mid-lb-c3'), mc4=document.getElementById('mid-lb-c4');
   if(_lbMode==='season' && canProject){
     const proj=seasonProjectionLB(activeRound);
     if(proj){
-      if(mc3) mc3.textContent='Pts';
-      if(mc4) mc4.textContent=proj.rdLbl;
+      paintLBHead('mid-lb-head','mid-lb',false,'Pts',proj.rdLbl);
       document.getElementById('mid-lb-sub').textContent=proj.sub;
       document.getElementById('mid-lb-rows').innerHTML=proj.html;
       return;
     }
   }
-  if(mc3) mc3.textContent='Net';
-  if(mc4) mc4.textContent='Thru';
+  const twoRd=lbHasCarryIn(activeRound);
+  paintLBHead('mid-lb-head','mid-lb',twoRd,twoRd?'Total':'Net','Thru');
 
-  const pars=coursePars[activeRound]||Array(18).fill(4);
-  const si=courseStrokeIndex[activeRound]||DEFAULT_SI;
-
-  const allPlayers=[];
-  Object.values(roundScores).forEach(sc=>{
-    if(sc.round!==activeRound) return;
-    sc.players.forEach(pl=>{
-      const played=pl.holes.filter(h=>h!==null&&h!==undefined);
-      if(played.length===0) return;
-      const thru=played.length;
-      const nvp=calcNetVsPar(pl.holes, pl.hcp, pars, si)+getStartStrokes(pl.name, activeRound)+getCarryIn(pl.name, activeRound);
-      const elapsed=sc.submitted&&sc.roundStartedAt?fmtElapsed(sc.submittedAt-sc.roundStartedAt):'';
-      allPlayers.push({name:pl.name, nvp, thru, done:sc.submitted||thru===18, elapsed});
-    });
-  });
-
+  const allPlayers=buildLiveRows(activeRound);
   if(!allPlayers.length){
     document.getElementById('mid-lb-sub').textContent='No scores yet';
     document.getElementById('mid-lb-rows').innerHTML='<div class="ho-empty" style="padding:24px 12px">No scores entered yet this round</div>';
     return;
   }
 
-  allPlayers.sort((a,b)=>a.nvp!==b.nvp?a.nvp-b.nvp:b.thru-a.thru);
-
-  const inProgress=allPlayers.filter(p=>!p.done).length;
-  document.getElementById('mid-lb-sub').textContent=inProgress>0?`${inProgress} player${inProgress>1?'s':''} still playing`:'Round complete';
-
-  // Assign positions — tied players all get the T prefix
-  let pos=1;
-  const rows=allPlayers.map((p,i,arr)=>{
-    if(i>0&&p.nvp!==arr[i-1].nvp) pos=i+1;
-    const tied = arr.filter(x => x.nvp === p.nvp).length > 1;
-    const posStr = tied ? 'T'+pos : String(pos);
-    const posCls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
-    const nvpStr=fmtNvp(p.nvp);
-    const nvpCls2=p.nvp<0?'under':p.nvp===0?'even':'over';
-    const thruStr=p.done?(p.elapsed?'F · '+p.elapsed:'F'):String(p.thru);
-    const lastName=(p.name||'?').split(' ').slice(-1)[0];
-    const firstName=(p.name||'?').split(' ')[0];
-    const clockStr3 = p.done
-      ? (p.elapsed || '')
-      : (p.elapsed || '');
-    const thruStr3 = p.done ? (p.elapsed ? `F · ${p.elapsed}` : 'F') : String(p.thru);
-    return `<div class="lb-row${pos===1?' lb-lead':''}">
-      <div class="lb-pos ${posCls}">${posStr}</div>
-      <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clockStr3?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clockStr3}</span>`:''}</div>
-      <div class="lb-score ${nvpCls2}${pos===1?' lead':''}">${nvpStr}</div>
-      <div class="lb-thru${p.done?' done':''}">${p.done?'F':thruStr3}</div>
-    </div>`;
-  }).join('');
-  document.getElementById('mid-lb-rows').innerHTML=rows;
+  document.getElementById('mid-lb-sub').textContent=liveBoardSub(allPlayers, activeRound);
+  document.getElementById('mid-lb-rows').innerHTML=liveBoardHTML(allPlayers,{twoRd});
 }
 
 // ═══════════════ CONFIRM SUBMIT ═══════════════
