@@ -210,7 +210,7 @@ body.dark .icon-sun{display:none}
 .st-row:last-child{border-bottom:none}
 .st-row.season{grid-template-columns:34px minmax(0,1fr) 28px 28px 60px;gap:8px}
 .st-row.world{grid-template-columns:34px minmax(0,1fr) 78px}
-.st-row.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
+.st-row.playoff{grid-template-columns:26px minmax(0,1fr) 32px 32px 34px 54px;gap:7px}
 .st-row.earn{grid-template-columns:minmax(0,1fr) 88px}
 .st-cell{font-family:var(--ff-display);font-weight:800;font-size:15px;color:var(--green);text-align:center;line-height:1;font-feature-settings:"tnum"}
 .st-cell.sub{font-family:var(--ff-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:600;margin-top:2px}
@@ -221,7 +221,10 @@ body.dark .icon-sun{display:none}
 .st-head{display:grid;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--hair);gap:10px;margin-bottom:4px}
 .st-head.season{grid-template-columns:34px minmax(0,1fr) 28px 28px 60px;gap:8px}
 .st-head.world{grid-template-columns:34px minmax(0,1fr) 78px}
-.st-head.playoff{grid-template-columns:34px minmax(0,1fr) 38px 38px 40px 64px}
+.st-head.playoff{grid-template-columns:26px minmax(0,1fr) 32px 32px 34px 54px;gap:7px}
+/* Six columns on a phone leaves the name about a hundred pixels. */
+.st-row.playoff .ho-name{font-size:13px}
+.st-row.playoff .ho-pos{font-size:15px}
 .st-h{font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;text-align:center}
 .st-h.left{text-align:left}
 .st-h.right{text-align:right}
@@ -479,16 +482,17 @@ body.dark .icon-sun{display:none}
 /* Live-board header grid. Kept in CSS, not inline, so the two-round variant
    below can widen it — the header and the rows must move together. */
 .lb-hgrid{padding:8px 16px;display:grid;grid-template-columns:32px 1fr 52px 44px;gap:0;background:var(--surf-tint);border-bottom:1px solid var(--hair-2)}
-/* Championship only: today's score and the running 2-round total are different
-   numbers, so the board carries both. Regular rounds stay on four columns
-   rather than repeating the same figure twice. */
-.lb-hgrid.lb-2rd{grid-template-columns:32px 1fr 44px 54px 36px}
-.lb-row.lb-2rd,.lb-header.lb-2rd{grid-template-columns:28px 1fr 44px 54px 36px}
-.lb-today{font-family:var(--ff-display);font-size:14px;font-weight:700;text-align:right;padding-right:4px;line-height:1;color:var(--sub);font-feature-settings:"tnum"}
-.lb-today.under{color:var(--birdie)}
-.lb-today.over{color:var(--bogey)}
+/* Championship only: the board is a 2-round total, so it carries both rounds
+   and the total — R1 / R2 / T / THRU. Regular rounds stay on four columns
+   rather than repeating the same figure three times. */
+.lb-hgrid.lb-2rd{grid-template-columns:32px 1fr 34px 34px 42px 32px}
+.lb-row.lb-2rd,.lb-header.lb-2rd{grid-template-columns:28px 1fr 34px 34px 42px 32px}
+/* The per-round cells sit beside the total, smaller and quieter than it. */
+.lb-rd{font-family:var(--ff-display);font-size:13px;font-weight:700;text-align:right;padding-right:4px;line-height:1;color:var(--sub);font-feature-settings:"tnum"}
+.lb-rd.under{color:var(--birdie)}
+.lb-rd.over{color:var(--bogey)}
 /* Nobody in the group has teed off yet — the row is the score they start on. */
-.lb-row.lb-pre .lb-score,.lb-row.lb-pre .lb-today{opacity:.8}
+.lb-row.lb-pre .lb-score,.lb-row.lb-pre .lb-rd{opacity:.8}
 .lb-row.lb-lead{background:rgba(244,217,64,.10)}
 .lb-row.lb-me{background:var(--surf-tint);border-left:3px solid var(--gold)}
 .lb-pos{font-family:var(--ff-display);font-size:15px;font-weight:800;color:var(--green);text-align:center;line-height:1}
@@ -3407,18 +3411,20 @@ function buildLiveRows(round){
 }
 
 // Writes a live board's header so the columns can't drift from the rows under
-// them. `twoRd` adds the Championship's extra TODAY column.
+// them. `twoRd` adds the Championship's per-round R1 and R2 columns ahead of
+// the total.
 function paintLBHead(id, prefix, twoRd, lbl3, lbl4){
   const el=document.getElementById(id);
   if(!el) return;
   el.classList.toggle('lb-2rd', !!twoRd);
   el.innerHTML=`<span class="st-h">Pos</span><span class="st-h left" style="padding-left:6px">Player</span>`
-    +(twoRd?`<span class="st-h right">Today</span>`:'')
+    +(twoRd?`<span class="st-h right">R1</span><span class="st-h right">R2</span>`:'')
     +`<span class="st-h right" id="${prefix}-c3">${lbl3}</span>`
     +`<span class="st-h right" id="${prefix}-c4">${lbl4}</span>`;
 }
 
-// opts: {twoRd} show the TODAY column, {myGi} highlight the signed-in player's group.
+// opts: {twoRd} split the score into R1 / R2 / T, {myGi} highlight the
+// signed-in player's group.
 function liveBoardHTML(rows, opts){
   const o=opts||{};
   const twoRd=!!o.twoRd;
@@ -3438,7 +3444,8 @@ function liveBoardHTML(rows, opts){
     return `<div class="lb-row${twoRd?' lb-2rd':''}${pos===1?' lb-lead':''}${isMe?' lb-me':''}${p.started?'':' lb-pre'}">
       <div class="lb-pos ${posCls}">${posStr}</div>
       <div class="lb-name">${lastName}<span class="lb-flag">${firstName[0]}.</span>${clock?`<span style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.08em;color:var(--sub);margin-left:6px;font-weight:500">${clock}</span>`:''}</div>
-      ${twoRd?`<div class="lb-today ${p.started?nvpCls(p.today):''}">${p.started?fmtNvp(p.today):'—'}</div>`:''}
+      ${twoRd?`<div class="lb-rd ${nvpCls(p.carry)}">${fmtNvp(p.carry)}</div>
+      <div class="lb-rd ${p.started?nvpCls(p.today):''}">${p.started?fmtNvp(p.today):'—'}</div>`:''}
       <div class="lb-score ${nvpCls(p.nvp)}${pos===1?' lead':''}">${fmtNvp(p.nvp)}</div>
       <div class="lb-thru${p.done?' done':''}">${thruStr}</div>
     </div>`;
@@ -3498,7 +3505,7 @@ function _renderFoursomesInlineLBInner(){
     }
   }
   const twoRd=lbHasCarryIn(activeRound);
-  paintLBHead('fs-lb-head','fs-lb',twoRd,twoRd?'Total':'Net','Thru');
+  paintLBHead('fs-lb-head','fs-lb',twoRd,twoRd?'T':'Net','Thru');
 
   const allPlayers=buildLiveRows(activeRound);
   if(!allPlayers.length){
@@ -4797,7 +4804,7 @@ function _renderLiveStandingsInner(){
     }
   }
   const twoRd=lbHasCarryIn(round);
-  paintLBHead('ov-lb-head','ov-lb',twoRd,twoRd?'Total':'Net','Thru');
+  paintLBHead('ov-lb-head','ov-lb',twoRd,twoRd?'T':'Net','Thru');
 
   const rowsEl=document.getElementById('ov-live-rows');
   const allPlayers=buildLiveRows(round);
@@ -6047,26 +6054,15 @@ function renderStandings(){
   } else if(activeTab==='playoffs'){
     // Combined Playoff 1 + Championship leaderboard
     const combined=buildPlayoffCombined();
-    const pool=calcPlayoffPool();
-    const swp=Math.max(0,settings.seasonWinnerPrize||0);
-    const payouts=calcPlayoffPayouts();
-
     const seeds=calcPlayoffSeeds();
     // Start strokes come off the Playoff 1 group records — the typed values.
     const startByName={};
     (activeGroups[PLAYOFF_BONUS_ROUND]||[]).forEach(g=>(g&&g.players||[]).forEach(pl=>{
       if(pl&&pl.name) startByName[pl.name]=Number(pl.startStrokes)||0;
     }));
-    el.innerHTML=`<div class="info-b">
-      Top 12 from season standings qualify. Combined net score over 2 rounds.<br>
-      <strong>Start strokes.</strong> Seeds 1&ndash;4 begin Playoff 1 at &minus;2, seeds 5&ndash;8 at &minus;1,
-      seeds 9&ndash;12 at even; alternates called up start at +2, +3, +4 in call-up order.
-      Start adjusts your <strong>score</strong>, not your handicap. It applies once, in Playoff 1, and carries
-      into your total &mdash; Round 2 picks up where Round 1 left off.<br>
-      <strong>Money settles once, on the 2-round total.</strong> Nothing is owed on Playoff 1 alone
-      &mdash; the $ column fills in when the Championship is complete.<br>
-      Prize pool: <strong>$${pool.toLocaleString()}</strong> (${PLAYERS.length} × $${settings.playoffEntryFee}${swp>0?' − $'+swp+' Season Winner':''})
-    </div>`;
+    // No explainer above the board. The format is settled and the players know
+    // it; the per-row Seed / START meta carries what's still worth saying.
+    el.innerHTML='';
 
     if(!combined.length){
       el.innerHTML+=`<div class="card" style="text-align:center;padding:30px"><div class="ho-empty">No playoff rounds submitted yet</div></div>`;
@@ -6097,6 +6093,7 @@ function renderStandings(){
       i=j;
     }
     withdrawn.forEach(p=>{ posLabels[p.name]='WD'; });
+    const shortName=shortNameMap(sorted.map(p=>p.name));
 
     el.innerHTML+=`<div class="card" style="padding:14px 16px">
       <div class="st-head playoff">
@@ -6131,7 +6128,7 @@ function renderStandings(){
         const seedMeta=bits.length?`<div class="ho-meta">${bits.join(' · ')}</div>`:'';
         return `<div class="st-row playoff"${p.wd?' style="opacity:.55"':''}>
           <div class="ho-pos${podiumCls}">${posLabels[p.name]||'—'}</div>
-          <div class="ho-name-wrap"><div class="ho-name">${p.name}</div>${seedMeta}</div>
+          <div class="ho-name-wrap"><div class="ho-name">${shortName[p.name]||p.name}</div>${seedMeta}</div>
           <div class="st-cell ${r1Cls}">${r1}</div>
           <div class="st-cell ${r2Cls}">${r2}</div>
           <div class="st-cell ${totCls}">${tot}</div>
@@ -6291,6 +6288,32 @@ function renderStandings(){
   } else if(activeTab==='points'){
     renderPointsBreakdown();
   }
+}
+
+// "Christian Turco" → "C. Turco", for tables too narrow to carry a full name.
+// Two players can share an initial and a surname — this roster has two
+// Piacentinis — so the initial grows to the shortest prefix that separates
+// them rather than printing the same label on two different players.
+function shortNameMap(names){
+  const bySurname={};
+  names.forEach(n=>{
+    const parts=(n||'').trim().split(/\s+/);
+    const first=parts.length>1?parts[0]:'';
+    const last=parts.length>1?parts.slice(1).join(' '):(parts[0]||'');
+    (bySurname[last]=bySurname[last]||[]).push({full:n, first, last});
+  });
+  const out={};
+  Object.keys(bySurname).forEach(last=>{
+    const group=bySurname[last];
+    group.forEach(e=>{
+      if(!e.first){ out[e.full]=e.last; return; }
+      let len=1;
+      while(len<e.first.length && group.some(o=>o!==e &&
+            o.first.slice(0,len).toLowerCase()===e.first.slice(0,len).toLowerCase())) len++;
+      out[e.full]=e.first.slice(0,len)+'. '+e.last;
+    });
+  });
+  return out;
 }
 
 // ─── Public points breakdown (read-only) ─────────────────────────────────
@@ -9027,7 +9050,7 @@ function _buildMidLBInner(){
     }
   }
   const twoRd=lbHasCarryIn(activeRound);
-  paintLBHead('mid-lb-head','mid-lb',twoRd,twoRd?'Total':'Net','Thru');
+  paintLBHead('mid-lb-head','mid-lb',twoRd,twoRd?'T':'Net','Thru');
 
   const allPlayers=buildLiveRows(activeRound);
   if(!allPlayers.length){
