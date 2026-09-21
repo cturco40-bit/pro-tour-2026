@@ -271,6 +271,36 @@ body.dark .icon-sun{display:none}
 .hero-meta-tag::before{content:'';width:6px;height:6px;background:var(--gold);border-radius:50%;box-shadow:0 0 0 1.5px var(--green)}
 .hero-meta-sep{width:24px;height:1px;background:var(--hair)}
 .hero-meta-date{font-family:var(--ff-mono);font-size:10px;color:var(--sub);letter-spacing:.08em}
+.champ-card{background:var(--card);border:1px solid var(--gold);border-radius:16px;box-shadow:var(--sh);padding:0;margin-bottom:16px;overflow:hidden}
+.champ-top{padding:18px 18px 16px;background:linear-gradient(180deg,var(--surf-amber,rgba(244,217,64,.10)),transparent)}
+.champ-eyebrow{display:flex;align-items:center;gap:8px;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-deep);word-break:keep-all}
+.champ-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.champ-name{font-family:var(--ff-display);font-weight:800;font-size:40px;line-height:.94;letter-spacing:-.01em;text-transform:uppercase;color:var(--green);margin:8px 0 0;word-break:keep-all}
+.champ-name.champ-name-multi{font-size:26px;line-height:1.05}
+.champ-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.champ-stats{display:flex;border-top:1px solid var(--hair)}
+.champ-stat{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--hair)}
+.champ-stat:last-child{border-right:none}
+.champ-stat-num{font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);line-height:1;word-break:keep-all}
+.champ-stat-num .dollar{font-size:15px;vertical-align:top;margin-right:1px}
+.champ-stat-num.under{color:var(--birdie,#2e7d32)}
+.champ-stat-label{font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:5px;word-break:keep-all}
+.champ-board{padding:14px 16px 4px;border-top:1px solid var(--hair)}
+.champ-board-hd{display:grid;grid-template-columns:30px 1fr 46px 46px 50px;gap:6px;font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:7px;border-bottom:1px solid var(--hair)}
+.champ-board-hd span{text-align:center}
+.champ-board-hd span.left{text-align:left}
+.champ-row{display:grid;grid-template-columns:30px 1fr 46px 46px 50px;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.champ-row:last-child{border-bottom:none}
+.champ-row .champ-pos{font-family:var(--ff-display);font-size:16px;font-weight:800;color:var(--muted);text-align:center;word-break:keep-all}
+.champ-row .champ-who{font-weight:600;color:var(--gd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.champ-row .champ-cell{font-family:var(--ff-display);font-size:16px;font-weight:800;text-align:center;color:var(--gd);word-break:keep-all}
+.champ-row .champ-cell.under{color:var(--birdie,#2e7d32)}
+.champ-row .champ-cell.over{color:var(--bogey)}
+.champ-row .champ-cell.mute{color:var(--sub);font-weight:400}
+.champ-foot{padding:12px 16px 14px;border-top:1px solid var(--hair)}
+.champ-award{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:8px 0}
+.champ-award-lbl{font-family:var(--ff-mono);font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);word-break:keep-all}
+.champ-award-name{font-weight:700;color:var(--green);font-size:14px;text-align:right}
 .hero-title{font-family:var(--ff-display);font-weight:800;font-size:42px;line-height:.92;letter-spacing:-.01em;text-transform:uppercase;color:var(--green);margin-bottom:2px}
 .hero-title em{font-style:italic;font-weight:700;color:var(--green);position:relative;display:inline-block}
 .hero-title em::after{content:'';position:absolute;bottom:4px;left:-2px;right:-2px;height:8px;background:var(--gold);z-index:-1;opacity:.55;transform:skewX(-4deg)}
@@ -734,6 +764,9 @@ body.dark .icon-sun{display:none}
     <span class="live-time" id="home-live-time"></span>
   </div>
 
+  <!-- Champion — only once both playoff rounds are settled -->
+  <div id="home-champion-card" style="display:none"></div>
+
   <!-- Hero -->
   <div class="hero" id="home-hero"></div>
 
@@ -822,7 +855,7 @@ body.dark .icon-sun{display:none}
   <div class="tbar">
     <button class="tbtn act" onclick="switchTab('season',this)">Season</button>
     <button class="tbtn" onclick="switchTab('world',this)">World Rankings</button>
-    <button class="tbtn" onclick="switchTab('playoffs',this)">Playoffs</button>
+    <button class="tbtn" id="st-tab-playoffs" onclick="switchTab('playoffs',this)">Playoffs</button>
     <button class="tbtn" onclick="switchTab('earnings',this)">Earnings</button>
     <button class="tbtn" onclick="switchTab('stats',this)">Player Stats</button>
     <button class="tbtn" onclick="switchTab('points',this)">Points</button>
@@ -2349,15 +2382,142 @@ function renderHome(){
       btn.onclick=()=>jumpToRound(display.round);
     } else if(allDone){
       ctaWrap.style.display='block';
-      if(label) label.textContent='View Final Leaderboard';
-      btn.onclick=()=>{ showPage('standings',document.getElementById('nb-standings')); };
+      // Season over: send them to the board that actually settled it, not the
+      // season points table.
+      const settled=playoffsSettled();
+      if(label) label.textContent=settled?'View Playoff Results':'View Final Leaderboard';
+      btn.onclick=settled
+        ? goToPlayoffBoard
+        : ()=>{ showPage('standings',document.getElementById('nb-standings')); };
     } else ctaWrap.style.display='none';
   }
+
+  // Champion card — leads the page once the playoffs have settled.
+  try { renderHomeChampion(); } catch(e){}
 
   // Carry-over cards — reuse the existing renderers so all data logic is preserved.
   try { renderHomeStandings(); } catch(e){}
   try { renderHomeRecentResults(); } catch(e){}
   try { renderHomePrizePool(); } catch(e){}
+}
+
+// ─── Champion card (season complete) ──────────────────────────────────────
+// The playoff field ranked the way the Playoffs tab ranks it: withdrawals keep
+// their Playoff 1 result but sit out of the order. One helper so the two views
+// can't disagree about who won on the same screen.
+function playoffFinalOrder(){
+  return buildPlayoffCombined()
+    .filter(p=>!p.wd)
+    .sort((a,b)=>a.combinedNet-b.combinedNet);
+}
+
+// Everyone level with the leader. A combined tie has no declared winner — the
+// trophy override is per-round, and money and points already split evenly — so
+// the card names co-champions rather than inventing one.
+function playoffChampions(){
+  const live=playoffFinalOrder();
+  if(!live.length) return [];
+  return live.filter(p=>p.combinedNet===live[0].combinedNet);
+}
+
+function renderHomeChampion(){
+  const el=document.getElementById('home-champion-card');
+  if(!el) return;
+
+  // Gated on playoffsSettled() — the same predicate the money uses, so the card
+  // can never crown someone while the payout still reads "Pending".
+  if(!playoffsSettled()){ el.style.display='none'; el.innerHTML=''; return; }
+
+  const live=playoffFinalOrder();
+  const champs=playoffChampions();
+  if(!champs.length){ el.style.display='none'; el.innerHTML=''; return; }
+
+  const moneyMap=calcPlayoffEarnings();
+  const ptMap=calcPlayoffPoints();
+  const tied=champs.length>1;
+  const champTotal=champs[0].combinedNet;
+  // On a tie the pooled prize is already split evenly across the tied
+  // positions, so each co-champion's own number is the honest one to show.
+  const champMoney=Math.round(moneyMap[champs[0].name]||0);
+  const champPts=Math.round(ptMap[champs[0].name]||0);
+
+  // Season winner — the points title, a different award from the combined-net
+  // championship. Mirrors the Earnings tab, which pays the outright leader.
+  const done=fullySubmittedRounds();
+  let seasonWinner=null;
+  if(REGULAR_ROUNDS.every(r=>done.has(r))){
+    const {totals}=calcSeasonStandings();
+    const ranked=PLAYERS.map(n=>({n,p:totals[n]||0})).sort((a,b)=>b.p-a.p);
+    if(ranked.length && ranked[0].p>0) seasonWinner=ranked[0].n;
+  }
+
+  const podium=live.slice(0,3);
+  const short=rosterShortNames(podium.map(p=>p.name));
+  const posLabel=(p,i)=>{
+    const same=live.filter(x=>x.combinedNet===p.combinedNet).length;
+    return same>1?'T'+(live.findIndex(x=>x.combinedNet===p.combinedNet)+1):String(i+1);
+  };
+
+  const totalCls=champTotal<0?' under':'';
+  el.style.display='block';
+  el.innerHTML=`<div class="champ-card">
+    <div class="champ-top">
+      <div class="champ-eyebrow">${seasonLabel()} &middot; ${tied?'Co-Champions':'Pro Tour Champion'}</div>
+      <h2 class="champ-name${tied?' champ-name-multi':''}">${champs.map(c=>c.name).join('<br>')}</h2>
+      <div class="champ-sub">${tied?'Tied on the combined total over both playoff rounds':'Playoff 1 + Championship, on the combined total'}</div>
+    </div>
+    <div class="champ-stats">
+      <div class="champ-stat">
+        <div class="champ-stat-num${totalCls}">${fmtNvp(champTotal)}</div>
+        <div class="champ-stat-label">Total</div>
+      </div>
+      <div class="champ-stat">
+        <div class="champ-stat-num">${champMoney>0?`<span class="dollar">$</span>${champMoney.toLocaleString()}`:'—'}</div>
+        <div class="champ-stat-label">${tied?'Prize Each':'Prize'}</div>
+      </div>
+      <div class="champ-stat">
+        <div class="champ-stat-num">${champPts>0?champPts.toLocaleString():'—'}</div>
+        <div class="champ-stat-label">Points</div>
+      </div>
+    </div>
+    <div class="champ-board">
+      <div class="champ-board-hd">
+        <span>#</span><span class="left">Player</span><span>R1</span><span>R2</span><span>Tot</span>
+      </div>
+      ${podium.map((p,i)=>{
+        // R2 reads as a running total — you start round two on whatever you
+        // finished round one on, same as the Playoffs board.
+        const running=p.r2!==null?p.combinedNet:null;
+        const cls=v=>v===null?'mute':v<0?'under':v>0?'over':'';
+        return `<div class="champ-row">
+          <div class="champ-pos">${posLabel(p,i)}</div>
+          <div class="champ-who">${short[p.name]||p.name}</div>
+          <div class="champ-cell ${cls(p.r1)}">${p.r1!==null?fmtNvp(p.r1):'—'}</div>
+          <div class="champ-cell ${cls(running)}">${running!==null?fmtNvp(running):'—'}</div>
+          <div class="champ-cell ${cls(p.combinedNet)}">${fmtNvp(p.combinedNet)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="champ-foot">
+      ${seasonWinner&&!champs.some(c=>c.name===seasonWinner)?`<div class="champ-award">
+        <span class="champ-award-lbl">Season Winner &middot; Points</span>
+        <span class="champ-award-name">${seasonWinner}</span>
+      </div>`:''}
+      ${seasonWinner&&champs.some(c=>c.name===seasonWinner)?`<div class="champ-award">
+        <span class="champ-award-lbl">Also Season Winner &middot; Points</span>
+        <span class="champ-award-name">${seasonWinner}</span>
+      </div>`:''}
+      <div class="ho-foot" style="padding-top:6px"><a onclick="goToPlayoffBoard()">Full playoff results →</a></div>
+    </div>
+  </div>`;
+}
+
+// Standings, on the Playoffs tab. switchTab() marks the button it's handed, so
+// it needs the real element — passing null throws on btn.classList.
+function goToPlayoffBoard(){
+  showPage('standings',document.getElementById('nb-standings'));
+  const btn=document.getElementById('st-tab-playoffs');
+  if(btn) switchTab('playoffs',btn);
 }
 
 function buildHomeTeeRow(round,gi,group){

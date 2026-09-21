@@ -42,6 +42,7 @@ There is no lint and no test runner. The test files are plain Node, no deps:
 ```bash
 node tests/playoff-start-strokes.test.js   # playoff start-stroke model
 node tests/season-rollover.test.js        # season archive / new-season rollover
+node tests/playoff-champion.test.js       # who the app calls champion
 ```
 
 Otherwise verify changes by loading the local preview and clicking through the affected flow.
@@ -119,6 +120,16 @@ The playoff advantage is a **start-stroke adjustment to the score, never a handi
 - Players see the whole field's starts on the Foursomes page before teeing off via `renderPlayoffAdvantageBoard(round)`, above the group cards. For the Championship the same board shows each player's Playoff 1 net instead.
 - `repairLegacyPlayoffHandicaps()` restores `hcp` from `baseHcp` on Playoff 1 groups saved by the **oldest** model, which inflated the handicap by a group bonus. That inflation would double-count against start strokes.
 - Tests: `node tests/playoff-start-strokes.test.js` — they extract the real functions out of `index.html` rather than copying them.
+
+### Champion card (Home)
+
+Once `playoffsSettled()` is true, Home leads with `renderHomeChampion()` — a gold-bordered card above the hero naming the champion, the podium's R1/R2/Total, the prize and points, and the season winner (a separate award: points leader, not combined net).
+
+- The gate is **`playoffsSettled()`**, the same predicate `calcPlayoffEarnings()` uses, so the card can never crown someone while the money still reads "Pending".
+- `playoffFinalOrder()` and `playoffChampions()` are the single source for who won. `buildPlayoffCombined()` returns **unsorted and includes withdrawals** — always filter `!wd` and sort by `combinedNet` before reading a leader off it.
+- **A combined tie has no declared winner.** The `roundWinnerOverrides` trophy override is per-round; there is no key for the combined title, and money and points already split evenly. The card names **co-champions** rather than inventing one — don't add an override to "fix" this.
+- The card and the Playoffs tab derive their order from the same helper on purpose; they render on the same journey and must not disagree.
+- Tests: `node tests/playoff-champion.test.js` — ties, withdrawals, and the pre-settlement gate.
 
 ### Season archive & rollover
 
