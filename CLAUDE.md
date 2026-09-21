@@ -123,12 +123,13 @@ The playoff advantage is a **start-stroke adjustment to the score, never a handi
 
 ### Champion card (Home)
 
-Once `playoffsSettled()` is true, Home leads with `renderHomeChampion()` — a gold-bordered card above the hero naming the champion, the podium's R1/R2/Total, the prize and points, and the season winner (a separate award: points leader, not combined net).
+Once `playoffsSettled()` is true — i.e. the final round is complete — `renderHomeChampion()` **replaces the Round Stats card** (`#home-stats-card`, which it hides) in the same slot below the hero. A purse and a group count aren't the story once the season is decided. It reuses `.stats-card` chrome so it reads as the same card, and carries the champion's name, Total / Prize / Points in the 3-cell grid, the **top 4** on R1/R2/Total, and the season winner (a separate award: points leader, not combined net). The hero is untouched, and there is deliberately **no banner above it**.
 
 - The gate is **`playoffsSettled()`**, the same predicate `calcPlayoffEarnings()` uses, so the card can never crown someone while the money still reads "Pending".
 - `playoffFinalOrder()` and `playoffChampions()` are the single source for who won. `buildPlayoffCombined()` returns **unsorted and includes withdrawals** — always filter `!wd` and sort by `combinedNet` before reading a leader off it.
 - **A combined tie has no declared winner.** The `roundWinnerOverrides` trophy override is per-round; there is no key for the combined title, and money and points already split evenly. The card names **co-champions** rather than inventing one — don't add an override to "fix" this.
 - The card and the Playoffs tab derive their order from the same helper on purpose; they render on the same journey and must not disagree.
+- The "Previous Round Scores" card selects from `REGULAR_ROUNDS` only, so after the playoffs it would be claiming to show the previous round while showing Round 8. Its title is set from the round it actually rendered (`#home-recent-title` → "Round 8 Scores"); the playoff result lives on the champion card.
 - Tests: `node tests/playoff-champion.test.js` — ties, withdrawals, and the pre-settlement gate.
 
 ### Season archive & rollover
