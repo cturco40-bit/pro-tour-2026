@@ -826,6 +826,7 @@ body.dark .icon-sun{display:none}
     <button class="tbtn" onclick="switchTab('earnings',this)">Earnings</button>
     <button class="tbtn" onclick="switchTab('stats',this)">Player Stats</button>
     <button class="tbtn" onclick="switchTab('points',this)">Points</button>
+    <button class="tbtn" onclick="switchTab('history',this)">History</button>
   </div>
   <div id="standings-content"></div>
 </div>
@@ -1174,6 +1175,55 @@ body.dark .icon-sun{display:none}
           <button onclick="exportRoundData()" style="width:100%;padding:13px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
             📥 Download Round-by-Round Scorecards
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEASON ARCHIVE -->
+    <div class="as-section">
+      <div class="as-section-hdr" onclick="toggleAS('season-archive');renderSeasonArchiveList()">
+        <h3>Season Archive</h3>
+        <svg class="as-garr" id="as-garr-season-archive" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="as-section-body" id="as-body-season-archive">
+        <div style="background:var(--surf-tint);border-left:4px solid var(--green);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13px;color:var(--green-deep);margin-bottom:14px;line-height:1.6">
+          Saves the whole season &mdash; every scorecard, group, course, penalty, photo and final table &mdash; and can then open the next one. Archived seasons stay readable here forever.
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Admin PIN (required below)</div>
+          <input class="as-num" type="number" id="as-season-pin" placeholder="&bull;&bull;&bull;&bull;" style="width:90px">
+        </div>
+
+        <!-- Archive only -->
+        <div style="border:1px solid var(--hair);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--card)">
+          <div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:6px">Archive This Season</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Snapshots the live season to the cloud and downloads a JSON copy. Changes nothing else &mdash; safe to run any time, mid-season included.</div>
+          <button id="as-archive-btn" onclick="archiveSeasonOnly()" style="width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer">Archive This Season</button>
+        </div>
+
+        <!-- Archived seasons -->
+        <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px">Archived Seasons</div>
+        <div id="as-archive-list"></div>
+
+        <!-- Rollover -->
+        <div style="font-size:12px;font-weight:800;color:var(--red-deep);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 8px">Start a New Season</div>
+        <div style="border:1px solid #f5c0c0;border-radius:10px;padding:12px;background:var(--surf-red)">
+          <div style="font-size:12px;color:var(--red-deep);margin-bottom:10px;line-height:1.7">
+            Archives the current season first, then clears scores, groups, penalties, course data, sponsor logos, photos and the calendar.<br>
+            <strong>Kept:</strong> roster, entry fees, points tables, admin PIN.<br>
+            <strong>Carried forward:</strong> each player's final world-ranking total becomes their starting points.<br>
+            Nothing is cleared until the archive is written, verified and downloaded.
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--red-deep);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">New Season Year</div>
+            <input class="as-num" type="number" id="as-next-season-year" style="width:110px;border-color:#f5c0c0">
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--red-deep);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Type <span id="as-rollover-phrase">ARCHIVE</span> to confirm</div>
+            <input class="finp" type="text" id="as-rollover-confirm" placeholder="ARCHIVE" autocapitalize="characters" autocomplete="off" style="width:100%;border-color:#f5c0c0">
+          </div>
+          <button id="as-rollover-btn" onclick="archiveSeasonAndStartNew()" style="width:100%;padding:12px;background:#8b0000;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer">Archive &amp; Start New Season</button>
         </div>
       </div>
     </div>
@@ -1655,7 +1705,11 @@ body.dark .icon-sun{display:none}
 <script>
 // ═══════════════ DATA ═══════════════
 const PLAYERS=["Adam Wallace","Adrian Perpetua","Alex Marchese","Andrew Piacentini","Anthony Arci","Anthony Piacentini","Christian Turco","Daniel Alonzi","Daniel Mossa","Dave Patullo","Elbron Barzegar","Fabio Marchese","Gaetano Tropea","Gianluca Divona","Gordo Bannister","Jean-Paul Piacente","Joe Cortellucci","Jon Cicchillo","Mario Colalillo","Mark Alonzi","Mark DiPoce","Mark Metallo","Martin Pena","Phil Schieda","Salvatore Bruzzese","Stephen Ceccanese","Stephen Pulla"];
-const WR_BASE={
+// Starting world-ranking points carried into this season. Seeded from the 2026
+// literal below, but `wrBase` in Firebase wins once a season has been archived —
+// the rollover writes each player's final Total Points there, so carry-forward is
+// data, not a code edit. See archiveSeasonAndStartNew().
+let WR_BASE={
   "Mark Metallo":4371.5,"Daniel Alonzi":3406.0,"Andrew Piacentini":3191.5,
   "Stephen Ceccanese":3136.5,"Christian Turco":2869.5,"Adrian Perpetua":2738.4,
   "Jean-Paul Piacente":2466.5,"Elbron Barzegar":2424.0,"Salvatore Bruzzese":2419.2,
@@ -1678,6 +1732,37 @@ const CALENDAR=[
   {round:"Playoff 1",date:"TBD",type:"playoff",course:"",eventName:"",teeTime:""},
   {round:"Championship",date:"TBD",type:"playoff",course:"",eventName:"",teeTime:""}
 ];
+
+// ─── Season identity ──────────────────────────────────────────────────────
+// The live season. Overwritten by the `seasonMeta` listener; bumped by the
+// season rollover in Admin. Every user-facing year string reads from here so a
+// new season needs no code edit.
+let seasonMeta={year:2026,label:"2026"};
+function seasonYear(){ return Number(seasonMeta.year)||2026; }
+function seasonLabel(){ return String(seasonMeta.label||seasonYear()); }
+// "26" for "Season 26" — the league counts seasons by the last two digits of the year.
+function seasonShort(){ return String(seasonYear()).slice(-2); }
+
+// Pushes the season year into the chrome that isn't re-rendered by a page render:
+// the document title and the meta description. The PWA manifest name is baked at
+// install time and can't be updated programmatically — an iOS reinstall is the
+// only way to change the home-screen label.
+function applySeasonBranding(){
+  try{
+    document.title='The Pro Tour '+seasonLabel();
+    const m=document.querySelector('meta[name="description"]');
+    if(m) m.setAttribute('content','The Pro Tour '+seasonLabel()+' Golf League — schedules, scoring, and leaderboards.');
+  }catch(e){}
+}
+
+// A fresh 10-round calendar for a new season. Complete round objects, not
+// partials — the `calendar` listener does Object.assign(CALENDAR[i],c), so any
+// field left out would keep last season's value in memory.
+function blankCalendar(){
+  return CALENDAR.map(c=>({
+    round:c.round, type:c.type, date:"TBD", course:"", eventName:"", teeTime:""
+  }));
+}
 // Returns display title for a round — "Swish Gin Cup — Round 1" or just "Round 1"
 function roundTitle(round){
   const cal=CALENDAR.find(c=>c.round===round);
@@ -2138,12 +2223,12 @@ function renderHome(){
   if(sub){
     const status=isToday?'Live':isFuture?'Upcoming':lastDone?'Off-Week':'Pre-Season';
     const roundLbl=display?display.round.replace(/^Round /,'R').replace(/^Playoff /,'P').replace(/^Championship/,'CH'):'—';
-    sub.innerHTML=`Season 26 <span class="sep">/</span> ${roundLbl} <span class="sep">/</span> ${status}`;
+    sub.innerHTML=`Season ${seasonShort()} <span class="sep">/</span> ${roundLbl} <span class="sep">/</span> ${status}`;
   }
 
   if(!display){
     hero.innerHTML=`<div class="hero-meta"><span class="hero-meta-tag">Season</span></div>
-      <h1 class="hero-title">2026<br>Season</h1>
+      <h1 class="hero-title">${seasonLabel()}<br>Season</h1>
       <div class="hero-round">Schedule the calendar in Admin to see the next round</div>`;
     if(liveStrip) liveStrip.style.display='none';
     if(statsCard) statsCard.style.display='none';
@@ -3989,9 +4074,9 @@ function addToCalendar(round,dateStr,course){
   // Format: YYYYMMDD
   const pad=n=>String(n).padStart(2,'0');
   const ymd=`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
-  const title=encodeURIComponent(roundTitle(round)+' — The Pro Tour 2026');
+  const title=encodeURIComponent(roundTitle(round)+' — The Pro Tour '+seasonLabel());
   const loc=encodeURIComponent(course||'');
-  const details=encodeURIComponent('Pro Tour 2026 Golf League');
+  const details=encodeURIComponent('Pro Tour '+seasonLabel()+' Golf League');
   // Google Calendar URL (works on all devices)
   const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${ymd}/${ymd}&location=${loc}&details=${details}`;
   window.open(url,'_blank');
@@ -6158,7 +6243,7 @@ function renderStandings(){
       iw=jw;
     }
     el.innerHTML=`<div class="info-b">
-      Starting points + 2026 season points + playoff points.<br>
+      Starting points + ${seasonLabel()} season points + playoff points.<br>
       Playoff 1 and the Championship each award playoff points on their own result.
       They lift your world ranking only &mdash; season standings stay the best 5 of 8 regular rounds.
     </div>
@@ -6287,7 +6372,63 @@ function renderStandings(){
     renderPlayerStats();
   } else if(activeTab==='points'){
     renderPointsBreakdown();
+  } else if(activeTab==='history'){
+    renderSeasonHistory(el);
   }
+}
+
+// ─── Past seasons (read-only, everyone) ───────────────────────────────────
+// Archived seasons are the league's record, so they live on the Standings page
+// where the players are, not behind the admin PIN. The board is drawn from the
+// summary stored at archive time — never recomputed — so a finished season
+// reads the same in five years as it did the day it was archived.
+function renderSeasonHistory(el){
+  el.innerHTML=`<div class="card"><div class="ctitle">Past Seasons</div>
+    <div style="font-size:13px;color:var(--muted);padding:10px 0">Loading…</div></div>`;
+  fbGet(ARCHIVE_INDEX_PATH).then(data=>{
+    const years=data?Object.keys(data).sort((a,b)=>Number(b)-Number(a)):[];
+    if(!years.length){
+      el.innerHTML=`<div class="card" style="text-align:center;padding:34px 20px">
+        <div class="ctitle" style="justify-content:center">Past Seasons</div>
+        <div class="ho-empty" style="margin-top:12px">No seasons archived yet</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:6px">${seasonLabel()} is the first season on the books.</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML=years.map(y=>{
+      const m=(data[y]&&data[y].meta)||{};
+      const sum=(data[y]&&data[y].summary)||{};
+      const champ=m.champion||sum.champion||null;
+      const winner=m.seasonWinner||sum.seasonWinner||null;
+      const top=(sum.standings||[]).slice(0,3);
+      return `<div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div style="font-family:var(--ff-display);font-size:34px;font-weight:800;color:var(--green);line-height:.9;word-break:keep-all">${y}</div>
+          <div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);word-break:keep-all">${m.scorecards||0} Cards</div>
+        </div>
+        ${champ?`<div class="ho-row" style="border-top:1px solid var(--hair)">
+          <div class="ho-pos">1</div>
+          <div class="ho-name-wrap"><div class="ho-name">${champ}</div><div class="ho-meta">Champion</div></div>
+          <div></div>
+        </div>`:''}
+        ${winner&&winner!==champ?`<div class="ho-row">
+          <div class="ho-pos"></div>
+          <div class="ho-name-wrap"><div class="ho-name">${winner}</div><div class="ho-meta">Season Winner</div></div>
+          <div></div>
+        </div>`:''}
+        ${top.length?`<div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px">Season Points</div>
+        ${top.map(r=>`<div class="ho-row">
+          <div class="ho-pos">${r.rank}</div>
+          <div class="ho-name-wrap"><div class="ho-name">${r.name}</div></div>
+          <div><div class="ho-val">${r.points}</div><div class="ho-val-sub">Pts</div></div>
+        </div>`).join('')}`:''}
+        <button onclick="viewArchivedSeason('${y}')" style="width:100%;margin-top:12px;padding:11px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:var(--ff-mono);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer">Full ${y} Results</button>
+      </div>`;
+    }).join('');
+  }).catch(e=>{
+    el.innerHTML=`<div class="card"><div class="ctitle">Past Seasons</div>
+      <div style="font-size:13px;color:var(--muted);padding:10px 0">Couldn't load past seasons — ${e.message}</div></div>`;
+  });
 }
 
 // "Christian Turco" → "C. Turco", for tables too narrow to carry a full name.
@@ -7469,14 +7610,36 @@ function saveOneScorecard(key){
 // ─── Local backup of in-progress scores (B2 fix) ───────────────────────────
 // Mirrors roundScores to localStorage on every change so a closed browser /
 // dropped connection at the course doesn't lose entered holes.
-const RSCORES_BACKUP_KEY='protour_rscores_backup_v1';
-const NOTIFIED_SUBMITS_KEY='protour_notified_submits_v1';
+// Season-scoped so a rollover can't resurrect last season. These backups live on
+// 27 phones; if the keys were fixed, the recovery block below and the "Restore
+// groups from local backup" button would push the archived season straight back
+// into the freshly-cleared cloud. Suffixing with the year retires them instead.
+// One-time carry-over of the pre-season-scoping backups. Without this, shipping
+// the scoped keys would orphan any in-progress card sitting on a phone at upgrade
+// time — the very data the backup exists to protect. Runs once per key, ever.
+function migrateLegacyBackupKeys(){
+  [['protour_rscores_backup_v1', rsBackupKey],
+   ['protour_active_groups_backup_v1', agroupsBackupKey],
+   ['protour_notified_submits_v1', notifiedSubmitsKey]].forEach(([oldKey,newKeyFn])=>{
+    try{
+      const nk=newKeyFn();
+      if(localStorage.getItem(nk)!==null) return;      // already scoped — leave it
+      const v=localStorage.getItem(oldKey);
+      if(v===null) return;
+      localStorage.setItem(nk, v);
+      localStorage.removeItem(oldKey);                 // retire the unscoped copy
+    }catch(e){}
+  });
+}
+
+function rsBackupKey(){ return 'protour_rscores_backup_v1_'+seasonYear(); }
+function notifiedSubmitsKey(){ return 'protour_notified_submits_v1_'+seasonYear(); }
 function backupRoundScoresLocal(){
-  try{ localStorage.setItem(RSCORES_BACKUP_KEY, JSON.stringify(roundScores)); }catch(e){}
+  try{ localStorage.setItem(rsBackupKey(), JSON.stringify(roundScores)); }catch(e){}
 }
 function restoreRoundScoresLocal(){
   try{
-    const s=localStorage.getItem(RSCORES_BACKUP_KEY);
+    const s=localStorage.getItem(rsBackupKey());
     if(!s) return {};
     return JSON.parse(s)||{};
   }catch(e){ return {}; }
@@ -7486,13 +7649,13 @@ function countFilledHoles(sc){
   return sc.players.reduce((a,p)=>a+(p.holes||[]).filter(h=>h!==null&&h!==undefined).length, 0);
 }
 
-const AGROUPS_BACKUP_KEY='protour_active_groups_backup_v1';
+function agroupsBackupKey(){ return 'protour_active_groups_backup_v1_'+seasonYear(); }
 function backupActiveGroupsLocal(){
-  try{ localStorage.setItem(AGROUPS_BACKUP_KEY, JSON.stringify(activeGroups||{})); }catch(e){}
+  try{ localStorage.setItem(agroupsBackupKey(), JSON.stringify(activeGroups||{})); }catch(e){}
 }
 function restoreActiveGroupsLocal(){
   try{
-    const s=localStorage.getItem(AGROUPS_BACKUP_KEY);
+    const s=localStorage.getItem(agroupsBackupKey());
     if(!s) return null;
     return JSON.parse(s)||null;
   }catch(e){ return null; }
@@ -7550,6 +7713,11 @@ let _firebaseInited = false;
 function initFirebase(){
   if(_firebaseInited) return; // guard: don't stack listeners if auth handler re-fires
   _firebaseInited = true;
+  // Before any listener can fire: seasonMeta is still the code default here, so a
+  // legacy backup is always filed under the season it was written in. A player who
+  // upgrades AFTER a rollover files theirs under the old year, where nothing reads
+  // it — which is exactly right.
+  migrateLegacyBackupKeys();
   try{ db = firebase.database(); } catch(e){ console.warn('Firebase db init error',e); }
   showSyncBanner('Connecting…');
 
@@ -7563,7 +7731,7 @@ function initFirebase(){
     // Without this, every app open re-notifies for every already-submitted card,
     // because `roundScores` starts empty on each page load.
     let notifiedSubmits;
-    try{ notifiedSubmits = new Set(JSON.parse(localStorage.getItem(NOTIFIED_SUBMITS_KEY)||'[]')); }
+    try{ notifiedSubmits = new Set(JSON.parse(localStorage.getItem(notifiedSubmitsKey())||'[]')); }
     catch(e){ notifiedSubmits = new Set(); }
 
     // Snapshot the currently-open scorecard key so we don't overwrite it mid-entry
@@ -7673,7 +7841,7 @@ function initFirebase(){
       }
     });
     if(notifiedChanged){
-      try{ localStorage.setItem(NOTIFIED_SUBMITS_KEY, JSON.stringify([...notifiedSubmits])); }catch(e){}
+      try{ localStorage.setItem(notifiedSubmitsKey(), JSON.stringify([...notifiedSubmits])); }catch(e){}
     }
     // Re-render affected views
     if(document.getElementById('pg-foursomes').classList.contains('act')) renderFoursomePage();
@@ -7738,6 +7906,29 @@ function initFirebase(){
     if(data){ settings={...DEFAULT_SETTINGS,...data}; }
   });
 
+  // Live listener: season identity. Drives every user-facing year string AND the
+  // season suffix on the localStorage backup keys, so it must be in the critical
+  // load set below — the recovery block can't run until the year is known.
+  fbOn('seasonMeta', data=>{
+    if(data && typeof data==='object'){
+      seasonMeta={year:Number(data.year)||seasonMeta.year, label:String(data.label||data.year||seasonMeta.label)};
+      applySeasonBranding();
+      if(document.getElementById('pg-home').classList.contains('act')) renderHome();
+      if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
+    }
+  });
+
+  // Live listener: starting world-ranking points. Written by the season rollover
+  // from the previous season's final totals; absent until the first archive, in
+  // which case the WR_BASE literal stands.
+  fbOn('wrBase', data=>{
+    if(data && typeof data==='object' && !Array.isArray(data)){
+      WR_BASE=data;
+      if(document.getElementById('pg-standings').classList.contains('act')) renderStandings();
+      if(document.getElementById('pg-home').classList.contains('act')) renderHome();
+    }
+  });
+
   // Live listener: roster
   fbOn('roster', data=>{
     if(data && Array.isArray(data)){
@@ -7791,7 +7982,7 @@ function initFirebase(){
 
   // Wait for ALL critical data to load then do a full re-render
   let _syncLoaded = 0;
-  const _totalToLoad = 5; // roundScores, activeGroups, calendar, courseInfo, settings
+  const _totalToLoad = 6; // roundScores, activeGroups, calendar, courseInfo, settings, seasonMeta
   const _checkSyncLoaded = () => {
     if(++_syncLoaded >= _totalToLoad){
       // B2 recovery: if local backup has an in-progress scorecard with MORE
@@ -7833,6 +8024,11 @@ function initFirebase(){
   db.ref('calendar').once('value',         ()=>_checkSyncLoaded());
   db.ref('courseInfo').once('value',       ()=>_checkSyncLoaded());
   db.ref('settings').once('value',         ()=>_checkSyncLoaded());
+  // seasonMeta gates the season-scoped backup keys — the local-recovery block in
+  // _checkSyncLoaded must not run before we know which season we're in. Counted
+  // on failure too: if security rules ever deny this path, a callback that never
+  // fires would leave every player stuck behind the sync gate.
+  db.ref('seasonMeta').once('value').then(()=>_checkSyncLoaded(), ()=>_checkSyncLoaded());
   // Safety fallback — force re-render after 6s no matter what
   setTimeout(()=>{ hideSyncBanner(); try{renderHome();}catch(e){} }, 6000);
 }
@@ -8518,6 +8714,391 @@ function refreshAllLeaderboards(){
   }
 }
 
+// ═══════════════ SEASON ARCHIVE & ROLLOVER ═══════════════
+// Snapshots the whole live tree to seasons/<year>/, then resets it for the next
+// season. Ordering is the safety model - nothing is cleared until the archive has
+// been written AND read back AND downloaded to the commissioner's device.
+//
+// Live paths that make up a season. Read and stored VERBATIM (including the ___
+// key encoding roundScores/penalties use) so an archive is a faithful copy that
+// could be written straight back.
+const SEASON_PATHS=[
+  'roundScores','activeGroups','calendar','settings','penalties','blockRounds',
+  'coursePars','courseStrokeIndex','courseInfo','sponsorLogos','scorecardPhotos',
+  'roundWinnerOverrides','roster','wrBase','auditLog'
+];
+// Cleared when the new season starts. `roster`, `settings` and `adminPin` carry
+// forward - the league, the fees and the PIN don't reset with the calendar.
+const SEASON_CLEAR_PATHS=[
+  'roundScores','activeGroups','penalties','blockRounds','coursePars',
+  'courseStrokeIndex','courseInfo','sponsorLogos','scorecardPhotos',
+  'roundWinnerOverrides','auditLog'
+];
+
+// How long the Cloud Function push senders stay muted during a rollover. Clearing
+// activeGroups writes null to ~10 round paths, and notifyGroupChange would turn
+// that into a "you've been removed from the groups" push for every player in
+// every round. See the rollover/until guard in functions/index.js.
+const ROLLOVER_MUTE_MS=120000;
+
+// An archive is split across two nodes on purpose:
+//   seasons/<year>/{meta,summary}  - the readable record. Small, and read by
+//                                   every player who opens Standings > History.
+//   seasonArchives/<year>          - the verbatim snapshot, scorecard photos and
+//                                   all. Megabytes. Only ever fetched when the
+//                                   commissioner downloads the raw file.
+// Keeping them together would mean every phone pulling the whole photo library
+// to render a champion's name.
+const ARCHIVE_INDEX_PATH='seasons';
+const ARCHIVE_DATA_PATH='seasonArchives';
+
+function _fmtBytes(n){
+  if(n<1024) return n+' B';
+  if(n<1048576) return (n/1024).toFixed(0)+' KB';
+  return (n/1048576).toFixed(1)+' MB';
+}
+
+// Reads every season path in parallel. Values are whatever RTDB holds - no
+// normalization, no key rewriting.
+function snapshotSeasonData(){
+  return Promise.all(SEASON_PATHS.map(path=>fbGet(path).then(v=>[path,v])))
+    .then(pairs=>{
+      const out={};
+      pairs.forEach(([k,v])=>{ if(v!==null && v!==undefined) out[k]=v; });
+      return out;
+    });
+}
+
+// The human-readable side of the archive, computed from in-memory state while the
+// season is still live. This is what the archive viewer reads, so a future change
+// to the scoring math can never silently restate a finished season.
+function buildSeasonSummary(){
+  const {totals}=calcSeasonStandings();
+  const roundsPlayed={};
+  Object.values(roundScores).forEach(sc=>{
+    if(!sc.submitted||!REGULAR_ROUNDS.includes(sc.round)) return;
+    (sc.players||[]).forEach(p=>{ roundsPlayed[p.name]=(roundsPlayed[p.name]||0)+1; });
+  });
+  const standings=PLAYERS.map(n=>({name:n,points:Math.round(totals[n]||0),played:roundsPlayed[n]||0}))
+    .sort((a,b)=>b.points-a.points).map((x,i)=>({rank:i+1,...x}));
+
+  const world=calcWorldRankings().map(p=>({rank:p.r,name:p.n,total:p.p,
+    start:Math.round((WR_BASE[p.n]||0)*10)/10, season:Math.round(p.season), playoff:Math.round(p.playoff)}));
+
+  // Season earnings. Mirrors the Earnings tab exactly - same per-round dedupe,
+  // same season-winner prize, and calcPlayoffEarnings() for the playoff money
+  // (which pays nothing until both playoff rounds are in the book).
+  const earn={};
+  const done=fullySubmittedRounds();
+  const byRound={};
+  Object.values(roundScores).forEach(sc=>{
+    if(!sc.submitted||!done.has(sc.round)) return;
+    if(!byRound[sc.round]) byRound[sc.round]=[];
+    byRound[sc.round].push(...(sc.players||[]));
+  });
+  Object.entries(byRound).forEach(([round,players])=>{
+    if(!REGULAR_ROUNDS.includes(round)) return;
+    const seen={};
+    players.forEach(pl=>{
+      const miss=(pl.holes||[]).filter(h=>h===null||h===undefined).length;
+      if(pl.dnf||miss>0) return;
+      const effNet=getEffectiveNet(pl,round);
+      if(!seen[pl.name]||effNet<seen[pl.name].effNet) seen[pl.name]={...pl,effNet};
+    });
+    const sorted=Object.values(seen).sort((a,b)=>a.effNet-b.effNet);
+    const moneyMap=assignMoneyWithTies(sorted, calcRoundPayouts(round), (window._roundWinnerOverrides||{})[round]||null);
+    Object.entries(moneyMap).forEach(([name,amt])=>{ earn[name]=(earn[name]||0)+amt; });
+  });
+
+  // Season winner prize - awarded after all 8 regular rounds, before playoffs.
+  const seasonWinnerPrize=Math.max(0,settings.seasonWinnerPrize||0);
+  const allRegularDone=REGULAR_ROUNDS.every(r=>done.has(r));
+  let seasonWinner=null;
+  if(allRegularDone && standings.length && standings[0].points>0){
+    seasonWinner=standings[0].name;
+    if(seasonWinnerPrize>0) earn[seasonWinner]=(earn[seasonWinner]||0)+seasonWinnerPrize;
+  }
+
+  Object.entries(calcPlayoffEarnings()).forEach(([name,amt])=>{ earn[name]=(earn[name]||0)+amt; });
+
+  // Playoff board, ranked the way the Playoffs tab ranks it: withdrawals keep
+  // their Playoff 1 result but sit below the field and out of the ranking.
+  const combined=buildPlayoffCombined();
+  const live=combined.filter(x=>!x.wd).sort((a,b)=>a.combinedNet-b.combinedNet);
+  const withdrawn=combined.filter(x=>x.wd).sort((a,b)=>a.combinedNet-b.combinedNet);
+  const playoff=live.map((x,i)=>({rank:i+1,name:x.name,total:x.combinedNet,r1:x.r1,r2:x.r2,wd:false}))
+    .concat(withdrawn.map(x=>({rank:null,name:x.name,total:x.combinedNet,r1:x.r1,r2:x.r2,wd:true})));
+  // The champion is only a champion once both rounds are settled.
+  const champion=(playoffsSettled()&&live.length)?live[0].name:null;
+
+  const earnings=Object.entries(earn).map(([name,amount])=>({name,amount:Math.round(amount)}))
+    .sort((a,b)=>b.amount-a.amount);
+
+  return {standings, world, earnings, playoff, champion, seasonWinner};
+}
+
+// Next season's starting world-ranking points = this season's final totals.
+function nextWrBase(){
+  const out={};
+  calcWorldRankings().forEach(p=>{ out[p.n]=Math.round(p.p*10)/10; });
+  return out;
+}
+
+function _downloadJson(obj, filename){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+// Writes the archive and proves it landed. Throws if the read-back doesn't match
+// what we sent - the caller treats that as "do not clear anything".
+async function _writeArchive(year, data, summary){
+  if(!db) throw new Error('No database connection');
+  const index=db.ref(ARCHIVE_INDEX_PATH+'/'+year);
+  await db.ref(ARCHIVE_DATA_PATH+'/'+year).set(data);
+  await index.child('summary').set(summary);
+  // meta last - its presence means the payload above completed.
+  await index.child('meta').set({
+    year, label:seasonLabel(), archivedAt:Date.now(),
+    archivedBy:(currentUser?.email||'').replace('@protour2026.com','')||'unknown',
+    champion:summary.champion||null, seasonWinner:summary.seasonWinner||null,
+    scorecards:Object.keys(data.roundScores||{}).length
+  });
+  // Verify against the payload, not the marker: a rules path that allowed meta
+  // but not data would otherwise read as success.
+  const back=await fbGet(ARCHIVE_DATA_PATH+'/'+year+'/roundScores');
+  const wrote=Object.keys(data.roundScores||{}).length;
+  const got=back?Object.keys(back).length:0;
+  if(got!==wrote) throw new Error('Archive verify failed - wrote '+wrote+' scorecards, read back '+got+'. Nothing was cleared.');
+}
+
+// --- Archive only (no reset) ----------------------------------------------
+// Safe to run any time - a mid-season snapshot is a fine habit.
+// This section keeps its own PIN box: toggleAS() closes every other section when
+// one opens, so the Clear Scores PIN input isn't reachable from here.
+function checkSeasonPin(){
+  const el=document.getElementById('as-season-pin');
+  const entered=String(el?.value||'').trim();
+  if(!entered){ showToast('Enter your Admin PIN first'); return false; }
+  if(entered!==getPin()){ showToast('Incorrect PIN'); if(el) el.value=''; return false; }
+  return true;
+}
+
+async function archiveSeasonOnly(){
+  if(!checkSeasonPin()) return;
+  const year=seasonYear();
+  const btn=document.getElementById('as-archive-btn');
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='Archiving...'; }
+    const existing=await fbGet(ARCHIVE_INDEX_PATH+'/'+year+'/meta');
+    if(existing && !confirm('Season '+year+' is already archived ('+new Date(existing.archivedAt||0).toLocaleString()+').\n\nOverwrite it with the current live data?')){
+      showToast('Archive cancelled'); return;
+    }
+    const data=await snapshotSeasonData();
+    const summary=buildSeasonSummary();
+    const size=JSON.stringify({data,summary}).length;
+    if(!confirm('Archive Season '+year+'?\n\nSnapshot size: '+_fmtBytes(size)+'\nScorecards: '+Object.keys(data.roundScores||{}).length+'\n\nSaves to seasons/'+year+' and downloads a JSON copy. Nothing is cleared.')){
+      showToast('Archive cancelled'); return;
+    }
+    await _writeArchive(year, data, summary);
+    _downloadJson({meta:{year,archivedAt:Date.now()},data,summary}, 'ProTour_'+year+'_archive.json');
+    showToast('Season '+year+' archived');
+    renderSeasonArchiveList();
+  }catch(e){
+    console.error('archive failed',e);
+    alert('Archive failed - nothing was changed.\n\n'+(e&&e.message?e.message:e));
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='Archive This Season'; }
+  }
+}
+
+// --- Archive + start the next season --------------------------------------
+async function archiveSeasonAndStartNew(){
+  if(!checkSeasonPin()) return;
+  const year=seasonYear();
+  const nextYear=Number(document.getElementById('as-next-season-year')?.value)||year+1;
+  if(nextYear<=year && !confirm('Next season is set to '+nextYear+", which isn't after "+year+'. Continue anyway?')) return;
+
+  const typed=String(document.getElementById('as-rollover-confirm')?.value||'').trim().toUpperCase();
+  if(typed!=='ARCHIVE '+year){
+    alert('Type exactly:  ARCHIVE '+year+'\n\nin the confirmation box to start the rollover.');
+    return;
+  }
+
+  const btn=document.getElementById('as-rollover-btn');
+  let muted=false;
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='Working...'; }
+
+    const existing=await fbGet(ARCHIVE_INDEX_PATH+'/'+year+'/meta');
+    if(existing && !confirm('Season '+year+' is ALREADY archived ('+new Date(existing.archivedAt||0).toLocaleString()+', '+(existing.scorecards||0)+' scorecards).\n\nOverwriting it now would replace that archive with the current live data. Continue?')){
+      showToast('Rollover cancelled'); return;
+    }
+
+    const data=await snapshotSeasonData();
+    const summary=buildSeasonSummary();
+    const carry=nextWrBase();
+    const size=JSON.stringify({data,summary}).length;
+
+    const ok=confirm(
+      'ARCHIVE '+year+' AND START '+nextYear+'\n\n'+
+      'Snapshot: '+_fmtBytes(size)+' - '+Object.keys(data.roundScores||{}).length+' scorecards\n'+
+      'Champion: '+(summary.champion||'-')+'\n'+
+      'Season winner: '+(summary.seasonWinner||'-')+'\n\n'+
+      'This will:\n'+
+      '- save everything to '+ARCHIVE_INDEX_PATH+'/'+year+'\n'+
+      '- download a JSON copy to this device\n'+
+      '- carry final world-ranking points into '+nextYear+'\n'+
+      '- clear scores, groups, penalties, courses, photos and the calendar\n\n'+
+      'Roster, fees, points tables and the admin PIN are kept.');
+    if(!ok){ showToast('Rollover cancelled'); return; }
+
+    // 1. Archive + verify. Throws before anything is cleared if it didn't land.
+    await _writeArchive(year, data, summary);
+
+    // 2. Off-Firebase copy, before a single clear. This is the copy that survives
+    //    losing the Firebase project itself.
+    _downloadJson({meta:{year,archivedAt:Date.now()},data,summary}, 'ProTour_'+year+'_archive.json');
+
+    // 3. Mute the push senders for the duration (see ROLLOVER_MUTE_MS).
+    await fbSet('rollover/until', Date.now()+ROLLOVER_MUTE_MS);
+    muted=true;
+
+    // 4. Flip the season BEFORE clearing anything. Every device's localStorage
+    //    backup keys are suffixed with the season year, so this one write retires
+    //    all 27 local copies at once. Do it after the clears instead and there's a
+    //    live window where a player staring at a suddenly-empty Foursomes page
+    //    could tap "Restore groups from local backup" and push the archived season
+    //    straight back into the cloud.
+    await fbSet('seasonMeta', {year:nextYear, label:String(nextYear)});
+    seasonMeta={year:nextYear, label:String(nextYear)};
+    applySeasonBranding();
+
+    // 5. Clear the live season.
+    for(const path of SEASON_CLEAR_PATHS) await fbSet(path, null);
+    roundScores={}; activeGroups={}; penalties={}; blockRounds={};
+    coursePars={}; courseStrokeIndex={}; sponsorLogos={}; scorecardPhotos={};
+    window._roundWinnerOverrides={};
+
+    // 6. Carry-forward + a blank calendar for the new year.
+    await fbSet('wrBase', carry);
+    WR_BASE=carry;
+    const fresh=blankCalendar();
+    await fbSet('calendar', fresh);
+    fresh.forEach((c,i)=>{ if(CALENDAR[i]) Object.assign(CALENDAR[i],c); });
+
+    showToast('Season '+nextYear+' is open');
+    alert('Done.\n\nSeason '+year+' is archived and downloaded to this device.\nSeason '+nextYear+' is live with a blank calendar and carried-forward world-ranking points.\n\nNext: set the '+nextYear+' dates in Admin > Calendar.');
+  }catch(e){
+    console.error('rollover failed',e);
+    alert('Rollover failed.\n\n'+(e&&e.message?e.message:e)+'\n\nIf this happened before the clear step, nothing was changed.');
+  }finally{
+    if(muted){ try{ await fbSet('rollover/until', null); }catch(e){} }
+    const c=document.getElementById('as-rollover-confirm'); if(c) c.value='';
+    const pin=document.getElementById('as-season-pin'); if(pin) pin.value='';
+    if(btn){ btn.disabled=false; btn.textContent='Archive & Start New Season'; }
+    try{ renderSeasonArchiveList(); renderHome(); renderStandings(); }catch(e){}
+    if(document.getElementById('pg-foursomes')?.classList.contains('act')) renderFoursomePage();
+  }
+}
+
+// --- Archive viewer -------------------------------------------------------
+function renderSeasonArchiveList(){
+  // Seed the rollover inputs from the live season so the confirmation phrase and
+  // the next year are never stale after a season changes under an open panel.
+  const yr=document.getElementById('as-next-season-year');
+  if(yr && !yr.value) yr.value=seasonYear()+1;
+  const phrase=document.getElementById('as-rollover-phrase');
+  if(phrase) phrase.textContent='ARCHIVE '+seasonYear();
+  const conf=document.getElementById('as-rollover-confirm');
+  if(conf) conf.placeholder='ARCHIVE '+seasonYear();
+
+  const el=document.getElementById('as-archive-list');
+  if(!el) return;
+  el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px 0">Loading...</div>';
+  fbGet(ARCHIVE_INDEX_PATH).then(data=>{
+    const years=data?Object.keys(data).sort((a,b)=>Number(b)-Number(a)):[];
+    if(!years.length){
+      el.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:14px 0">No seasons archived yet.</div>';
+      return;
+    }
+    el.innerHTML=years.map(y=>{
+      const m=(data[y]&&data[y].meta)||{};
+      const when=m.archivedAt?new Date(m.archivedAt).toLocaleDateString():'-';
+      return '<div style="border:1px solid var(--hair);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--card)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
+          '<div style="font-family:var(--ff-display);font-size:24px;font-weight:800;color:var(--green);line-height:1">'+y+'</div>'+
+          '<div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">'+(m.scorecards||0)+' cards / '+when+'</div>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6">'+
+          'Champion: <strong>'+(m.champion||'-')+'</strong><br>Season winner: <strong>'+(m.seasonWinner||'-')+'</strong>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'+
+          '<button onclick="viewArchivedSeason(\''+y+'\')" style="flex:1;min-width:110px;padding:9px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">View Results</button>'+
+          '<button onclick="downloadArchivedSeason(\''+y+'\')" style="flex:1;min-width:110px;padding:9px;background:var(--surf-tint);color:var(--gd);border:1.5px solid var(--bdr);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Download JSON</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }).catch(e=>{
+    el.innerHTML='<div style="font-size:13px;color:var(--bogey);padding:12px 0">Could not load archives: '+e.message+'</div>';
+  });
+}
+
+// Rejoins the two halves so the downloaded file is one complete season, the
+// same shape the rollover hands to the commissioner at archive time.
+function downloadArchivedSeason(year){
+  showToast('Preparing '+year+' archive...');
+  Promise.all([fbGet(ARCHIVE_INDEX_PATH+'/'+year), fbGet(ARCHIVE_DATA_PATH+'/'+year)])
+    .then(([index,data])=>{
+      if(!index && !data){ showToast('Nothing archived for '+year); return; }
+      _downloadJson({meta:(index&&index.meta)||null, summary:(index&&index.summary)||null, data:data||null},
+        'ProTour_'+year+'_archive.json');
+    });
+}
+
+function viewArchivedSeason(year){
+  fbGet(ARCHIVE_INDEX_PATH+'/'+year+'/summary').then(sum=>{
+    if(!sum){ showToast('No summary stored for '+year); return; }
+    const rankRows=(arr,valKey,prefix)=>(arr||[]).slice(0,30).map(r=>
+      '<div style="display:grid;grid-template-columns:34px 1fr 78px;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair);font-size:13px;align-items:baseline">'+
+        '<div style="font-family:var(--ff-display);font-weight:800;color:var(--muted)">'+(r.rank??'')+'</div>'+
+        '<div style="font-weight:600">'+(r.name||'')+'</div>'+
+        '<div style="font-family:var(--ff-display);font-weight:800;text-align:right">'+(prefix||'')+(r[valKey]??'')+'</div>'+
+      '</div>').join('');
+    const wrap=(title,body)=>'<div style="margin-bottom:18px"><div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">'+title+'</div>'+(body||'<div style="font-size:13px;color:var(--muted);padding:8px 0">-</div>')+'</div>';
+
+    let modal=document.getElementById('season-archive-modal');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='season-archive-modal';
+      modal.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;overflow-y:auto;padding:24px 14px';
+      document.body.appendChild(modal);
+    }
+    const earnRows=(sum.earnings||[]).slice(0,30).map(r=>
+      '<div style="display:grid;grid-template-columns:1fr 78px;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair);font-size:13px;align-items:baseline">'+
+        '<div style="font-weight:600">'+r.name+'</div>'+
+        '<div style="font-family:var(--ff-display);font-weight:800;text-align:right">$'+r.amount+'</div>'+
+      '</div>').join('');
+
+    modal.innerHTML='<div style="max-width:520px;margin:0 auto;background:var(--bg);border-radius:16px;padding:20px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
+        '<div style="font-family:var(--ff-display);font-size:30px;font-weight:800;color:var(--green);line-height:1">'+year+' Season</div>'+
+        '<button onclick="document.getElementById(\'season-archive-modal\').style.display=\'none\'" style="background:none;border:none;font-size:26px;color:var(--muted);cursor:pointer;line-height:1;padding:0 4px">&times;</button>'+
+      '</div>'+
+      wrap('Season Standings', rankRows(sum.standings,'points'))+
+      wrap('Playoff - Combined', rankRows(sum.playoff,'total'))+
+      wrap('World Rankings', rankRows(sum.world,'total'))+
+      wrap('Earnings', earnRows)+
+      // The raw archive is an admin tool; players get the results, not the file.
+      (adminUnlocked?'<button onclick="downloadArchivedSeason(\''+year+'\')" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px">Download Full '+year+' Archive (JSON)</button>':'')+
+    '</div>';
+    modal.style.display='block';
+  });
+}
+
 // ═══════════════ EXPORT ═══════════════
 function exportSeasonData(){
   const wb = XLSX.utils.book_new();
@@ -8594,7 +9175,7 @@ function exportSeasonData(){
     Rank: p.r,
     Player: p.n,
     'Starting Points': WR_BASE[p.n]||0,
-    '2026 Season Points': Math.round(p.season),
+    [seasonLabel()+' Season Points']: Math.round(p.season),
     'Playoff Points': Math.round(p.playoff),
     'Total Points': p.p
   }));
@@ -8602,7 +9183,7 @@ function exportSeasonData(){
   ws4['!cols']=[{wch:6},{wch:22},{wch:16},{wch:18},{wch:14},{wch:14}];
   XLSX.utils.book_append_sheet(wb, ws4, 'World Rankings');
 
-  XLSX.writeFile(wb, 'ProTour2026_Season.xlsx');
+  XLSX.writeFile(wb, `ProTour${seasonLabel()}_Season.xlsx`);
   showToast('Season data exported ✓');
 }
 
@@ -8653,7 +9234,7 @@ function exportRoundData(){
     return;
   }
 
-  XLSX.writeFile(wb, 'ProTour2026_Scorecards.xlsx');
+  XLSX.writeFile(wb, `ProTour${seasonLabel()}_Scorecards.xlsx`);
   showToast('Scorecards exported ✓');
 }
 

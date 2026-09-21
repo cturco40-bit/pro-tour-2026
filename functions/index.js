@@ -81,9 +81,24 @@ function playerGroupMap(groupsVal){
   return map;
 }
 
+// Season rollover mute. The rollover clears activeGroups round by round and
+// rewrites the calendar; without this, notifyGroupChange alone would turn that
+// into a "you've been removed from the groups" push for every player in every
+// round. The client sets rollover/until = now + 2min and clears it when done, so
+// the worst case if it's left set is two quiet minutes.
+async function rolloverMuted(){
+  try {
+    const snap = await admin.database().ref('rollover/until').once('value');
+    return Date.now() < (Number(snap.val()) || 0);
+  } catch (e) {
+    return false; // can't read the flag -> behave exactly as before
+  }
+}
+
 // SCHEDULE delivery: { name, body } messages → that player's schedule-enabled tokens.
 async function deliverSchedule(messages){
   if (!messages.length) return;
+  if (await rolloverMuted()) return;
   const byName = {};
   messages.forEach(m => { (byName[m.name] = byName[m.name] || []).push(m.body); });
 
@@ -101,6 +116,7 @@ async function deliverSchedule(messages){
 
 // SCORING delivery: broadcast one body to every scoring-enabled token (all users).
 async function broadcastScoring(body){
+  if (await rolloverMuted()) return;
   const snap = await admin.database().ref('fcmTokens').once('value');
   const all = snap.val() || {};
   const targets = [];

@@ -37,10 +37,11 @@ sq(180).save('apple-touch-icon.png','PNG',optimize=True)
 "
 ```
 
-There is no lint and no test runner. The one test file is plain Node, no deps:
+There is no lint and no test runner. The test files are plain Node, no deps:
 
 ```bash
 node tests/playoff-start-strokes.test.js   # playoff start-stroke model
+node tests/season-rollover.test.js        # season archive / new-season rollover
 ```
 
 Otherwise verify changes by loading the local preview and clicking through the affected flow.
@@ -118,6 +119,29 @@ The playoff advantage is a **start-stroke adjustment to the score, never a handi
 - Players see the whole field's starts on the Foursomes page before teeing off via `renderPlayoffAdvantageBoard(round)`, above the group cards. For the Championship the same board shows each player's Playoff 1 net instead.
 - `repairLegacyPlayoffHandicaps()` restores `hcp` from `baseHcp` on Playoff 1 groups saved by the **oldest** model, which inflated the handicap by a group bonus. That inflation would double-count against start strokes.
 - Tests: `node tests/playoff-start-strokes.test.js` — they extract the real functions out of `index.html` rather than copying them.
+
+### Season archive & rollover
+
+A season is archived and the next one opened entirely from **Admin → Season Archive**. There is no console step and no per-year code edit.
+
+- **Two nodes, on purpose.** `seasons/<year>/{meta,summary}` is the readable record — small, and pulled by every player who opens Standings → History. `seasonArchives/<year>` is the verbatim snapshot (`SEASON_PATHS`, stored with the `___` key encoding intact so it could be written straight back), which is megabytes once scorecard photos are in it and is only fetched for the raw download. **Don't merge them** — the index is on the hot path for 27 phones.
+- **`summary` is computed once, at archive time,** from the live scoring helpers (`calcSeasonStandings`, `calcWorldRankings`, `calcPlayoffEarnings`, `buildPlayoffCombined`). The History view renders that stored summary and never recomputes, so a later change to the scoring math can't silently restate a finished season.
+- **Ordering is the safety model** in `archiveSeasonAndStartNew()`, and the tests assert the order, not just the outcome:
+  1. archive written — bulk, then `summary`, then `meta` **last** so `meta` is itself proof the payload landed;
+  2. verified by reading back `seasonArchives/<year>/roundScores` and comparing the key count — not by checking `meta` exists, which a rules path allowing `meta` but not the data would pass;
+  3. JSON copy downloaded to the commissioner's device;
+  4. `rollover/until` set, muting push;
+  5. `seasonMeta` flipped — **before** the clears (see below);
+  6. live paths cleared (`SEASON_CLEAR_PATHS`);
+  7. `wrBase` + blank calendar written.
+  Any throw before step 6 leaves the season untouched.
+- **`seasonMeta` must flip before the clears.** The localStorage backup keys are season-scoped (`rsBackupKey()`, `agroupsBackupKey()`, `notifiedSubmitsKey()`), so that one write retires all 27 local copies at once. Clear first and there's a live window where a player looking at a suddenly-empty Foursomes page could tap "Restore groups from local backup" (`index.html` `renderFoursomePage`) and push the archived season back into the emptied cloud. `migrateLegacyBackupKeys()` carries the pre-scoping keys over once, at `initFirebase()` start, before any listener can fire.
+- **World-ranking carry-forward is data, not a code edit.** `WR_BASE` is `let`, seeded from the literal but overridden by the `wrBase` node, which the rollover writes from `nextWrBase()` (each player's final Total Points).
+- **Year strings come from `seasonMeta`** via `seasonYear()` / `seasonLabel()` / `seasonShort()` and `applySeasonBranding()`. `usernameToEmail` stays on `@protour2026.com` forever — renaming it breaks all 27 logins. The PWA manifest name is baked at install; changing it still needs an iOS reinstall.
+- **The push mute needs the Cloud Function deployed.** Clearing `activeGroups` writes null to ~10 round paths, and `notifyGroupChange` would turn that into a "you've been removed from the groups" push per player per round (~270). `rolloverMuted()` in `functions/index.js` gates `deliverSchedule()` and `broadcastScoring()` — one chokepoint covering all three triggers. **`firebase deploy --only functions` must happen before the first archive run**, or the rollover works but spams the league.
+- **Security rules must allow** `seasons` (read for everyone, write for the commissioner), `seasonArchives`, `seasonMeta`, `wrBase` and `rollover`. If they don't, the verify step turns it into a clean abort rather than data loss — but nothing gets archived.
+- `archiveSeasonOnly()` is the same snapshot with no reset, safe to run mid-season.
+- Tests: `node tests/season-rollover.test.js` — runs the real rollover against an in-memory stand-in for RTDB and asserts the write ordering above.
 
 ### Admin
 
