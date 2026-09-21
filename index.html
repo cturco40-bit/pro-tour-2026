@@ -8991,7 +8991,10 @@ async function archiveSeasonAndStartNew(){
     fresh.forEach((c,i)=>{ if(CALENDAR[i]) Object.assign(CALENDAR[i],c); });
 
     showToast('Season '+nextYear+' is open');
-    alert('Done.\n\nSeason '+year+' is archived and downloaded to this device.\nSeason '+nextYear+' is live with a blank calendar and carried-forward world-ranking points.\n\nNext: set the '+nextYear+' dates in Admin > Calendar.');
+    // Nudge about the JSON copy: a blob download can silently no-op inside an
+    // iOS home-screen PWA. The cloud archive is verified either way, but that
+    // file is the copy that outlives the Firebase project.
+    alert('Done.\n\nSeason '+year+' is archived in the cloud, and a JSON copy was downloaded to this device.\nSeason '+nextYear+' is live with a blank calendar and carried-forward world-ranking points.\n\nCheck your downloads for ProTour_'+year+'_archive.json — an iOS home-screen app can block the save without saying so.\n\nNext: set the '+nextYear+' dates in Admin > Calendar.');
   }catch(e){
     console.error('rollover failed',e);
     alert('Rollover failed.\n\n'+(e&&e.message?e.message:e)+'\n\nIf this happened before the clear step, nothing was changed.');

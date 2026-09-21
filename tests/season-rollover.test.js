@@ -612,6 +612,55 @@ atest('world-ranking points carry into the new season', async () => {
   });
 });
 
+// Standings > History is on the players' page now, so it has to survive a
+// security rule that denies the read — a REJECTED promise, which is a different
+// branch from the node simply not existing yet.
+function historyCtx(fbGetImpl) {
+  const el = { innerHTML: '' };
+  const ctx = {
+    ...sandbox,
+    fbGet: fbGetImpl,
+    seasonMeta: { year: 2026, label: '2026' },
+    document: { getElementById: () => el },
+    adminUnlocked: false,
+    console,
+    el,
+  };
+  vm.createContext(ctx);
+  vm.runInContext([extractDecl('const', 'ARCHIVE_INDEX_PATH'),
+                   extractFn('seasonYear'), extractFn('seasonLabel'),
+                   extractFn('renderSeasonHistory')].join('\n'), ctx);
+  return ctx;
+}
+
+atest('History degrades gracefully when the archive read is denied', async () => {
+  const ctx = historyCtx(() => Promise.reject(new Error('permission_denied at /seasons')));
+  ctx.renderSeasonHistory(ctx.el);
+  await new Promise((r) => setImmediate(r));
+  assert.ok(/Couldn't load past seasons/.test(ctx.el.innerHTML),
+    'a denied read should explain itself, not leave the tab on "Loading…" forever');
+  assert.ok(!/Loading/.test(ctx.el.innerHTML));
+});
+
+atest('History says so when nothing has been archived yet', async () => {
+  const ctx = historyCtx(() => Promise.resolve(null));
+  ctx.renderSeasonHistory(ctx.el);
+  await new Promise((r) => setImmediate(r));
+  assert.ok(/No seasons archived yet/.test(ctx.el.innerHTML));
+});
+
+atest('History renders the stored summary, never a recomputation', async () => {
+  const ctx = historyCtx(() => Promise.resolve({
+    2025: { meta: { year: 2025, champion: 'Ben Okafor', seasonWinner: 'Ann Reyes', scorecards: 30 },
+            summary: { standings: [{ rank: 1, name: 'Ann Reyes', points: 1180 }] } },
+  }));
+  ctx.renderSeasonHistory(ctx.el);
+  await new Promise((r) => setImmediate(r));
+  assert.ok(ctx.el.innerHTML.includes('2025'));
+  assert.ok(ctx.el.innerHTML.includes('Ben Okafor'), 'the archived champion should show');
+  assert.ok(ctx.el.innerHTML.includes('1180'), 'points come from the stored summary');
+});
+
 atest('the player-facing record stays small - the bulk lives elsewhere', async () => {
   const { fake } = await happy();
   // Standings > History reads the whole index for every player, on every open.
