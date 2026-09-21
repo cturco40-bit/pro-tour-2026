@@ -123,6 +123,32 @@ test('the final order is sorted, lowest first', () => {
   assert.deepStrictEqual(order, ['Ann Reyes', 'Ben Okafor', 'Cal Nguyen', 'Dee Marchetti']);
 });
 
+// ── 1b. What the R1 / R2 / Tot columns mean ───────────────────────────────
+// Both finished-result boards (the Home champion card and Standings > Playoffs)
+// show each round's OWN net in R1 and R2, with Tot the combined. They used to
+// show a running total in R2, which just restated Tot in both columns and hid
+// how a player actually got there. The live leaderboard still carries round 1
+// forward while the Championship is being played — that's getCarryIn, and it is
+// a different surface.
+test("r1 and r2 are each round's own net, and they sum to the total", () => {
+  reset();
+  setRound('Playoff 1',    { 'Ann Reyes': -8, 'Ben Okafor': -7, 'Cal Nguyen': -3, 'Dee Marchetti': -1 });
+  setRound('Championship', { 'Ann Reyes': -5, 'Ben Okafor': -6, 'Cal Nguyen': -2, 'Dee Marchetti': 0 });
+  const order = playoffFinalOrder();
+  order.forEach((p) => {
+    assert.strictEqual(p.r1 + p.r2, p.combinedNet,
+      p.name + ': r1 (' + p.r1 + ') + r2 (' + p.r2 + ') should equal the total (' + p.combinedNet + ')');
+    assert.notStrictEqual(p.r2, p.combinedNet,
+      p.name + ": r2 must be that round's own score, not a running total");
+  });
+  // Ann and Ben both finish -13 by different routes — the exact case a running
+  // total in the R2 column would flatten.
+  const ann = order.find((p) => p.name === 'Ann Reyes');
+  const ben = order.find((p) => p.name === 'Ben Okafor');
+  assert.strictEqual(ann.combinedNet, ben.combinedNet, 'both should finish level');
+  assert.notStrictEqual(ann.r2, ben.r2, 'but on different second rounds');
+});
+
 // ── 2. Nothing is decided until both rounds are in ────────────────────────
 test('no champion before the Championship is complete', () => {
   reset();

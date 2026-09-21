@@ -2493,15 +2493,14 @@ function renderHomeChampion(){
         <span>#</span><span class="left">Player</span><span>R1</span><span>R2</span><span>Tot</span>
       </div>
       ${board.map(p=>{
-        // R2 reads as a running total — you start round two on whatever you
-        // finished round one on, same as the Playoffs board.
-        const running=p.r2!==null?p.combinedNet:null;
+        // R1 and R2 are each round's own net; Tot is the combined. A running
+        // total in the R2 column would just restate Tot twice.
         const cls=v=>v===null?'mute':v<0?'under':v>0?'over':'';
         return `<div class="champ-row${champNames.has(p.name)?' is-champ':''}">
           <div class="champ-pos">${posLabel(p)}</div>
           <div class="champ-who">${short[p.name]||p.name}</div>
           <div class="champ-cell ${cls(p.r1)}">${p.r1!==null?fmtNvp(p.r1):'—'}</div>
-          <div class="champ-cell ${cls(running)}">${running!==null?fmtNvp(running):'—'}</div>
+          <div class="champ-cell ${cls(p.r2)}">${p.r2!==null?fmtNvp(p.r2):'—'}</div>
           <div class="champ-cell ${cls(p.combinedNet)}">${fmtNvp(p.combinedNet)}</div>
         </div>`;
       }).join('')}
@@ -6366,13 +6365,15 @@ function renderStandings(){
         const podiumCls=posNum>=1&&posNum<=3?` podium-${posNum}`:'';
         const pts=ptMap[p.name]||0;
         const money=moneyMap[p.name]||0;
-        // R2 is a running total: you start round 2 on whatever you finished round 1 on.
-        const running=p.r2!==null?p.combinedNet:null;
+        // R1 and R2 are each round's own net; Tot is the combined. The live
+        // leaderboard still carries round 1 forward while the Championship is
+        // being played (see getCarryIn) — this is the finished-result board,
+        // where a running total would just restate Tot in the R2 column.
         const r1=p.r1!==null?fmtNvp(p.r1):'—';
-        const r2=running!==null?fmtNvp(running):'—';
+        const r2=p.r2!==null?fmtNvp(p.r2):'—';
         const tot=fmtNvp(p.combinedNet);
         const r1Cls=p.r1===null?'mute':p.r1<0?'under':p.r1>0?'over':'';
-        const r2Cls=running===null?'mute':running<0?'under':running>0?'over':'';
+        const r2Cls=p.r2===null?'mute':p.r2<0?'under':p.r2>0?'over':'';
         const totCls=p.combinedNet<0?'under':p.combinedNet>0?'over':'';
         // Seed shown is the ORIGINAL seed; START is the immutable stroke
         // adjustment. An alternate has no seed, so it's labelled by call-up.
