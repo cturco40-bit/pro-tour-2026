@@ -6723,6 +6723,61 @@ function openScheduleResults(rid, tab){
   el.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
+// The purse for a round, with the pot and the four payouts on one line so they
+// can be checked against each other. "The money doesn't add up" is almost always
+// the pot and the payouts being read off two different screens — or a payout
+// table that doesn't total 100%, which silently leaves money unallocated
+// (calcPayoutsFromPool only corrects OVERpayment). Any shortfall is stated here
+// rather than quietly vanishing.
+function buildPurseLine(round){
+  const isPlayoff=PLAYOFF_ROUNDS.includes(round);
+  const muted='font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600';
+  if(isPlayoff && round!==PLAYOFF_FINAL_ROUND){
+    return `<div style="${muted};line-height:1.7;margin-bottom:12px">No purse on this round &mdash;
+      playoff money settles once, on the combined 2-round total. See the ${roundTitle(PLAYOFF_FINAL_ROUND)}.</div>`;
+  }
+  let pool, table, basis, note='';
+  if(isPlayoff){
+    pool=calcPlayoffPool();
+    table=calcPlayoffPayouts();
+    const swp=Math.max(0,settings.seasonWinnerPrize||0);
+    basis=`${PLAYERS.length} × $${settings.playoffEntryFee}${swp?` − $${swp} season winner`:''}`;
+    note=playoffsSettled()
+      ? 'Settled on the combined Playoff 1 + Championship total'
+      : 'Not settled — both playoff rounds must be complete';
+  } else {
+    pool=calcPrizePool(round);
+    table=calcRoundPayouts(round);
+    const n=(activeGroups[round]||[]).reduce((a,g)=>a+(g.players||[]).filter(p=>p&&p.name).length,0);
+    basis=`${n} × $${settings.entryFee}${settings.sponsorDiscount?` − $${settings.sponsorDiscount} sponsor`:''}`;
+  }
+  if(!pool) return '';
+  const pcts=(isPlayoff?settings.playoffPrizePercentages:settings.prizePercentages)
+    ||(isPlayoff?DEFAULT_SETTINGS.playoffPrizePercentages:DEFAULT_SETTINGS.prizePercentages);
+  const pctTotal=pcts.reduce((a,v)=>a+(Number(v)||0),0);
+  const paid=table.reduce((a,v)=>a+v,0);
+  const left=pool-paid;
+  const labels=['1st','2nd','3rd','4th'];
+  const short=left!==0?`<div style="${muted};color:var(--bogey);margin-top:6px;line-height:1.7">
+      Pays $${paid.toLocaleString()} of $${pool.toLocaleString()} &mdash;
+      $${Math.abs(left).toLocaleString()} ${left>0?'unallocated':'over'}.
+      ${Math.abs(pctTotal-100)>0.05
+        ? `The payout split totals ${pctTotal.toFixed(1)}%, not 100% &mdash; fix it in Admin &rsaquo; Prizes.`
+        : 'Rounding to the nearest $5.'}</div>`:'';
+  return `<div style="background:var(--surf-tint);border:1px solid var(--hair);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+      <span style="${muted}">Purse</span>
+      <span style="font-family:var(--ff-display);font-size:20px;font-weight:800;color:var(--green);line-height:1">$${pool.toLocaleString()}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:9px">
+      ${table.map((amt,i)=>`<span style="${muted}">${labels[i]}
+        <span style="font-family:var(--ff-display);font-size:14px;color:var(--green);letter-spacing:0">$${amt.toLocaleString()}</span></span>`).join('')}
+    </div>
+    <div style="${muted};margin-top:8px;line-height:1.7">${basis}${note?' &middot; '+note:''}</div>
+    ${short}
+  </div>`;
+}
+
 function buildScheduleResults(round, submittedGroups){
   // Show final leaderboard for this round
   const pars=coursePars[round]||Array(18).fill(4);
@@ -6767,7 +6822,12 @@ function buildScheduleResults(round, submittedGroups){
   const ptsTable=ptsTableFor(round);
   let ptMap=assignPointsWithTies(allPlayers.map(p=>({...p})),ptsTable);
 
-  const moneyMap=payouts?assignMoneyWithTies(allPlayers.map(p=>({...p})),payouts):{};
+  // Playoff rounds have no purse of their own, so payoutsFor() gives null and
+  // this column used to be blank on both of them. The money does exist though —
+  // it settles on the combined 2-round total — so the Championship, the round it
+  // settles on, shows each player's share of it.
+  const moneyMap=payouts?assignMoneyWithTies(allPlayers.map(p=>({...p})),payouts)
+                :round===PLAYOFF_FINAL_ROUND?calcPlayoffEarnings():{};
 
   // Position labels — tied players share a T-position; the declared winner is
   // set apart only by the Winner card, not by a distinct rank.
@@ -6797,6 +6857,7 @@ function buildScheduleResults(round, submittedGroups){
       ${moneyMap[winner1st]>0?`<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(moneyMap[winner1st])}</div><div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:4px;font-weight:600">Prize</div></div>`:''}
     </div>`;
   }
+  html+=buildPurseLine(round);
   html+=`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Final Leaderboard</div>`;
   html+=`<table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead><tr>
@@ -6805,7 +6866,7 @@ function buildScheduleResults(round, submittedGroups){
       <th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Gross</th>
       <th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Net</th>
       <th style="text-align:right;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Pts</th>
-      <th style="text-align:right;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">$</th>
+      <th style="text-align:right;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">${round===PLAYOFF_FINAL_ROUND?'$ 2-RD':'$'}</th>
     </tr></thead>
     <tbody>${allPlayers.map(p=>{
       const nvpStr=fmtNvp(calcNetVsPar(p.holes,p.hcp,pars,si));
@@ -6820,7 +6881,7 @@ function buildScheduleResults(round, submittedGroups){
         <td style="text-align:center;padding:7px 4px;color:var(--muted)">${p.gross||'—'}</td>
         <td style="text-align:center;padding:7px 4px;font-weight:700;color:${nvpStr.startsWith('-')?'var(--birdie)':nvpStr==='E'?'var(--muted)':'var(--bogey)'}">${nvpStr}</td>
         <td style="text-align:right;padding:7px 4px;font-weight:700;color:var(--green)">${pts>0?Math.round(pts):'—'}</td>
-        <td style="text-align:right;padding:7px 4px;font-weight:700;color:var(--gd)">${money>0?'$'+Math.round(money):'—'}</td>
+        <td style="text-align:right;padding:7px 4px;font-weight:700;color:var(--gd)">${money>0?'$'+Math.round(money).toLocaleString():'—'}</td>
       </tr>`;
     }).join('')}
     ${dnfPlayers.map(p=>`<tr style="opacity:.6">
