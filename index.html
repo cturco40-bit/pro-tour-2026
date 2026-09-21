@@ -6093,7 +6093,7 @@ function renderStandings(){
       i=j;
     }
     withdrawn.forEach(p=>{ posLabels[p.name]='WD'; });
-    const shortName=shortNameMap(sorted.map(p=>p.name));
+    const shortName=rosterShortNames(sorted.map(p=>p.name));
 
     el.innerHTML+=`<div class="card" style="padding:14px 16px">
       <div class="st-head playoff">
@@ -6314,6 +6314,15 @@ function shortNameMap(names){
     });
   });
   return out;
+}
+
+// Short names built over the WHOLE roster, not just whoever is in one table, so
+// a player reads the same way on every screen. Scoping it per-table would let
+// Andrew Piacentini be "And. Piacentini" on one and "A. Piacentini" on the next,
+// depending on whether his namesake happened to be in that field.
+function rosterShortNames(extra){
+  const all=PLAYERS.concat(extra||[]);
+  return shortNameMap(all.filter((n,i)=>all.indexOf(n)===i));
 }
 
 // ─── Public points breakdown (read-only) ─────────────────────────────────
@@ -6796,6 +6805,18 @@ function buildScheduleResults(round, submittedGroups){
   });
   const allPlayers=Object.values(seen).sort((a,b)=>a.effNet-b.effNet);
 
+  // The Championship is ranked on the 2-round TOTAL, not on the day — it is the
+  // last round of a two-round event, and finishing order there is the playoff
+  // result. Points are not: each playoff round pays its own table on its own
+  // result (calcPlayoffPoints), so `roundOrder` keeps the day's order for the
+  // points map and only the display order moves to the combined total.
+  const isFinal=round===PLAYOFF_FINAL_ROUND;
+  const combo={};
+  if(isFinal) buildPlayoffCombined().forEach(c=>{ combo[c.name]=c; });
+  const roundOrder=allPlayers.slice();
+  const rankOf=p=>isFinal&&combo[p.name]?combo[p.name].combinedNet:p.effNet;
+  if(isFinal) allPlayers.sort((a,b)=>rankOf(a)-rankOf(b));
+
   // Also collect DNF players separately to show at bottom
   const dnfPlayers=[];
   submittedGroups.forEach(sc=>{
@@ -6809,9 +6830,9 @@ function buildScheduleResults(round, submittedGroups){
   // Only honor a stored override if a real tie for 1st exists AND the override is in it.
   // Guards against stale overrides from a previous (reset) attempt at this round.
   const _rawOverride=(window._roundWinnerOverrides||{})[round]||null;
-  const _tiedForFirst=allPlayers.length>1 && allPlayers[0].effNet===allPlayers[1].effNet;
+  const _tiedForFirst=allPlayers.length>1 && rankOf(allPlayers[0])===rankOf(allPlayers[1]);
   const _tiedNames=_tiedForFirst
-    ? allPlayers.filter(p=>p.effNet===allPlayers[0].effNet).map(p=>p.name)
+    ? allPlayers.filter(p=>rankOf(p)===rankOf(allPlayers[0])).map(p=>p.name)
     : [];
   const overrideWinner=(_rawOverride && _tiedNames.includes(_rawOverride)) ? _rawOverride : null;
   // null on playoff rounds — their prize money lives on the combined total, not here
@@ -6820,7 +6841,10 @@ function buildScheduleResults(round, submittedGroups){
   // Points and money always split evenly across a tie — a declared tie-break
   // winner is solely for the trophy (the Winner card below), not the payout.
   const ptsTable=ptsTableFor(round);
-  let ptMap=assignPointsWithTies(allPlayers.map(p=>({...p})),ptsTable);
+  // Off `roundOrder`, not the display order — assignPointsWithTies walks the
+  // array in sequence, so handing it a total-sorted list would pay the round's
+  // points table out in the wrong order.
+  let ptMap=assignPointsWithTies(roundOrder.map(p=>({...p})),ptsTable);
 
   // Playoff rounds have no purse of their own, so payoutsFor() gives null and
   // this column used to be blank on both of them. The money does exist though —
@@ -6834,9 +6858,9 @@ function buildScheduleResults(round, submittedGroups){
   let posLabels={};
   let i=0;
   while(i<allPlayers.length){
-    const score=allPlayers[i].effNet;
+    const score=rankOf(allPlayers[i]);
     let j=i;
-    while(j<allPlayers.length&&allPlayers[j].effNet===score) j++;
+    while(j<allPlayers.length&&rankOf(allPlayers[j])===score) j++;
     const tieCount=j-i;
     const label=tieCount>1?'T'+(i+1):(i+1)+'';
     for(let k=i;k<j;k++) posLabels[allPlayers[k].name]=label;
@@ -6850,22 +6874,38 @@ function buildScheduleResults(round, submittedGroups){
     const winnerData=allPlayers.find(p=>p.name===winner1st);
     html+=`<div style="background:var(--surf-amber);border:1px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="min-width:0;flex:1">
-        <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-deep)">${isTieWithOverride?'Winner (Playoff Declared)':'Winner'}</div>
+        <div style="font-family:var(--ff-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--gold-deep)">${isTieWithOverride?(isFinal?'Champion (Playoff Declared)':'Winner (Playoff Declared)'):(isFinal?'Champion':'Winner')}</div>
         <div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--green);letter-spacing:.01em;text-transform:uppercase;line-height:1.05;margin-top:6px">${winner1st}</div>
-        ${winnerData?`<div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:6px;font-weight:600">${fmtNvp(calcNetVsPar(winnerData.holes,winnerData.hcp,pars,si))} Net · Gross ${winnerData.gross}</div>`:''}
+        ${winnerData?`<div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:6px;font-weight:600">${
+          isFinal&&combo[winner1st]
+            ? `${fmtNvp(combo[winner1st].combinedNet)} Total · R1 ${fmtNvp(combo[winner1st].r1)} · R2 ${fmtNvp(combo[winner1st].r2)}`
+            : `${fmtNvp(calcNetVsPar(winnerData.holes,winnerData.hcp,pars,si))} Net · Gross ${winnerData.gross}`}</div>`:''}
       </div>
-      ${moneyMap[winner1st]>0?`<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(moneyMap[winner1st])}</div><div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:4px;font-weight:600">Prize</div></div>`:''}
+      ${moneyMap[winner1st]>0?`<div style="text-align:right;flex-shrink:0"><div style="font-family:var(--ff-display);font-size:22px;font-weight:800;color:var(--gold-deep);line-height:1">$${Math.round(moneyMap[winner1st]).toLocaleString()}</div><div style="font-family:var(--ff-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);margin-top:4px;font-weight:600">Prize</div></div>`:''}
     </div>`;
   }
   html+=buildPurseLine(round);
   html+=`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Final Leaderboard</div>`;
+
+  // The table carries both rounds and the combined figure in place of a single
+  // Net column. Three score columns instead of one needs the room; an initial and a
+  // surname buys it, the same shortening the Playoffs standings table uses.
+  const shortName=isFinal?rosterShortNames(allPlayers.concat(dnfPlayers).map(p=>p.name)):null;
+  const nm=n=>shortName?(shortName[n]||n):n;
+  const scoreCell=v=>v===null||v===undefined
+    ? `<td style="text-align:center;padding:7px 4px;color:var(--sub)">—</td>`
+    : `<td style="text-align:center;padding:7px 4px;font-weight:700;color:${v<0?'var(--birdie)':v===0?'var(--muted)':'var(--bogey)'}">${fmtNvp(v)}</td>`;
   html+=`<table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead><tr>
       <th style="text-align:left;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Pos</th>
       <th style="text-align:left;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Player</th>
       <th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Gross</th>
-      <th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Net</th>
-      <th style="text-align:right;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Pts</th>
+      ${isFinal
+        ? `<th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">R1</th>
+           <th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">R2</th>
+           <th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">T</th>`
+        : `<th style="text-align:center;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">Net</th>`}
+      <th style="text-align:right;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">${isFinal?'R2 Pts':'Pts'}</th>
       <th style="text-align:right;padding:5px 4px;font-size:10px;color:var(--muted);border-bottom:1px solid var(--bdr)">${round===PLAYOFF_FINAL_ROUND?'$ 2-RD':'$'}</th>
     </tr></thead>
     <tbody>${allPlayers.map(p=>{
@@ -6875,11 +6915,13 @@ function buildScheduleResults(round, submittedGroups){
       return `<tr>
         <td style="padding:7px 4px;font-weight:700;color:var(--muted)">${posLabels[p.name]}</td>
         <td style="padding:7px 4px">
-          <div style="font-weight:600">${p.name}</div>
+          <div style="font-weight:600">${nm(p.name)}</div>
           ${p.pen>0?`<div style="font-size:10px;color:var(--bogey);font-weight:600">+${p.pen} penalty</div>`:''}
         </td>
         <td style="text-align:center;padding:7px 4px;color:var(--muted)">${p.gross||'—'}</td>
-        <td style="text-align:center;padding:7px 4px;font-weight:700;color:${nvpStr.startsWith('-')?'var(--birdie)':nvpStr==='E'?'var(--muted)':'var(--bogey)'}">${nvpStr}</td>
+        ${isFinal
+          ? scoreCell(combo[p.name]?.r1)+scoreCell(combo[p.name]?.r2)+scoreCell(combo[p.name]?.combinedNet)
+          : `<td style="text-align:center;padding:7px 4px;font-weight:700;color:${nvpStr.startsWith('-')?'var(--birdie)':nvpStr==='E'?'var(--muted)':'var(--bogey)'}">${nvpStr}</td>`}
         <td style="text-align:right;padding:7px 4px;font-weight:700;color:var(--green)">${pts>0?Math.round(pts):'—'}</td>
         <td style="text-align:right;padding:7px 4px;font-weight:700;color:var(--gd)">${money>0?'$'+Math.round(money).toLocaleString():'—'}</td>
       </tr>`;
@@ -6887,11 +6929,14 @@ function buildScheduleResults(round, submittedGroups){
     ${dnfPlayers.map(p=>`<tr style="opacity:.6">
       <td style="padding:7px 4px;font-weight:700;color:var(--bogey)">DNF</td>
       <td style="padding:7px 4px">
-        <div style="font-weight:600">${p.name}</div>
+        <div style="font-weight:600">${nm(p.name)}</div>
         <div style="font-size:10px;color:var(--bogey);font-weight:600">Did not finish</div>
       </td>
       <td style="text-align:center;padding:7px 4px;color:var(--muted)">${p.gross||'—'}</td>
+      ${isFinal?`<td style="text-align:center;padding:7px 4px;color:var(--sub)">—</td>
       <td style="text-align:center;padding:7px 4px;color:var(--bogey)">DNF</td>
+      <td style="text-align:center;padding:7px 4px;color:var(--sub)">—</td>`
+      :`<td style="text-align:center;padding:7px 4px;color:var(--bogey)">DNF</td>`}
       <td style="text-align:right;padding:7px 4px;color:var(--muted)">—</td>
       <td style="text-align:right;padding:7px 4px;color:var(--muted)">—</td>
     </tr>`).join('')}
