@@ -8953,7 +8953,13 @@ async function archiveSeasonAndStartNew(){
       '- download a JSON copy to this device\n'+
       '- carry final world-ranking points into '+nextYear+'\n'+
       '- clear scores, groups, penalties, courses, photos and the calendar\n\n'+
-      'Roster, fees, points tables and the admin PIN are kept.');
+      'Roster, fees, points tables and the admin PIN are kept.\n\n'+
+      // The mute only works if the Cloud Function carrying rolloverMuted() has
+      // been deployed. Without it, clearing ten rounds of groups fires a
+      // "you have been removed" push at every player in every round.
+      'Push is muted while this runs — that needs "firebase deploy --only functions"\n'+
+      'to have been run at least once since this version shipped. If it has not,\n'+
+      'the league gets a few hundred notifications.');
     if(!ok){ showToast('Rollover cancelled'); return; }
 
     // 1. Archive + verify. Throws before anything is cleared if it didn't land.
